@@ -40,7 +40,7 @@ The new workflow was exercised on the separate `localhost:5174` QA origin. Three
 
 ## Scope and remaining release work
 
-This is a local, device-saved preview, with no authenticated login, server-side shared workspace or public deployment. It does not contact another city or claim endorsement. Public launch needs the real account/storage infrastructure and hosting destination. Provider availability and municipal source freshness are external dependencies. The verified catalogue is maintained manually; the new source watcher detects public page changes for review. Live AI is integrated but not configured. Always-on monitoring and cross-device collaboration require deployed infrastructure.
+This is a device-saved preview, now publicly hosted at https://cityrelay.vercel.app, with no authenticated login or server-side shared workspace. It does not contact another city or claim endorsement. Operational municipal use needs the real account/storage infrastructure. Provider availability and municipal source freshness are external dependencies. The verified catalogue is maintained manually; the new source watcher detects public page changes for review. Live AI is integrated but not configured. Always-on monitoring and cross-device collaboration require deployed infrastructure.
 
 Live APIs retain explicit failure states; this turn observed a successfully loaded IMGW temperature in the Kraków brief. The value is not frozen into the app. Historical programme facts are not real-time inventories.
 
@@ -48,4 +48,6 @@ Original supplied hackathon documents and the earlier CityRelay prototype were r
 
 ## Vercel preparation
 
-Added SPA deep-link rewrites and a serverless public-preview API. Automated tests cover Vercel's pre-parsed JSON body, request-size enforcement, same-origin public POSTs, preservation of local-only restrictions and unconditional disabling of paid research in public mode. Production deployment status and the live URL are recorded after the Vercel build succeeds.
+Added SPA deep-link rewrites and a serverless public-preview API. Automated tests cover Vercel's pre-parsed JSON body, request-size enforcement, same-origin public POSTs, preservation of local-only restrictions and unconditional disabling of paid research in public mode. Vercel successfully deployed commit `2c6f2da` to https://cityrelay.vercel.app on 3 October 2026. The production dashboard identifies GitHub `main` as its update source.
+
+Verified on the public domain: welcome page, guided Kraków entry, direct `/community/krakow/agents` reload, completed five-stage local analysis, source-monitor API and successful checks of all five public HTML sources. An unauthenticated HTTP request to `/api/status` succeeded with AI explicitly disabled. No local private workspace content was uploaded; the live domain starts with its own browser storage. Screenshot: `artifacts/elsewhere-live-vercel.png`.

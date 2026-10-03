@@ -2,6 +2,10 @@
 
 **Great ideas start somewhere. Bring them here.**
 
+Live preview: **https://cityrelay.vercel.app**
+
+Vercel project: https://vercel.com/divin-josephs-projects/cityrelay — production follows GitHub `main`.
+
 An advisor workspace for learning from real city projects and shaping a locally appropriate pilot. Formerly CityRelay. React, TypeScript, Vite and an original Three.js architectural scene.
 
 ## Run
@@ -63,7 +67,7 @@ Matching is deterministic: focus/outcome filtering, readiness categories, then s
 
 Advisor identity, municipalities, drafts, plans and observations remain in browser storage under `cityrelay.real.v2`. This key is deliberately retained through the rename so existing work survives. Earlier fictional prototype storage is untouched. Corrupt reads and failed saves surface errors. The reset dialog explains what it clears. Text-note import accepts a local `.txt` file up to 100 KB. Local processing displays shared document excerpts; permitted documents can be interpreted during a consented live AI run.
 
-This build has device-saved advisor access, not authenticated accounts. It is a working hackathon preview, not a public municipal service. Public release still requires a hosting destination, secure authentication and shared storage, access control/privacy review, and commercial data arrangements where applicable. User-entered local information is not independently verified. The catalogue is curated and updated manually; source-page changes trigger review notices, not automatic fact updates. Advisor contributors are local role records, not separate authenticated accounts. Data switches control processing inputs, not user-level security boundaries. Previously recorded outputs remain in local history when access is later withheld. Shared-origin browser tabs synchronize saved work; separate devices do not. Always-on background research requires a deployed scheduler and persistent storage; browser monitoring stops when the app closes. No live AI provider call was made during verification because a key was not configured.
+This build has device-saved advisor access, not authenticated accounts. It is a working hackathon preview, not a public municipal service. The public preview is hosted on Vercel. Operational municipal use still requires secure authentication and shared storage, access control/privacy review, and commercial data arrangements where applicable. User-entered local information is not independently verified. The catalogue is curated and updated manually; source-page changes trigger review notices, not automatic fact updates. Advisor contributors are local role records, not separate authenticated accounts. Data switches control processing inputs, not user-level security boundaries. Previously recorded outputs remain in local history when access is later withheld. Shared-origin browser tabs synchronize saved work; separate devices do not. Always-on background research requires a deployed scheduler and persistent storage; browser monitoring stops when the app closes. No live AI provider call was made during verification because a key was not configured.
 
 The current renderer imports `src/app.css` and `src/civic.css`; previous design files remain in the repository for reference and are not loaded. The Three.js module is loaded asynchronously on the welcome page. Its production chunk is about 544 KB uncompressed / 135 KB gzip; the workspace does not depend on rendering it. Manrope is self-hosted.
 
