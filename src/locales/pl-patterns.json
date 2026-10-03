@@ -71,5 +71,11 @@
   "Budget: {0}": "Budżet: {0}",
   "Staff: {0}": "Personel: {0}",
   "Supported connections: {0} · Implementation checks: {1}": "Powiązania poparte dowodami: {0} · Warunki realizacji: {1}",
-  "{0}. Review this source-page change before treating it as a new project.": "{0}. Zweryfikuj zmianę strony źródłowej, zanim uznasz ją za nowy projekt."
+  "{0}. Review this source-page change before treating it as a new project.": "{0}. Zweryfikuj zmianę strony źródłowej, zanim uznasz ją za nowy projekt.",
+  "ALIGNED: {0}": "ZGODNE: {0}",
+  "UNKNOWN: {0}": "NIEZNANE: {0}",
+  "DIFFERENT: {0}": "RÓŻNICE: {0}",
+  "BLOCKED: {0}": "BLOKADA: {0}",
+  "{0}: Relevant evidence found; local feasibility still needs investigation.": "{0}: Znaleziono istotne dowody; lokalna wykonalność wymaga dalszego zbadania.",
+  "{0} topic-relevant approaches retrieved. {1}. Catalogue retrieval is complete. Live source-page checks are listed in the activity log. No broader web discovery was run.": "Znalezione podejścia zgodne z tematem: {0}. {1}. Przeszukiwanie katalogu zakończone. Sprawdzenia stron źródłowych na żywo są zapisane w dzienniku aktywności. Nie przeprowadzono szerszego wyszukiwania w internecie."
 }

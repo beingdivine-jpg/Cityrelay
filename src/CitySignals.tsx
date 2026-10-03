@@ -2,6 +2,7 @@ import { t as tr, locale } from "./i18n";
 import { Link, useParams } from "react-router-dom";
 import { Button, CommunityNav, Icon } from "./components";
 import { Missing } from "./Workspace";
+import { DEMO_ID } from "./demo";
 import { useCivic } from "./CivicContext";
 import {
   allowed,
@@ -13,6 +14,7 @@ export default function CitySignals() {
   const { id = "" } = useParams();
   const { profile, civic } = useCivic(id);
   if (!profile || !civic) return <Missing />;
+  const demo = id === DEMO_ID;
   const signals = summarizeReports(civic.reports);
   const last = civic.runs.find((r) => r.status === "complete");
   const stale = last && last.fingerprint !== runFingerprint(profile, civic);
@@ -32,30 +34,85 @@ export default function CitySignals() {
             {tr("LISTEN LOCALLY. LEARN GLOBALLY.")}
           </span>
           <h1>
-            {tr("What’s your city")}
+            {tr(demo ? "A city is talking." : "What’s your city")}
             <br />
-            <span className="blue-text">{tr("telling you?")}</span>
+            <span className="blue-text">
+              {tr(demo ? "Where do you start?" : "telling you?")}
+            </span>
           </h1>
         </div>
         <div>
           <p>
-            {tr(
-              "A shared view of resident needs, municipal knowledge and the ideas worth investigating for ",
+            {demo ? (
+              tr(
+                "You are the innovation advisor. Read the sample concerns below, then let the agents organise them and investigate documented responses from other cities.",
+              )
+            ) : (
+              <>
+                {tr(
+                  "A shared view of resident needs, municipal knowledge and the ideas worth investigating for ",
+                )}
+                {profile.name}.
+              </>
             )}
-            {profile.name}
-            {tr(".")}
           </p>
           <Button to={`/community/${id}/${next}`}>
             {tr(
-              next === "challenge"
-                ? "Choose your challenge"
-                : "Open the agent studio",
+              demo
+                ? "Follow the agents"
+                : next === "challenge"
+                  ? "Choose your challenge"
+                  : "Open the agent studio",
             )}
             {tr(" ")}
             <Icon />
           </Button>
         </div>
       </div>
+      {demo && (
+        <section className="demo-story">
+          <span className="eyebrow">
+            {tr("YOUR MISSION / A SMALL, PRACTICAL PILOT")}
+          </span>
+          <p>
+            {tr(
+              "Heat is the largest topic in this sample inbox. Six concerns point to shade, access and cool public places. The agents will compare that need with real projects, keep unknowns visible and hand the decision back to you.",
+            )}
+          </p>
+          <div>
+            <span>01 · {tr("Read the concerns")}</span>
+            <span>02 · {tr("Follow the investigation")}</span>
+            <span>03 · {tr("Choose a direction")}</span>
+            <span>04 · {tr("Shape a pilot")}</span>
+          </div>
+        </section>
+      )}
+
+      {demo && (
+        <section className="demo-reports">
+          <div className="civic-section-title">
+            <h2>{tr("From the sample inbox")}</h2>
+            <Link to={`/community/${id}/reports`}>
+              {tr("View the sample inbox")} ↗
+            </Link>
+          </div>
+          <div className="demo-report-grid">
+            {civic.reports
+              .filter((r) => !r.duplicateOf && r.status === "received")
+              .filter((_, i) => [0, 6, 10].includes(i))
+              .map((r) => (
+                <article key={r.id}>
+                  <span className="eyebrow">
+                    {tr("SAMPLE CONCERN")} · {r.area}
+                  </span>
+                  <h3>{tr(r.title)}</h3>
+                  <p>{tr(r.detail)}</p>
+                  <span className="tag">{tr(topicLabels[r.topic])}</span>
+                </article>
+              ))}
+          </div>
+        </section>
+      )}
 
       <div className="signals-layout">
         <section>

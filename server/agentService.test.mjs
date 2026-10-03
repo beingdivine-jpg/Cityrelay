@@ -6,7 +6,26 @@ import {
   sourceSnapshot,
   publicSourceUrl,
   safeText,
+  parseResponse,
 } from "./agentService.mjs";
+it("keeps both single and multiple provider search queries in the observable record", () => {
+  const result = parseResponse({
+    output: [
+      {
+        type: "web_search_call",
+        action: { type: "search", query: "Kraków heat adaptation" },
+      },
+      {
+        type: "web_search_call",
+        action: { type: "search", queries: ["Helsinki library services"] },
+      },
+    ],
+  });
+  expect(result.searches.map((s) => s.queries)).toEqual([
+    ["Kraków heat adaptation"],
+    ["Helsinki library services"],
+  ]);
+});
 async function request(handler, path, body, headers = {}, options = {}) {
   const req = Readable.from([JSON.stringify(body)]);
   req.method = options.method || "POST";
@@ -351,4 +370,47 @@ it("requires a shared account before public paid research and fails closed on qu
   expect(denied.status).toBe(403);
   expect(fetcher).toHaveBeenCalledTimes(1);
   expect(fetcher.mock.calls[0][0]).toContain("/rest/v1/rpc/ew_claim_research");
+});
+
+it("streams actual source starts and results, including failures, before the terminal event", async () => {
+  const fetcher = vi.fn(
+    async (url) =>
+      new Response(
+        String(url).includes("missing")
+          ? "missing"
+          : "<main>A documented municipal project.</main>",
+        {
+          status: String(url).includes("missing") ? 404 : 200,
+          headers: { "Content-Type": "text/html" },
+        },
+      ),
+  );
+  const result = await request(
+    createAgentService({ fetcher }),
+    "/api/monitor",
+    {
+      stream: true,
+      sources: [
+        { title: "City source", url: "https://www.hel.fi/example" },
+        { title: "Unavailable source", url: "https://www.hel.fi/missing" },
+      ],
+    },
+  );
+  const events = result.events();
+  expect(result.status).toBe(200);
+  expect(events.filter((e) => e.phase === "started")).toHaveLength(2);
+  expect(
+    events
+      .filter((e) => e.phase === "complete")
+      .map((e) => e.snapshot.status)
+      .sort(),
+  ).toEqual(["ok", "unavailable"]);
+  expect(events.at(-1).type).toBe("done");
+  for (const source of [
+    "https://www.hel.fi/example",
+    "https://www.hel.fi/missing",
+  ])
+    expect(events.findIndex((e) => e.source?.url === source)).toBeLessThan(
+      events.findIndex((e) => e.snapshot?.url === source),
+    );
 });

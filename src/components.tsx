@@ -297,7 +297,8 @@ export function CommunityNav({ profile }: { profile: CommunityProfile }) {
             <strong>{tr(profile.name || "Your municipality")}</strong>
             <span>
               {tr(
-                state.advisor?.entryMode === "guided" && profile.id === "krakow"
+                state.advisor?.entryMode === "guided" &&
+                  ["krakow", "krakow-demo"].includes(profile.id)
                   ? "Guided municipal workspace"
                   : "Municipal intelligence workspace",
               )}
@@ -305,9 +306,18 @@ export function CommunityNav({ profile }: { profile: CommunityProfile }) {
           </div>
         </div>
         <nav aria-label={tr("Your innovation journey")}>
-          <NavLink to={`/community/${profile.id}/challenge`}>
+          <NavLink
+            to={
+              profile.id === "krakow-demo"
+                ? `/community/${profile.id}`
+                : `/community/${profile.id}/challenge`
+            }
+            end
+          >
             <span>{tr("01")}</span>
-            {tr(" Challenge")}
+            {tr(
+              profile.id === "krakow-demo" ? " Resident voices" : " Challenge",
+            )}
           </NavLink>
           <NavLink to={`/community/${profile.id}/agents`}>
             <span>{tr("02")}</span>

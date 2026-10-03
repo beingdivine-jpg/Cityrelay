@@ -1,3 +1,16 @@
+# Kraków demo and observable agent workflow — 4 October 2026
+
+- Automated verification: **88 tests passed across nine files**. Production build passed; existing application and lazy Three.js chunk-size warnings remain.
+- `/demo` creates an isolated, idempotent `krakow-demo` workspace. It preserves existing advisor work and seeds 18 explicitly fictional intake records: 13 unique complaints, three ideas, one duplicate and one held item. Sample contributors and the planning document are labelled; authority, cost, staffing and site permissions are not fabricated as confirmed.
+- Home and entry prioritise the demo. The route is resident voices → five agent stages → documented findings → an editable pilot. Sample work cannot be uploaded as an operational shared workspace; exported plans and activity records carry demo disclosures.
+- The default run pauses at actual handoffs. The chronological log records grouping, excluded reports, data permissions, catalogue queries, retrieved candidates, live page checks, evidence gaps, fit factors, idea triage and outputs. Search/source/check filters, cancellation, run history and JSON export are available. No artificial delays or replay presented as live execution.
+- Browser verification used the separate `127.0.0.1:4183` origin. All five approved source pages returned successfully during a real source-check run. Completed logs survived navigation and refresh. Cancellation after the Listener retained 22 events and a failed run; the earlier complete record remained inspectable.
+- The Polish route was followed from the demo inbox through the agent workroom, findings, Barcelona evidence/local checks and an editable pilot. Sample report titles and text have translation coverage. Authored resident text remains unchanged.
+- Desktop agent workroom visually checked; Polish mobile log and handoff controls checked at 390 px, with document width matching the viewport at both 390 and 320 px.
+- Local rules and current HTTP source checks are explicitly distinguished from unconfigured LLM web research. Provider tests are mocked; this work does not configure paid AI, Supabase, shared resident delivery or always-on monitoring.
+
+---
+
 # Audit remediation verification — 4 October 2026
 
 ## Current implementation

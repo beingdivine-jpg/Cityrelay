@@ -198,3 +198,64 @@ export function CivicMonitor({ id }: { id: string }) {
   }, [profile, civic, change]);
   return null;
 }
+
+/** Emits actual HTTP source-check progress; it does not claim global discovery. */
+export async function checkSourcesLive(
+  civic: CivicWorkspace,
+  onSource: (event: {
+    phase: "started" | "complete";
+    source?: { title: string; url: string };
+    snapshot?: SourceSnapshot;
+  }) => void,
+  signal?: AbortSignal,
+) {
+  if (!allowed(civic, "catalogue"))
+    throw Error("Project repository access withheld");
+  const records = [...new Set(examples.flatMap((e) => e.sources))]
+    .map(getSource)
+    .filter((s) => !!s)
+    .filter(
+      (s) =>
+        (s.kind === "Municipal source" || s.kind === "Public agency") &&
+        !new URL(s.url).pathname.toLowerCase().endsWith(".pdf"),
+    );
+  const response = await fetch("/api/monitor", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sources: records.map((s) => ({ url: s.url, title: s.title })),
+      stream: true,
+    }),
+    signal: signal
+      ? AbortSignal.any([signal, AbortSignal.timeout(50000)])
+      : AbortSignal.timeout(50000),
+  });
+  if (!response.ok || !response.body)
+    throw Error("Source checking is unavailable.");
+  const reader = response.body.getReader(),
+    decoder = new TextDecoder();
+  let buffer = "",
+    done = false;
+  const consume = (line: string) => {
+    if (!line.trim()) return;
+    const event = JSON.parse(line);
+    if (event.type === "source") onSource(event);
+    if (event.type === "done") done = true;
+  };
+  try {
+    while (true) {
+      const part = await reader.read();
+      if (part.done) break;
+      buffer += decoder.decode(part.value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+      lines.forEach(consume);
+    }
+    buffer += decoder.decode();
+    if (buffer.trim()) consume(buffer);
+    if (!done) throw Error("Source check ended before completion.");
+  } finally {
+    await reader.cancel().catch(() => {});
+    reader.releaseLock();
+  }
+}

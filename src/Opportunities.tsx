@@ -9,6 +9,7 @@ import { examples } from "./data";
 import { SourceList } from "./SourceList";
 import { getSource } from "./sources";
 import { CitedOutput } from "./AgentStudio";
+import { DEMO_ID } from "./demo";
 export default function Opportunities() {
   const { id = "" } = useParams();
   const { state: appState } = useApp();
@@ -19,6 +20,8 @@ export default function Opportunities() {
   if (!profile || !civic) return <Missing />;
   const run = civic.runs.find((r) => r.status === "complete");
   const stale = !!run && run.fingerprint !== runFingerprint(profile, civic);
+  const firstLead = run?.opportunities.find((o) => o.state !== "hold");
+  const firstExample = examples.find((e) => e.id === firstLead?.exampleId);
   const shortlist = Object.entries(civic.decisions).filter(
     ([, d]) => d.state === "shortlist",
   );
@@ -162,6 +165,25 @@ export default function Opportunities() {
                 </div>
               ),
             )}
+            {id === DEMO_ID && !stale && firstExample && (
+              <div className="demo-next-step">
+                <div>
+                  <span className="eyebrow">{tr("YOUR NEXT STEP")}</span>
+                  <h2>{tr("Take one approach a little further.")}</h2>
+                  <p>
+                    {tr(firstExample.title)} · {tr(firstExample.origin.name)}
+                  </p>
+                  <small>
+                    {tr(
+                      "Start with a lead connected to the largest sample concern. Inspect its evidence, then draft a pilot with the open checks clearly marked.",
+                    )}
+                  </small>
+                </div>
+                <Button to={`/community/${id}/matches/${firstExample.id}`}>
+                  {tr("Inspect this approach")} <Icon />
+                </Button>
+              </div>
+            )}
             <div className="opportunity-tabs">
               {tr(
                 [
@@ -271,7 +293,7 @@ export default function Opportunities() {
                               <span>{tr(topicLabels[o.topic])}</span>
                               <p>{tr(o.reason)}</p>
                             </div>
-                            <details className="fit-ledger" open={i === 0}>
+                            <details className="fit-ledger">
                               <summary>
                                 {tr("Why this idea appeared")}
                                 {tr(" ")}

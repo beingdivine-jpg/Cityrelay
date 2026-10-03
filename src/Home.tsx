@@ -29,17 +29,21 @@ export default function Home() {
               " Leave with a proposal, sources and the questions to resolve.",
             )}
           </p>
-          <Link className="hero-cta" to="/enter">
-            {tr("Start with your challenge")}
+          <Link className="hero-cta" to="/demo">
+            {tr("Explore the Kraków demo")}
             {tr(" ")}
             <span>
               <Icon size={23} />
             </span>
           </Link>
-          <a className="hero-secondary" href="#how-it-works">
-            {tr("Meet a different way of thinking ")}
-            <span>{tr("↓")}</span>
-          </a>
+          <p className="hero-demo-note">
+            {tr(
+              "18 sample reports. Five agents. One local pilot. No account needed.",
+            )}
+          </p>
+          <Link className="hero-secondary" to="/enter">
+            {tr("Or bring your own city's challenge")} <span>↗</span>
+          </Link>
         </div>
         <div className="hero-art">
           <CityScene />

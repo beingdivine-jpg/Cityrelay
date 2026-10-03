@@ -4,7 +4,7 @@ import { t as tr, locale, getLanguage } from "./i18n";
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Button, CommunityNav, Icon } from "./components";
-import { useAgentService, useCivic } from "./CivicContext";
+import { checkSourcesLive, useAgentService, useCivic } from "./CivicContext";
 import {
   agentDefinitions,
   allowed,
@@ -16,7 +16,10 @@ import {
   topicLabels,
 } from "./civicEngine";
 import { Missing } from "./Workspace";
+import { DEMO_ID } from "./demo";
+import ActivityLog from "./ActivityLog";
 import type {
+  AgentEvent,
   AgentCitation,
   AgentKey,
   AgentRun,
@@ -85,55 +88,158 @@ export function CitedOutput({
 export default function AgentStudio() {
   const { id = "" } = useParams();
   const { profile, civic, change } = useCivic(id);
-  const service = useAgentService();
-  const shared = useShared();
+  const service = useAgentService(),
+    shared = useShared();
   const canAI = service.ai && (!service.requiresAccount || !!shared.workspace);
   const [mode, setMode] = useState<"local" | "ai">("local"),
-    [selected, setSelected] = useState<AgentKey>("listener"),
-    [liveSteps, setLiveSteps] = useState<AgentStep[]>([]),
-    [busy, setBusy] = useState(false),
+    [selected, setSelected] = useState<AgentKey>("listener");
+  const [liveSteps, setLiveSteps] = useState<AgentStep[]>([]),
+    [liveEvents, setLiveEvents] = useState<AgentEvent[]>([]);
+  const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
-    [consent, setConsent] = useState(false),
-    [replay, setReplay] = useState(false);
-  const abort = useRef<AbortController | null>(null);
+    [consent, setConsent] = useState(false);
+  const [guided, setGuided] = useState(true),
+    [sourceChecks, setSourceChecks] = useState(true),
+    [waiting, setWaiting] = useState<AgentKey | null>(null),
+    [viewId, setViewId] = useState<string | null>(null);
+  const abort = useRef<AbortController | null>(null),
+    gate = useRef<(() => void) | null>(null);
   useEffect(() => () => abort.current?.abort(), []);
-  const last = civic?.runs[0];
-  const steps = busy ? liveSteps : last?.steps || [];
-  const selectedStep = steps.find((s) => s.id === selected);
   useEffect(() => {
-    if (!replay) return;
-    let i = 0;
-    setSelected("listener");
-    const timer = setInterval(() => {
-      i++;
-      if (i >= agentDefinitions.length) {
-        setReplay(false);
-        clearInterval(timer);
-      } else setSelected(agentDefinitions[i].id);
-    }, 1400);
-    return () => clearInterval(timer);
-  }, [replay]);
+    if (!busy) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [busy]);
   if (!profile || !civic) return <Missing />;
-  const updateStep = (step: AgentStep) => {
-    setLiveSteps((list) => [...list.filter((s) => s.id !== step.id), step]);
-    setSelected(step.id);
-  };
+  const last =
+    (viewId && civic.runs.find((r) => r.id === viewId)) || civic.runs[0];
+  const steps = busy ? liveSteps : last?.steps || [],
+    events = busy ? liveEvents : last?.events || [];
+  const selectedStep = steps.find((s) => s.id === selected),
+    completed = steps.filter((s) => s.status === "complete").length;
+  const displayMode = busy ? mode : last?.mode || mode;
   async function run() {
     if (!profile || !civic || busy) return;
     setBusy(true);
-    setReplay(false);
     setError("");
+    setWaiting(null);
+    setViewId(null);
     setLiveSteps([]);
+    setLiveEvents([]);
+    setSelected("listener");
+    requestAnimationFrame(() =>
+      document.getElementById("agent-workbench")?.scrollIntoView({
+        block: "start",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "instant"
+          : "smooth",
+      }),
+    );
+    const controller = new AbortController();
+    abort.current = controller;
     const snapshot = structuredClone(civic),
-      place = structuredClone(profile);
-    const startedAt = new Date().toISOString();
-    let result: AgentRun | undefined;
-    let completedSteps: AgentStep[] = [];
+      place = structuredClone(profile),
+      startedAt = new Date().toISOString();
+    let completedSteps: AgentStep[] = [],
+      recorded: AgentEvent[] = [],
+      currentAgent: AgentKey = "listener";
+    const log = (event: AgentEvent) => {
+      recorded = [...recorded, event];
+      setLiveEvents(recorded);
+    };
+    const emit = (
+      agent: AgentKey,
+      kind: AgentEvent["kind"],
+      title: string,
+      detail: string,
+      url?: string,
+    ) =>
+      log({
+        id: crypto.randomUUID(),
+        at: new Date().toISOString(),
+        agent,
+        kind,
+        title,
+        detail,
+        url,
+      });
+    const onStep = (step: AgentStep) => {
+      currentAgent = step.id;
+      setLiveSteps((list) => [...list.filter((s) => s.id !== step.id), step]);
+      setSelected(step.id);
+      if (step.status === "complete")
+        completedSteps = [
+          ...completedSteps.filter((s) => s.id !== step.id),
+          step,
+        ];
+    };
     try {
+      let result: AgentRun;
       if (mode === "local")
-        result = await localAnalysis(place, snapshot, updateStep);
+        result = await localAnalysis(place, snapshot, onStep, {
+          signal: controller.signal,
+          onEvent: log,
+          beforeStep: async (agent) => {
+            if (!guided || agent === "listener") return;
+            setWaiting(agent);
+            await new Promise<void>((resolve, reject) => {
+              const cancel = () => {
+                gate.current = null;
+                reject(Error("Run cancelled."));
+              };
+              gate.current = () => {
+                controller.signal.removeEventListener("abort", cancel);
+                gate.current = null;
+                setWaiting(null);
+                resolve();
+              };
+              controller.signal.addEventListener("abort", cancel, {
+                once: true,
+              });
+              if (controller.signal.aborted) cancel();
+            });
+          },
+          checkSources: sourceChecks
+            ? async (logSource) => {
+                await checkSourcesLive(
+                  snapshot,
+                  (event) => {
+                    const source = event.source || event.snapshot!;
+                    logSource({
+                      kind:
+                        event.phase === "complete" &&
+                        event.snapshot?.status !== "ok"
+                          ? "error"
+                          : "source",
+                      title:
+                        event.phase === "started"
+                          ? "Checking a live source page"
+                          : event.snapshot?.status === "ok"
+                            ? "Source page retrieved"
+                            : "Source page unavailable",
+                      detail:
+                        event.phase === "started"
+                          ? source.title
+                          : event.snapshot?.status === "ok"
+                            ? "Page content retrieved. This does not independently verify every source claim."
+                            : event.snapshot?.error ||
+                              "No current page check is claimed.",
+                      url: source.url,
+                    });
+                  },
+                  controller.signal,
+                );
+              }
+            : undefined,
+        });
       else {
-        abort.current = new AbortController();
+        emit(
+          "listener",
+          "input",
+          "Submitting permitted research inputs",
+          "Only enabled data groups and separately consented reports and documents are sent.",
+        );
         const token = sharedClient
           ? (await sharedClient.auth.getSession()).data.session?.access_token
           : undefined;
@@ -162,12 +268,12 @@ export default function AgentStudio() {
               : [],
             consent,
           }),
-          signal: abort.current.signal,
+          signal: controller.signal,
         });
         if (!response.ok) {
-          const msg = await response.json().catch(() => ({
-            error: "Research service unavailable.",
-          }));
+          const msg = await response
+            .json()
+            .catch(() => ({ error: "Research service unavailable." }));
           throw Error(msg.error);
         }
         if (!response.body) throw Error("No research stream received.");
@@ -180,12 +286,34 @@ export default function AgentStudio() {
           const event = JSON.parse(line);
           if (event.type === "error") throw Error(event.error);
           if (event.type === "step") {
-            updateStep(event.step);
-            if (event.step.status === "complete")
-              completedSteps = [
-                ...completedSteps.filter((s) => s.id !== event.step.id),
-                event.step,
-              ];
+            onStep(event.step);
+            emit(
+              event.step.id,
+              event.step.status === "running" ? "input" : "output",
+              event.step.status === "running"
+                ? "Agent request started"
+                : "Stage output recorded",
+              event.step.status === "running"
+                ? event.step.input
+                : event.step.output,
+            );
+            for (const search of event.searches || [])
+              for (const query of search.queries || [])
+                if (typeof query === "string")
+                  emit(
+                    event.step.id,
+                    "query",
+                    "Reported web search query",
+                    query,
+                  );
+            for (const citation of event.step.citations || [])
+              emit(
+                event.step.id,
+                "source",
+                "Source cited by the agent",
+                citation.title,
+                citation.url,
+              );
           }
           if (event.type === "done") done = true;
         };
@@ -193,15 +321,15 @@ export default function AgentStudio() {
           while (true) {
             const part = await reader.read();
             if (part.done) break;
-            buffer += decoder.decode(part.value, {
-              stream: true,
-            });
+            buffer += decoder.decode(part.value, { stream: true });
             const lines = buffer.split("\n");
             buffer = lines.pop() || "";
             lines.forEach(consume);
           }
+          buffer += decoder.decode();
           if (buffer.trim()) consume(buffer);
         } finally {
+          await reader.cancel().catch(() => {});
           reader.releaseLock();
         }
         if (!done) throw Error("Research ended before all agents completed.");
@@ -216,6 +344,7 @@ export default function AgentStudio() {
           status: "complete",
           fingerprint: runFingerprint(place, snapshot),
           steps: completedSteps,
+          events: recorded,
           signals,
           opportunities,
           ideas: triageIdeas(reports, opportunities),
@@ -224,19 +353,18 @@ export default function AgentStudio() {
           ).length,
         };
       }
-      const finished = result;
       change((c) => ({
         ...c,
-        runs: [finished, ...c.runs].slice(0, 20),
+        runs: [result, ...c.runs].slice(0, 20),
         notices: [
           {
-            id: `run-${finished.id}`,
+            id: `run-${result.id}`,
             title:
               mode === "ai"
                 ? "AI research is ready for review"
                 : "Local analysis is ready for review",
-            detail: `${finished.reportCount} eligible submissions · ${finished.opportunities.length} documented leads. Open the evidence trail before making a decision.`,
-            at: finished.completedAt,
+            detail: `${result.reportCount} eligible submissions · ${result.opportunities.length} documented leads. Open the evidence trail before making a decision.`,
+            at: result.completedAt,
             read: false,
             kind: "analysis" as const,
           },
@@ -244,79 +372,70 @@ export default function AgentStudio() {
         ].slice(0, 100),
       }));
       setSelected("writer");
-      if (
-        mode === "local" &&
-        !window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      )
-        setReplay(true);
     } catch (e) {
-      const message = e instanceof Error ? e.message : "Analysis failed.";
+      const message = controller.signal.aborted
+        ? "Run cancelled."
+        : e instanceof Error
+          ? e.message
+          : "Analysis failed.";
       setError(message);
-      if (mode === "ai") {
-        const failed: AgentRun = {
-          id: crypto.randomUUID(),
-          startedAt,
-          completedAt: new Date().toISOString(),
-          mode,
-          status: "failed",
-          fingerprint: runFingerprint(place, snapshot),
-          steps: completedSteps,
-          signals: [],
-          opportunities: [],
-          ideas: [],
-          reportCount: 0,
-          error: message,
-        };
-        change((c) => ({
-          ...c,
-          runs: [failed, ...c.runs].slice(0, 20),
-        }));
-      }
+      emit(currentAgent, "error", "Run stopped", message);
+      const failed: AgentRun = {
+        id: crypto.randomUUID(),
+        startedAt,
+        completedAt: new Date().toISOString(),
+        mode,
+        status: "failed",
+        fingerprint: runFingerprint(place, snapshot),
+        steps: completedSteps,
+        events: recorded,
+        signals: [],
+        opportunities: [],
+        ideas: [],
+        reportCount: 0,
+        error: message,
+      };
+      change((c) => ({ ...c, runs: [failed, ...c.runs].slice(0, 20) }));
     } finally {
       setBusy(false);
+      setWaiting(null);
       abort.current = null;
+      gate.current = null;
     }
   }
   return (
-    <div className="page-width civic-page">
+    <div className="page-width civic-page agent-page">
       <CommunityNav profile={profile} />
-      <div className="civic-heading">
+      <header className="agent-heading">
         <div>
-          <span className="eyebrow">{tr("RESEARCH YOU CAN FOLLOW")}</span>
+          <span className="eyebrow">{tr("THE AGENT WORKROOM")}</span>
           <h1>
-            {tr("No black box.")}
-            <br />
-            <span className="blue-text">{tr("Meet your agents.")}</span>
+            {tr("Follow the work.")}{" "}
+            <span className="blue-text">{tr("Keep the evidence.")}</span>
           </h1>
         </div>
         <p>
           {tr(
-            "See what each specialist receives, what it finds and what gets passed on. Evidence is visible. Approval stays with your team.",
+            id === DEMO_ID
+              ? "Turn the sample inbox into a research brief. Each agent leaves a visible record, then hands the work to the next."
+              : "Inspect each action, source and result. You decide what becomes a local pilot.",
           )}
         </p>
-      </div>
-      <section className="agent-control">
+      </header>
+      <section className="agent-launch">
         <div>
-          <span className={`service-indicator ${service.ai ? "live" : ""}`}>
-            <i />
-            {tr(service.message)}
-          </span>
+          <span className="eyebrow">{tr("READY TO INVESTIGATE")}</span>
           <h2>
-            {tr("A research run for ")}
-            {profile.name}
-            {tr(".")}
+            {profile.name} · {tr("research desk")}
           </h2>
           <p>
             {tr(
               `${civic.reports.length} submissions · ${civic.connections.filter((c) => c.enabled).length} shared data groups · ${civic.documents.filter((d) => d.enabled).length} local documents`,
             )}
           </p>
-          <Link className="quiet-link" to={`/community/${id}/data`}>
-            {tr("Review data access ")}
-            <Icon size={15} />
-          </Link>
+          <Link to={`/community/${id}/data`}>{tr("Review data access")} ↗</Link>
         </div>
-        <div className="agent-run-options">
+        <div className="agent-launch-actions">
           <div className="agent-mode-switch">
             <button
               disabled={busy}
@@ -330,310 +449,258 @@ export default function AgentStudio() {
               aria-pressed={mode === "ai"}
               onClick={() => setMode("ai")}
             >
-              {tr("Live AI research ")}
-              {tr(canAI ? "↗" : "· not connected")}
+              {tr(canAI ? "Live AI research" : "AI research · not connected")}
             </button>
           </div>
-          <p>
-            {tr(
-              mode === "local"
-                ? "Runs real grouping, catalogue retrieval and rule-based checks on this device. No LLM or live web search is claimed."
-                : `Five sequential AI specialists using ${service.model}; the scout searches approved municipal sources. Outputs require human verification.`,
-            )}
-          </p>
-          {tr(
-            mode === "ai" && (
-              <label className="checkbox-label">
+          {mode === "local" ? (
+            <div className="agent-run-settings">
+              <label>
                 <input
                   type="checkbox"
-                  checked={consent}
-                  onChange={(e) => setConsent(e.target.checked)}
+                  checked={guided}
+                  disabled={busy}
+                  onChange={(e) => setGuided(e.target.checked)}
                 />
-                <span>
-                  {tr(
-                    "Send the shared municipal brief, permitted reports and permitted documents to OpenAI for this run. Usage may incur API costs.",
-                  )}
-                </span>
+                {tr("Pause at each handoff")}
               </label>
-            ),
+              <label>
+                <input
+                  type="checkbox"
+                  checked={sourceChecks}
+                  disabled={busy}
+                  onChange={(e) => setSourceChecks(e.target.checked)}
+                />
+                {tr("Check source pages live")}
+              </label>
+            </div>
+          ) : (
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={consent}
+                disabled={busy}
+                onChange={(e) => setConsent(e.target.checked)}
+              />
+              {tr(
+                "Send the shared municipal brief, permitted reports and permitted documents to OpenAI for this run. Usage may incur API costs.",
+              )}
+            </label>
           )}
           <Button
             disabled={
               busy ||
-              (mode === "ai" && (!consent || !allowed(civic, "catalogue")))
+              (mode === "ai" &&
+                (!canAI || !consent || !allowed(civic, "catalogue")))
             }
             onClick={() => void run()}
           >
             {tr(
               busy
-                ? "Agents are processing…"
-                : mode === "local"
-                  ? "Run local analysis"
-                  : "Start live AI research",
-            )}
-            <Icon name={busy ? "sun" : "arrow"} />
+                ? "Investigation in progress"
+                : last
+                  ? "Start a new investigation"
+                  : "Start with the Listener",
+            )}{" "}
+            <Icon />
           </Button>
-          {tr(
-            busy && mode === "ai" && (
+        </div>
+      </section>
+      <p className="agent-method-note">
+        {tr(
+          mode === "local"
+            ? "Local rules organise the reports and compare the documented library. Live page checks are real HTTP requests; they are not an AI web search."
+            : "AI requests and reported search queries appear as the service returns them. Search details may arrive with the completed stage.",
+        )}
+      </p>
+      {error && (
+        <p role="alert" className="form-error">
+          {tr(error)}
+        </p>
+      )}
+      <section
+        id="agent-workbench"
+        className="agent-workbench"
+        aria-label={tr("Agent work dashboard")}
+      >
+        <aside className="agent-rail">
+          <span className="eyebrow">{tr("RESEARCH TEAM")}</span>
+          {agentDefinitions.map((agent, i) => {
+            const step = steps.find((s) => s.id === agent.id);
+            return (
+              <button
+                key={agent.id}
+                aria-pressed={selected === agent.id}
+                className={selected === agent.id ? "selected" : ""}
+                onClick={() => setSelected(agent.id)}
+              >
+                <span className="rail-number">
+                  {step?.status === "complete"
+                    ? "✓"
+                    : String(i + 1).padStart(2, "0")}
+                </span>
+                <span>
+                  <strong>{tr(agent.name)}</strong>
+                  <small>
+                    {tr(
+                      step?.status === "running"
+                        ? "Working now"
+                        : step?.status === "complete"
+                          ? "Output ready"
+                          : "Waiting for handoff",
+                    )}
+                  </small>
+                </span>
+                {step?.status === "running" && <i className="working-light" />}
+              </button>
+            );
+          })}
+          <p>
+            {completed}/5 {tr("stages completed")}
+          </p>
+        </aside>
+        <div className="agent-log-panel">
+          <ActivityLog
+            events={events}
+            busy={busy}
+            waiting={!!waiting}
+            mode={displayMode}
+          />
+          <div className="agent-handoff" role="status">
+            {waiting ? (
+              <>
+                <div>
+                  <strong>{tr("Handoff ready")}</strong>
+                  <p>
+                    {tr("Inspect the log, then continue when you are ready.")}
+                  </p>
+                </div>
+                <Button onClick={() => gate.current?.()}>
+                  {tr("Continue to")}{" "}
+                  {tr(agentDefinitions.find((a) => a.id === waiting)!.name)}{" "}
+                  <Icon />
+                </Button>
+              </>
+            ) : busy ? (
+              <>
+                <span>
+                  <i className="working-light" />{" "}
+                  {tr("Recording actions as they happen…")}
+                </span>
+              </>
+            ) : last?.status === "complete" ? (
+              <>
+                <div>
+                  <strong>{tr("Investigation complete")}</strong>
+                  <p>
+                    {tr(
+                      "Your next step: compare the evidence and choose a direction.",
+                    )}
+                  </p>
+                </div>
+                <Button to={`/community/${id}/opportunities`}>
+                  {tr("Compare the findings")} <Icon />
+                </Button>
+              </>
+            ) : (
+              <p>
+                {tr(
+                  last?.status === "failed"
+                    ? "This run stopped. Its recorded actions are saved. Start a new investigation when you are ready."
+                    : "Start the investigation above. Every action will appear here.",
+                )}
+              </p>
+            )}
+            {busy && (
               <button
                 className="quiet-link"
                 onClick={() => abort.current?.abort()}
               >
-                {tr("Cancel research")}
+                {tr("Stop investigation")}
               </button>
-            ),
+            )}
+          </div>
+        </div>
+      </section>
+      <section className="agent-result">
+        <div>
+          <span className="eyebrow">{tr("INSPECT AN AGENT'S WORK")}</span>
+          <h2>{tr(agentDefinitions.find((a) => a.id === selected)!.name)}</h2>
+          <p>
+            {tr(agentDefinitions.find((a) => a.id === selected)!.description)}
+          </p>
+        </div>
+        <div>
+          {selectedStep ? (
+            <>
+              <span className="eyebrow">{tr("INPUT")}</span>
+              <p>{tr(selectedStep.input || "Reading permitted inputs…")}</p>
+              <span className="eyebrow">{tr("FINDINGS & HANDOFF")}</span>
+              {selectedStep.status === "running" ? (
+                <p role="status">{tr("Working now")}</p>
+              ) : (
+                <CitedOutput
+                  text={selectedStep.output}
+                  local={displayMode === "local"}
+                  citations={selectedStep.citations}
+                />
+              )}
+            </>
+          ) : (
+            <p>
+              {tr(
+                "Select a completed agent to inspect its inputs, findings and sources.",
+              )}
+            </p>
           )}
         </div>
       </section>
-      {tr(
-        replay && (
-          <p className="agent-notice" role="status">
-            {tr(
-              "Analysis finished. Replaying the recorded handoffs so you can follow the work.",
-            )}
-          </p>
-        ),
-      )}
-      {tr(
-        !civic.authority.confirmed && (
-          <div className="agent-notice">
-            {tr(
-              "The responsible authority has not been confirmed. The agents will keep this visible as an unresolved check.",
-            )}
-            {tr(" ")}
-            <Link to={`/community/${id}/data`}>{tr("Review authority ↗")}</Link>
-          </div>
-        ),
-      )}
-      {tr(
-        error && (
-          <p role="alert" className="form-error agent-error">
-            {tr(error)}
-          </p>
-        ),
-      )}
-      <div
-        className={`agent-pipeline ${busy ? "is-running" : ""} ${replay ? "is-replaying" : ""}`}
-        aria-label={tr("Agent research pipeline")}
-      >
+      <p className="micro">
         {tr(
-          agentDefinitions.map((a, i) => {
-            const step = steps.find((s) => s.id === a.id);
-            return (
-              <button
-                key={a.id}
-                onClick={() => {
-                  setReplay(false);
-                  setSelected(a.id);
-                }}
-                className={`${selected === a.id ? "selected" : ""} ${step?.status === "running" ? "processing" : ""}`}
-                aria-pressed={selected === a.id}
-              >
-                <span className="pipeline-node">
-                  <span>{tr(String(i + 1).padStart(2, "0"))}</span>
-                  {tr(
-                    step?.status === "complete" ? (
-                      <Icon name="check" size={15} />
-                    ) : (
-                      <i />
-                    ),
-                  )}
-                </span>
-                <strong>{tr(a.name)}</strong>
-                <small>
-                  {tr(
-                    step?.status === "running"
-                      ? "Working now"
-                      : step?.status === "complete"
-                        ? "Output ready"
-                        : a.verb,
-                  )}
-                </small>
-              </button>
-            );
-          }),
+          "Actions, inputs, outputs and sources are recorded here. Private model reasoning is not exposed. Municipal approval always stays with people.",
         )}
-      </div>
-      <div className="agent-inspector">
-        <aside>
-          <span className="eyebrow">
-            {tr(replay ? "REPLAYING A COMPLETED RUN" : "INSIDE THE WORKFLOW")}
-          </span>
-          <h2>{tr(agentDefinitions.find((a) => a.id === selected)?.name)}</h2>
-          <p>
-            {tr(agentDefinitions.find((a) => a.id === selected)?.description)}
-          </p>
-          {tr(
-            last && !busy && (
-              <>
-                <small>
-                  {tr(last.mode === "ai" ? "AI research" : "Local rules")}
-                  {tr(" ·")}
-                  {tr(" ")}
-                  {tr(new Date(last.completedAt).toLocaleString(locale()))}
-                </small>
-                <button
-                  className="quiet-link"
-                  onClick={() => setReplay(!replay)}
-                >
-                  {tr(replay ? "Stop replay" : "Replay the handoffs")}
-                  {tr(" ")}
-                  <span>{tr(replay ? "Ⅱ" : "▷")}</span>
-                </button>
-              </>
-            ),
-          )}
-          <div className="agent-audit-note">
-            {tr(
-              "This is an action and evidence trail. It shows inputs, outputs and sources—not private model reasoning.",
-            )}
-          </div>
-        </aside>
-        <div className="agent-evidence" aria-live="polite">
-          {tr(
-            selectedStep ? (
-              <>
-                <div className="agent-input">
-                  <span>{tr("INPUT")}</span>
-                  <p>{tr(selectedStep.input || "Reading permitted inputs…")}</p>
-                </div>
-                <div className="agent-output">
-                  <div className="civic-section-title">
-                    <span className="eyebrow">
-                      {tr(
-                        selectedStep.status === "running"
-                          ? "PROCESSING"
-                          : "FINDINGS & HANDOFF",
-                      )}
-                    </span>
-                    <span className="tag">
-                      {tr(
-                        last?.mode === "ai" && !busy
-                          ? "AI-generated · verify sources"
-                          : mode === "ai" && busy
-                            ? "AI agent"
-                            : "Deterministic local processing",
-                      )}
-                    </span>
-                  </div>
-                  {tr(
-                    selectedStep.status === "running" ? (
-                      <div className="agent-processing">
-                        <i />
-                        <i />
-                        <i />
-                        <p>
-                          {tr(
-                            "The agent is working with its permitted inputs.",
-                          )}
-                        </p>
-                      </div>
-                    ) : (
-                      <CitedOutput
-                        local={
-                          mode === "local" && (!last || last.mode === "local")
-                        }
-                        text={selectedStep.output}
-                        citations={selectedStep.citations}
-                      />
-                    ),
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className="agent-waiting">
-                <div className="listening-art" aria-hidden="true">
-                  <i />
-                  <i />
-                  <i />
-                  <i />
-                  <i />
-                </div>
-                <h3>{tr("A visible trail starts with a run.")}</h3>
-                <p>
-                  {tr(
-                    "Start local analysis to inspect the actual inputs, grouping rules, retrieved projects and transfer checks. Connect server-side AI for live research.",
-                  )}
-                </p>
-              </div>
-            ),
-          )}
-        </div>
-      </div>
-      {tr(
-        last?.status === "complete" && !busy && (
-          <div className="civic-next">
-            <p>
-              {tr(
-                "The research is complete. Review the evidence, resolve unknowns, then choose what deserves a local pilot.",
-              )}
-            </p>
-            <Button to={`/community/${id}/opportunities`}>
-              {tr("Review the opportunities ")}
-              <Icon />
-            </Button>
-          </div>
-        ),
-      )}
-      {tr(
-        last && !busy && (
-          <a
-            className="quiet-link research-export"
-            download={`elsewhere-${id}-research-${last.id.slice(0, 8)}.md`}
-            href={`data:text/markdown;charset=utf-8,${encodeURIComponent(`# ${profile.name} — ${tr("research record")}\n\n${tr(last.mode === "ai" ? "AI research; verify sources" : "Deterministic local analysis")} · ${tr(last.status)} · ${last.completedAt}\n\n${last.steps.map((step) => `## ${tr(step.title)}\n\n${tr("Input")}: ${tr(step.input)}\n\n${last.mode === "local" ? tr(step.output) : step.output}\n\n${step.citations.map((c) => `- [${c.title}](${c.url})`).join("\n")}`).join("\n\n")}\n\n${tr("Unresolved local checks require human review. This record is not municipal approval.")}`)}`}
-          >
-            <Icon name="download" size={16} />
-            {tr(" Download this research record")}
-          </a>
-        ),
+      </p>
+      {last && !busy && (
+        <a
+          className="quiet-link research-export"
+          download={`elsewhere-${id}-research-${last.id.slice(0, 8)}.json`}
+          href={`data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify({ disclosure: id === DEMO_ID ? "DEMO: sample reports, real project sources" : "Research record; not municipal approval", ...last }, null, 2))}`}
+        >
+          <Icon name="download" size={16} />
+          {tr("Download the complete activity record")}
+        </a>
       )}
       <details className="agent-history">
         <summary>
-          {tr("Run history ")}
-          <span>
-            {tr(civic.runs.length)}
-            {tr(" recorded runs")}
-          </span>
+          {tr("Run history")} · {civic.runs.length}
         </summary>
-        {tr(
-          civic.runs.map((r) => (
-            <article key={r.id}>
-              <div>
-                <strong>
-                  {tr(r.mode === "ai" ? "Live AI research" : "Local analysis")}
-                  {tr(" ·")}
-                  {tr(" ")}
-                  {tr(r.status)}
-                </strong>
-                <p>
-                  {tr(new Date(r.startedAt).toLocaleString(locale()))}
-                  {tr(" · ")}
-                  {tr(r.reportCount)}
-                  {tr(" ")}
-                  {tr("eligible submissions · ")}
-                  {tr(r.opportunities.length)}
-                  {tr(" catalogue leads")}
-                </p>
-                {tr(r.error && <p>{tr(r.error)}</p>)}
-              </div>
-              <details>
-                <summary>{tr("Read recorded outputs")}</summary>
-                {tr(
-                  r.steps.map((s) => (
-                    <section key={s.id}>
-                      <h3>{tr(s.title)}</h3>
-                      <CitedOutput
-                        local={r.mode === "local"}
-                        text={s.output}
-                        citations={s.citations}
-                      />
-                    </section>
-                  )),
-                )}
-              </details>
-            </article>
-          )),
-        )}
+        {civic.runs.map((r) => (
+          <article key={r.id}>
+            <div>
+              <strong>
+                {tr(r.mode === "ai" ? "Live AI research" : "Local analysis")} ·{" "}
+                {tr(r.status)}
+              </strong>
+              <p>
+                {new Date(r.startedAt).toLocaleString(locale())} ·{" "}
+                {r.events?.length || 0} {tr("recorded actions")}
+              </p>
+              {r.error && <p>{tr(r.error)}</p>}
+            </div>
+            <Button
+              secondary
+              disabled={busy}
+              onClick={() => {
+                setViewId(r.id);
+                setSelected(r.steps.at(-1)?.id || "listener");
+                document
+                  .getElementById("agent-workbench")
+                  ?.scrollIntoView({ block: "start", behavior: "instant" });
+              }}
+            >
+              {tr("Inspect this run")}
+            </Button>
+          </article>
+        ))}
       </details>
     </div>
   );

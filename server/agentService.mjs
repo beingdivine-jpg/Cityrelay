@@ -59,7 +59,10 @@ export function parseResponse(body) {
     citations,
     searches: (body.output || [])
       .filter((x) => x.type === "web_search_call")
-      .map((x) => ({ type: x.action?.type, queries: x.action?.queries || [] })),
+      .map((x) => ({
+        type: x.action?.type,
+        queries: x.action?.queries || (x.action?.query ? [x.action.query] : []),
+      })),
   };
 }
 async function limitedText(response, limit = 1500000) {
@@ -295,6 +298,27 @@ export function createAgentService({
         });
       monitorRunning = true;
       try {
+        if (body.stream === true) {
+          res.writeHead(200, {
+            "Content-Type": "application/x-ndjson; charset=utf-8",
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+          });
+          const emit = (event) => {
+            if (!res.destroyed) res.write(JSON.stringify(event) + "\n");
+          };
+          await Promise.all(
+            body.sources.map(async (s) => {
+              const source = { url: s.url, title: s.title.slice(0, 200) };
+              emit({ type: "source", phase: "started", source });
+              const snapshot = await sourceSnapshot(source, fetcher);
+              emit({ type: "source", phase: "complete", snapshot });
+            }),
+          );
+          emit({ type: "done" });
+          res.end();
+          return;
+        }
         const snapshots = await Promise.all(
           body.sources.map((s) =>
             sourceSnapshot(

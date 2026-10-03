@@ -3,6 +3,7 @@ import type {
   AgentKey,
   AgentRun,
   AgentStep,
+  AgentEvent,
   CivicOpportunity,
   CivicReport,
   CivicTopic,
@@ -73,12 +74,11 @@ export function newCivic(profile: CommunityProfile): CivicWorkspace {
   return {
     authority: {
       kind: "Municipality",
-      name:
-        profile.id === "krakow"
-          ? "Gmina Miejska Kraków"
-          : profile.authorityType === "Unknown"
-            ? ""
-            : profile.authorityType,
+      name: ["krakow", "krakow-demo"].includes(profile.id)
+        ? "Gmina Miejska Kraków"
+        : profile.authorityType === "Unknown"
+          ? ""
+          : profile.authorityType,
       confirmed: false,
     },
     documents: [],
@@ -178,7 +178,11 @@ export function compareFactors(
       detail: `The project addresses ${topicLabels[example.domain].toLowerCase()}. Topic relevance is not evidence of an outcome.`,
     },
   ];
-  if (context && profile.id === "krakow" && example.id === "helsinki-info") {
+  if (
+    context &&
+    ["krakow", "krakow-demo"].includes(profile.id) &&
+    example.id === "helsinki-info"
+  ) {
     const delta = Math.round(
       (1 -
         populationEvidence.helsinki.value / populationEvidence.krakow.value) *
@@ -349,6 +353,14 @@ export async function localAnalysis(
   profile: CommunityProfile,
   civic: CivicWorkspace,
   onStep: (step: AgentStep) => void,
+  options: {
+    signal?: AbortSignal;
+    beforeStep?: (agent: AgentKey) => Promise<void>;
+    onEvent?: (event: AgentEvent) => void;
+    checkSources?: (
+      emit: (event: Omit<AgentEvent, "id" | "at" | "agent">) => void,
+    ) => Promise<void>;
+  } = {},
 ): Promise<AgentRun> {
   const start = new Date().toISOString(),
     run: AgentRun = {
@@ -363,9 +375,22 @@ export async function localAnalysis(
       opportunities: [],
       ideas: [],
       reportCount: 0,
+      events: [],
     };
   const reports = allowed(civic, "reports") ? civic.reports : [];
   for (const def of agentDefinitions) {
+    await options.beforeStep?.(def.id);
+    options.signal?.throwIfAborted();
+    const emit = (event: Omit<AgentEvent, "id" | "at" | "agent">) => {
+      const item: AgentEvent = {
+        ...event,
+        id: crypto.randomUUID(),
+        at: new Date().toISOString(),
+        agent: def.id,
+      };
+      run.events!.push(item);
+      options.onEvent?.(item);
+    };
     const step: AgentStep = {
       id: def.id,
       title: def.name,
@@ -380,6 +405,23 @@ export async function localAnalysis(
       requestAnimationFrame(() => resolve()),
     );
     if (def.id === "listener") {
+      emit({
+        kind: "input",
+        title: "Opening permitted resident input",
+        detail: `${reports.length} reports shared by the municipal data steward`,
+      });
+      for (const report of reports)
+        emit({
+          kind: "check",
+          title: report.duplicateOf
+            ? "Duplicate excluded from counts"
+            : report.status === "needs-review"
+              ? "Held for intake review"
+              : report.kind === "idea"
+                ? "Idea kept separate from complaints"
+                : "Concern included in topic grouping",
+          detail: report.title,
+        });
       run.signals = summarizeReports(reports);
       run.reportCount = reports.filter(
         (r) => !r.duplicateOf && r.status === "received",
@@ -395,6 +437,28 @@ export async function localAnalysis(
         : "No eligible resident submissions. The municipal brief may provide a starting focus; it is not a claim about resident demand.";
     }
     if (def.id === "context") {
+      emit({
+        kind: "input",
+        title: "Opening the municipal profile",
+        detail: allowed(civic, "context")
+          ? profile.name
+          : "No municipal context shared",
+      });
+      if (allowed(civic, "context"))
+        for (const document of civic.documents.filter((d) => d.enabled))
+          emit({
+            kind: "input",
+            title: "Reading a shared local document",
+            detail: document.title,
+          });
+      for (const connection of civic.connections)
+        emit({
+          kind: "input",
+          title: connection.enabled
+            ? "Data access enabled"
+            : "Data access withheld",
+          detail: datasetLabels[connection.key],
+        });
       step.input = allowed(civic, "context")
         ? `${profile.name} municipal profile`
         : "No municipal context shared";
@@ -403,7 +467,7 @@ export async function localAnalysis(
             .filter((d) => d.enabled)
             .map(
               (d) =>
-                `Shared document: ${d.title} (${d.text.length} characters). ${d.text.slice(0, 240)}`,
+                `Shared document: ${d.title} (${d.text.length} characters). ${d.text.slice(0, 600)}`,
             )
             .join("\n")}`
         : "Context access is disabled. No geography, population similarity or initiative connection is inferred.";
@@ -413,7 +477,38 @@ export async function localAnalysis(
         .map((s) => ({ url: s.url, title: s.title }));
     }
     if (def.id === "scout") {
+      emit({
+        kind: "query",
+        title: "Searching the documented project library",
+        detail: allowed(civic, "catalogue")
+          ? [
+              ...new Set([
+                ...run.signals.map((s) => topicLabels[s.topic]),
+                ...(allowed(civic, "context")
+                  ? profile.problems.map((p) => topicLabels[p])
+                  : []),
+              ]),
+            ].join(" · ")
+          : "Project repository access withheld",
+      });
       run.opportunities = buildOpportunities(profile, civic, run.signals);
+      for (const opportunity of run.opportunities) {
+        const example = examples.find((e) => e.id === opportunity.exampleId)!;
+        emit({
+          kind: "source",
+          title: "Documented candidate retrieved",
+          detail: `${example.origin.name} · ${example.shortTitle}`,
+          url: getSource(example.sources[0])?.url,
+        });
+      }
+      for (const signal of run.signals.filter(
+        (s) => !run.opportunities.some((o) => o.topic === s.topic),
+      ))
+        emit({
+          kind: "check",
+          title: "Evidence gap kept visible",
+          detail: topicLabels[signal.topic],
+        });
       step.input = allowed(civic, "catalogue")
         ? `${examples.length} documented projects in the curated repository`
         : "Project repository access withheld";
@@ -428,9 +523,44 @@ export async function localAnalysis(
         .map(getSource)
         .filter((s) => !!s)
         .map((s) => ({ url: s.url, title: s.title }));
+      if (options.checkSources && allowed(civic, "catalogue")) {
+        step.output = step.output.replace(
+          "Local catalogue search only. This run did not search the live web.",
+          "Catalogue retrieval is complete. Live source-page checks are listed in the activity log. No broader web discovery was run.",
+        );
+        try {
+          await options.checkSources(emit);
+        } catch (e) {
+          if (options.signal?.aborted) throw e;
+          emit({
+            kind: "error",
+            title: "Live source check unavailable",
+            detail:
+              "Documented records remain available. No current page check is claimed.",
+          });
+        }
+        options.signal?.throwIfAborted();
+      }
     }
     if (def.id === "reviewer") {
       run.ideas = triageIdeas(reports, run.opportunities);
+      for (const idea of run.ideas)
+        emit({
+          kind: "check",
+          title:
+            idea.state === "review"
+              ? "Resident idea routed to human review"
+              : "Resident idea held for evidence",
+          detail:
+            reports.find((r) => r.id === idea.reportId)?.title || idea.reason,
+        });
+      for (const o of run.opportunities)
+        for (const factor of o.factors)
+          emit({
+            kind: "check",
+            title: `${examples.find((e) => e.id === o.exampleId)!.origin.name} · ${factor.name}`,
+            detail: `${factor.state.toUpperCase()}: ${factor.detail}`,
+          });
       step.input = `${run.opportunities.length} approaches and ${reports.filter((r) => r.kind === "idea").length} submitted ideas`;
       step.output =
         run.opportunities
@@ -453,6 +583,21 @@ export async function localAnalysis(
     step.completedAt = new Date().toISOString();
     run.steps.push(step);
     onStep({ ...step });
+    emit({
+      kind: "output",
+      title: "Stage output recorded",
+      detail: step.output,
+    });
+    emit({
+      kind: "handoff",
+      title: def.id === "writer" ? "Ready for advisor review" : "Handoff ready",
+      detail:
+        def.id === "writer"
+          ? "No project has been approved or sent to a municipality."
+          : agentDefinitions[
+              agentDefinitions.findIndex((a) => a.id === def.id) + 1
+            ].name,
+    });
   }
   run.completedAt = new Date().toISOString();
   return run;

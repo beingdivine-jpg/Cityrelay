@@ -14,7 +14,7 @@ export default function Entry() {
     [city, setCity] = useState(""),
     [setting, setSetting] = useState<Setting>("city");
   const saved = state.profiles.filter(
-    (p) => p.id !== "krakow" && p.name.trim(),
+    (p) => p.id !== "krakow" && p.id !== "krakow-demo" && p.name.trim(),
   );
   function enter(id: string, mode: "guided" | "own") {
     update((s) => ({
@@ -168,6 +168,28 @@ export default function Entry() {
                     </Link>
                   ),
                 )}
+                <Link
+                  className="entry-choice guided-choice demo-choice"
+                  to="/demo"
+                >
+                  <span className="choice-number">
+                    {tr("START HERE / INTERACTIVE DEMO")}
+                  </span>
+                  <span className="choice-title">
+                    {tr("Step inside Kraków.")}
+                  </span>
+                  <span className="choice-description">
+                    {tr(
+                      "A populated sample inbox, a visible agent investigation and a pilot you can shape. Follow the complete story.",
+                    )}
+                  </span>
+                  <span className="demo-choice-stats">
+                    {tr("18 sample reports · 5 agents · real city sources")}
+                  </span>
+                  <span className="choice-action">
+                    {tr("Explore the Kraków demo")} <Icon />
+                  </span>
+                </Link>
                 <button
                   className="entry-choice own-choice"
                   disabled={!!shared.workspace}
@@ -188,27 +210,6 @@ export default function Entry() {
                   </span>
                   <span className="choice-action">
                     {tr("Start my workspace ")}
-                    <Icon />
-                  </span>
-                </button>
-                <button
-                  className="entry-choice guided-choice"
-                  disabled={!!shared.workspace}
-                  onClick={() => enter("krakow", "guided")}
-                >
-                  <span className="choice-number">{tr("JUST EXPLORING?")}</span>
-                  <span className="choice-title">
-                    {tr("Let’s simplify it.")}
-                    <br />
-                    {tr("Try Kraków.")}
-                  </span>
-                  <span className="choice-description">
-                    {tr(
-                      "Take the advisor’s seat in a guided example, with real local context and documented projects.",
-                    )}
-                  </span>
-                  <span className="choice-action">
-                    {tr("Enter the walkthrough ")}
                     <Icon />
                   </span>
                 </button>

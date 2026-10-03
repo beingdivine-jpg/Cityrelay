@@ -176,8 +176,12 @@ export default function ResidentSpace({
                             )}
                           </span>
                         </div>
-                        <h3>{r.title}</h3>
-                        <p>{r.detail}</p>
+                        <h3>
+                          {r.provenance === "demo" ? tr(r.title) : r.title}
+                        </h3>
+                        <p>
+                          {r.provenance === "demo" ? tr(r.detail) : r.detail}
+                        </p>
                         <div className="intake-meta">
                           <span>
                             {tr(r.area || "No neighbourhood specified")}

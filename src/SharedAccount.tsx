@@ -16,7 +16,9 @@ export default function SharedAccount() {
   const [list, setList] = useState<{ id: string; name: string }[]>([]);
   const [publish, setPublish] = useState(false);
   const [city, setCity] = useState(
-    state.advisor?.activeCommunityId || "krakow",
+    state.advisor?.activeCommunityId === "krakow-demo"
+      ? "krakow"
+      : state.advisor?.activeCommunityId || "krakow",
   );
   const [receiver, setReceiver] = useState(shared.workspace?.receiver || "");
   const [inviteEmail, setInviteEmail] = useState("");
@@ -173,11 +175,13 @@ export default function SharedAccount() {
               <label>
                 {tr("Municipality")}
                 <select value={city} onChange={(e) => setCity(e.target.value)}>
-                  {state.profiles.map((p) => (
-                    <option value={p.id} key={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
+                  {state.profiles
+                    .filter((p) => p.id !== "krakow-demo")
+                    .map((p) => (
+                      <option value={p.id} key={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
                 </select>
               </label>
               <Button

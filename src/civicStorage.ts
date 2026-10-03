@@ -2,6 +2,15 @@ import type { CivicWorkspace } from "./civicModel";
 const obj = (v: unknown): v is Record<string, unknown> =>
   !!v && typeof v === "object" && !Array.isArray(v);
 const text = (v: unknown) => typeof v === "string";
+const httpsUrl = (v: unknown) => {
+  if (typeof v !== "string") return false;
+  try {
+    const url = new URL(v);
+    return url.protocol === "https:" && !!url.hostname;
+  } catch {
+    return false;
+  }
+};
 const fields = (v: unknown, keys: string[]) =>
   obj(v) && keys.every((k) => text(v[k]));
 const list = (v: unknown, check: (x: unknown) => boolean): boolean =>
@@ -77,6 +86,26 @@ export function validCivic(
             "fingerprint",
           ]) &&
           typeof x.reportCount === "number" &&
+          (x.events === undefined ||
+            list(
+              x.events,
+              (e) =>
+                obj(e) &&
+                fields(e, ["id", "at", "agent", "kind", "title", "detail"]) &&
+                ["listener", "context", "scout", "reviewer", "writer"].includes(
+                  String(e.agent),
+                ) &&
+                [
+                  "input",
+                  "query",
+                  "source",
+                  "check",
+                  "output",
+                  "handoff",
+                  "error",
+                ].includes(String(e.kind)) &&
+                (e.url === undefined || httpsUrl(e.url)),
+            )) &&
           list(
             x.steps,
             (s) =>

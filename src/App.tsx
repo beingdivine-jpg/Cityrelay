@@ -14,6 +14,8 @@ import { loadState, saveState, seedState, STORAGE_KEY } from "./storage";
 import type { AppState, CommunityProfile } from "./model";
 import Home from "./Home";
 import Entry from "./Entry";
+import DemoStart from "./DemoStart";
+import { DEMO_ID, demoDisclosure } from "./demo";
 const Profile = lazy(() => import("./Profile"));
 import Workspace, { Missing } from "./Workspace";
 const MatchDetail = lazy(() => import("./MatchDetail"));
@@ -402,6 +404,13 @@ function Shell() {
             {tr(shared.error)}
           </p>
         )}
+        {!landing && active?.id === DEMO_ID && (
+          <div className="demo-ribbon page-width">
+            <strong>{tr("KRAKÓW DEMO")}</strong>
+            <span>{tr(demoDisclosure)}</span>
+            <Link to={`/community/${DEMO_ID}`}>{tr("Demo overview")}</Link>
+          </div>
+        )}
         <main id="main-content" tabIndex={-1}>
           {shared.opening ? (
             <p className="page-width" role="status">
@@ -417,6 +426,7 @@ function Shell() {
             >
               <Routes>
                 <Route path="/" element={<Home />} />
+                <Route path="/demo" element={<DemoStart />} />
                 <Route
                   path="/resident/:id"
                   element={<SharedResident key={location.pathname} />}
@@ -432,7 +442,10 @@ function Shell() {
                 <Route path="/community/:id" element={<CitySignals />} />
                 <Route path="/community/:id/brief" element={<Workspace />} />
                 <Route path="/community/:id/data" element={<CityData />} />
-                <Route path="/community/:id/agents" element={<AgentStudio />} />
+                <Route
+                  path="/community/:id/agents"
+                  element={<AgentStudio key={location.pathname} />}
+                />
                 <Route
                   path="/community/:id/reports"
                   element={

@@ -3,6 +3,7 @@ export type CivicTopic = Domain | "mobility" | "waste";
 export type DatasetKey = "reports" | "context" | "resources" | "catalogue";
 export type AgentKey = "listener" | "context" | "scout" | "reviewer" | "writer";
 export type CivicReport = {
+  provenance?: "demo";
   id: string;
   kind: "complaint" | "idea";
   title: string;
@@ -70,6 +71,7 @@ export type IdeaTriage = {
   exampleIds: string[];
 };
 export type AgentRun = {
+  events?: AgentEvent[];
   id: string;
   startedAt: string;
   completedAt: string;
@@ -82,6 +84,15 @@ export type AgentRun = {
   ideas: IdeaTriage[];
   reportCount: number;
   error?: string;
+};
+export type AgentEvent = {
+  id: string;
+  at: string;
+  agent: AgentKey;
+  kind: "input" | "query" | "source" | "check" | "output" | "handoff" | "error";
+  title: string;
+  detail: string;
+  url?: string;
 };
 export type CivicNotice = {
   id: string;

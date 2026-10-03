@@ -22,6 +22,10 @@ export function workspaceDocument(
 ): AppState {
   const p = state.profiles.find((p) => p.id === sourceId);
   if (!p) throw Error("Municipality not found");
+  if (sourceId === "krakow-demo")
+    throw Error(
+      "The sample demo cannot become a live municipal workspace. Create your own city to collaborate.",
+    );
   const result = seedState();
   result.profiles = [
     ...result.profiles.filter((p) => p.id !== targetId),
