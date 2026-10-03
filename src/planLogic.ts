@@ -64,7 +64,9 @@ export function exportPlan(
   const selected = plan.selectedExamples
     .map((id) => examples.find((e) => e.id === id))
     .filter((e): e is ImplementationExample => !!e);
-  const matches = selected.map((e) => assessCase(profile, e));
+  const matches = selected.map((e) =>
+    assessCase(profile, e, state.civic?.[profile.id]),
+  );
   const references = [
     ...new Set([
       ...(profile.sources || []),
@@ -102,4 +104,27 @@ export function exportPlan(
       )
       .join("\n\n") || t("No observations recorded.")
   }\n\n${t("Published project facts, live weather context and proposed local actions are distinct. Local suitability, costs, delivery times and outcomes require local evidence.")}\n`;
+}
+
+/** Adding evidence never replaces an advisor's existing writing. */
+export function addPlanExample(prior: PilotPlan, exampleId: string): PilotPlan {
+  return {
+    ...prior,
+    selectedExamples: [...new Set([...prior.selectedExamples, exampleId])],
+  };
+}
+export function checkpointPlan(plan: PilotPlan): PilotPlan {
+  const { revisions, ...snapshot } = plan;
+  return {
+    ...plan,
+    revisions: [
+      {
+        at: new Date().toISOString(),
+        proposal: plan.proposal,
+        goal: plan.goal,
+        snapshot,
+      },
+      ...(plan.revisions || []),
+    ].slice(0, 20),
+  };
 }

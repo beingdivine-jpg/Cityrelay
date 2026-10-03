@@ -8,7 +8,7 @@ import {
   outcomesFor,
   staffLabels,
 } from "./data";
-import { assessMatches } from "./matching";
+import { assessMatches, assessmentProfile } from "./matching";
 import { LiveWeather, useLive } from "./LiveContext";
 import { SourceList } from "./SourceList";
 import {
@@ -193,7 +193,10 @@ export default function Workspace({
   const profile = state.profiles.find((p) => p.id === id);
   if (!profile) return <Missing />;
   const focus = profile.problems[0];
-  const matches = assessMatches(profile, examples),
+  const matches = assessMatches(
+      assessmentProfile(profile, state.civic?.[profile.id]),
+      examples,
+    ),
     visible = showBlocked
       ? matches
       : matches.filter(

@@ -21,7 +21,20 @@ export default function ResidentSpace({
     [consent, setConsent] = useState(false),
     [receipt, setReceipt] = useState(""),
     [error, setError] = useState("");
-  if (!profile || !civic) return <Missing />;
+  if (!profile || !civic)
+    return intake ? (
+      <Missing />
+    ) : (
+      <div className="page-width safety-page">
+        <h1>{tr("This local reporting link belongs to another browser.")}</h1>
+        <p>
+          {tr(
+            "No report has been sent. Ask the team for its shared resident reporting link, or explore the Kraków example.",
+          )}
+        </p>
+        <Button to="/enter">{tr("Explore the example")}</Button>
+      </div>
+    );
   function submit() {
     setError("");
     if (title.trim().length < 5 || detail.trim().length < 20) {
@@ -39,8 +52,17 @@ export default function ResidentSpace({
       area: area.trim().slice(0, 100),
       externalConsent: consent,
       submittedAt: new Date().toISOString(),
-      status: needsReview(title + " " + detail) ? "needs-review" : "received",
-      duplicateOf: duplicateReport(civic!.reports, title, detail),
+      status: needsReview(title + " " + detail + " " + area)
+        ? "needs-review"
+        : "received",
+      duplicateOf: duplicateReport(
+        civic!.reports,
+        title,
+        detail,
+        area,
+        kind,
+        topic,
+      ),
     };
     change((c) => ({
       ...c,
@@ -75,6 +97,16 @@ export default function ResidentSpace({
             {tr(" Municipal workspace")}
           </Link>
         ),
+      )}
+      {!intake && (
+        <div className="delivery-notice">
+          <strong>{tr("Practice report — not sent to a municipality")}</strong>
+          <p>
+            {tr(
+              "This local preview stores your report only in this browser. Do not use it for urgent issues or official requests.",
+            )}
+          </p>
+        </div>
       )}
       <div className="civic-heading">
         <div>
@@ -289,8 +321,8 @@ export default function ResidentSpace({
                         {tr("Add another perspective ")}
                         <Icon name="plus" />
                       </Button>
-                      <Link className="quiet-link" to={`/community/${id}`}>
-                        {tr("See the municipal view ")}
+                      <Link className="quiet-link" to="/enter">
+                        {tr("Return to the demo overview ")}
                         <Icon size={16} />
                       </Link>
                     </div>
@@ -331,6 +363,11 @@ export default function ResidentSpace({
                     <TextField
                       label={tr("In a few words")}
                       value={title}
+                      error={
+                        error && title.trim().length < 5
+                          ? tr("Use at least 5 characters.")
+                          : undefined
+                      }
                       onChange={(v) => setTitle(v.slice(0, 150))}
                       required
                       placeholder={tr("What would you like to change?")}
@@ -338,6 +375,11 @@ export default function ResidentSpace({
                     <TextField
                       label={tr("Tell us a little more")}
                       value={detail}
+                      error={
+                        error && detail.trim().length < 20
+                          ? tr("Use at least 20 characters.")
+                          : undefined
+                      }
                       onChange={(v) => setDetail(v.slice(0, 2000))}
                       required
                       multiline

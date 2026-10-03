@@ -1,3 +1,4 @@
+import type { CivicWorkspace } from "./civicModel";
 import {
   assetLabels,
   budgetLabels,
@@ -20,6 +21,16 @@ const budgets = {
   unknown: -1,
 };
 const staff = { none: 0, limited: 1, shared: 2, dedicated: 3, unknown: -1 };
+export function initiativeMatches(item: string, word: string) {
+  const patterns: Record<string, RegExp> = {
+    library: /library|libraries|bibliot/i,
+    school: /school|szkoł|szkol/i,
+    schoolyard: /schoolyard|podwór|boisk/i,
+    parks: /park/i,
+    green: /green|ziele|zielon/i,
+  };
+  return (patterns[word] || new RegExp(`\\b${word}\\b`, "i")).test(item);
+}
 export function assessMatches(
   profile: CommunityProfile,
   examples: ImplementationExample[],
@@ -102,10 +113,35 @@ export function assessMatches(
             ? "The source does not establish a transferable delivery time. Agree a local scope and schedule before claiming the project can fit your horizon."
             : `Compare the documented preparation period with your ${days ?? "unconfirmed"}-day horizon.`,
       });
+      readiness.push(
+        {
+          key: "climate",
+          label: "Climate & urban setting",
+          state: "unknown",
+          explanation:
+            "Compare climate, urban form and neighbourhood needs at the proposed local site.",
+        },
+        {
+          key: "authority",
+          label: "Authority & delivery permissions",
+          state: "unknown",
+          explanation:
+            "Record the responsible body, site permission and delivery responsibilities. A named organisation is not verified membership.",
+        },
+      );
+      for (const check of readiness) {
+        const evidence = profile.localChecks?.[example.id]?.[check.key];
+        if (
+          evidence &&
+          evidence.owner.trim() &&
+          evidence.evidence.trim().length >= 20
+        ) {
+          check.state = evidence.state;
+          check.explanation = `${evidence.evidence} · ${evidence.owner} · ${evidence.at.slice(0, 10)}`;
+        }
+      }
       const reused = profile.existingInitiatives.filter((item) =>
-        example.reuse.some((word) =>
-          new RegExp(`\\b${word}\\b`, "i").test(item),
-        ),
+        example.reuse.some((word) => initiativeMatches(item, word)),
       );
       const met = readiness.filter((check) => check.state === "met");
       const unknown = readiness.filter((check) => check.state === "unknown");
@@ -201,10 +237,30 @@ export function assessMatches(
 }
 
 /** A selected case can be investigated without rewriting the municipality's focus. */
+export function assessmentProfile(
+  profile: CommunityProfile,
+  civic?: CivicWorkspace,
+): CommunityProfile {
+  if (
+    !civic ||
+    civic.connections.some((c) => c.key === "resources" && c.enabled)
+  )
+    return profile;
+  return {
+    ...profile,
+    assets: Object.fromEntries(
+      Object.keys(profile.assets).map((k) => [k, "unknown"]),
+    ) as CommunityProfile["assets"],
+    resources: { budget: "unknown", staff: "unknown" },
+    localChecks: undefined,
+  };
+}
 export function assessCase(
   profile: CommunityProfile,
   example: ImplementationExample,
+  civic?: CivicWorkspace,
 ): MatchAssessment {
+  profile = assessmentProfile(profile, civic);
   return assessMatches(
     {
       ...profile,

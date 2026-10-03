@@ -1,3 +1,4 @@
+import { useShared } from "./SharedContext";
 import { t as tr, locale } from "./i18n";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -13,6 +14,7 @@ export default function CityMonitor() {
   const { id = "" } = useParams();
   const { profile, civic, change } = useCivic(id);
   const service = useAgentService();
+  const shared = useShared();
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   if (!profile || !civic) return <Missing />;
@@ -53,6 +55,18 @@ export default function CityMonitor() {
           )}
         </p>
       </div>
+      <p className="delivery-notice">
+        {tr(
+          "Coverage: the approved source pages in our curated library. This is a page-change watch, not a global discovery feed.",
+        )}
+      </p>
+      {shared.workspace && service.backgroundMonitor && (
+        <p className="agent-notice">
+          {tr(
+            "Daily background source checks are connected. Save your monitoring choice to apply it after the browser closes.",
+          )}
+        </p>
+      )}
       <div className="monitor-control">
         <div className="radar-art" aria-hidden="true">
           <i />
@@ -97,7 +111,9 @@ export default function CityMonitor() {
           </label>
           <small>
             {tr(
-              "Continuous monitoring after the browser closes requires a deployed scheduler. No email, push notification or automatic AI spend is enabled.",
+              shared.workspace && service.backgroundMonitor
+                ? "Daily checks continue for this shared workspace. No email, push notification or automatic AI spend is enabled."
+                : "Continuous monitoring after the browser closes requires a deployed scheduler. No email, push notification or automatic AI spend is enabled.",
             )}
           </small>
         </div>
@@ -251,6 +267,19 @@ export default function CityMonitor() {
                     {tr(new Date(s.checkedAt).toLocaleString(locale()))}
                   </small>
                   {tr(s.error && <p>{tr(s.error)}</p>)}
+                  {s.excerpt && (
+                    <details>
+                      <summary>
+                        {tr("Inspect the checked source excerpt")}
+                      </summary>
+                      <p className="source-excerpt">{s.excerpt}</p>
+                      <small>
+                        {tr(
+                          "Source text is preserved in its original language. A changed page still needs human review.",
+                        )}
+                      </small>
+                    </details>
+                  )}
                 </article>
               ))
             ) : (

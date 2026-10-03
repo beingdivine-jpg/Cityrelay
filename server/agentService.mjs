@@ -110,7 +110,8 @@ export async function sourceSnapshot(source, fetcher = fetch) {
     if (!response.headers.get("content-type")?.includes("text/html"))
       throw Error("Only HTML source pages are monitored");
     const raw = await limitedText(response);
-    const normalized = raw
+    const content = raw.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i)?.[1] || raw;
+    const normalized = content
       .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
       .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
       .replace(/<[^>]+>/g, " ")
@@ -121,6 +122,7 @@ export async function sourceSnapshot(source, fetcher = fetch) {
       title: source.title,
       checkedAt,
       hash: createHash("sha256").update(normalized).digest("hex"),
+      excerpt: normalized.slice(0, 1200),
       status: "ok",
     };
   } catch (e) {
@@ -147,7 +149,11 @@ export function createAgentService({
   model = "gpt-5.5",
   fetcher = fetch,
   publicPreview = false,
+  supabaseUrl = "",
+  supabaseKey = "",
+  backgroundMonitor = false,
 } = {}) {
+  const sharedResearch = !!(apiKey && supabaseUrl && supabaseKey);
   let running = false;
   let monitorRunning = false;
   const times = [];
@@ -185,7 +191,9 @@ export function createAgentService({
       });
     if (path === "/status" && req.method === "GET")
       return send(200, {
-        ai: !publicPreview && !!apiKey,
+        ai: publicPreview ? sharedResearch : !!apiKey,
+        requiresAccount: publicPreview,
+        backgroundMonitor,
         ...(publicPreview
           ? {
               message:
@@ -195,7 +203,7 @@ export function createAgentService({
         model,
         monitor: "While the browser is open",
       });
-    if (publicPreview && path === "/research")
+    if (publicPreview && path === "/research" && !sharedResearch)
       return send(503, {
         error:
           "Live AI research is not enabled on the public preview. Use the local advisor workspace with a server-side key.",
@@ -234,6 +242,44 @@ export function createAgentService({
     }
     if (!body || typeof body !== "object" || Array.isArray(body))
       return send(400, { error: "A JSON object is required." });
+    if (publicPreview && path === "/research") {
+      const authorization = req.headers.authorization;
+      if (
+        !authorization?.startsWith("Bearer ") ||
+        !/^[0-9a-f-]{36}$/i.test(body.workspaceId || "")
+      )
+        return send(401, {
+          error: "Sign in and open a shared workspace to use live research.",
+        });
+      if (body.consent !== true)
+        return send(400, { error: "Explicit research consent is required." });
+      try {
+        // Supabase verifies the JWT; the RPC verifies membership and atomically reserves a daily attempt.
+        const claim = await fetcher(
+          `${supabaseUrl}/rest/v1/rpc/ew_claim_research`,
+          {
+            method: "POST",
+            headers: {
+              apikey: supabaseKey,
+              authorization,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ w: body.workspaceId }),
+            signal: AbortSignal.timeout(10000),
+          },
+        );
+        if (!claim.ok)
+          return send(403, {
+            error:
+              "Research access was denied or the daily research limit has been reached.",
+          });
+      } catch {
+        return send(503, {
+          error:
+            "Research access could not be verified. No provider call was made.",
+        });
+      }
+    }
     if (path === "/monitor") {
       if (monitorRunning)
         return send(429, { error: "A source check is already running." });

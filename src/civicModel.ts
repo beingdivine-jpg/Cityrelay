@@ -49,6 +49,7 @@ export type TopicSignal = {
   summary: string;
 };
 export type FitFactor = {
+  checkKey?: string;
   name: string;
   state: "aligned" | "unknown" | "different" | "blocked";
   detail: string;
@@ -92,6 +93,7 @@ export type CivicNotice = {
   href?: string;
 };
 export type SourceSnapshot = {
+  excerpt?: string;
   url: string;
   title: string;
   checkedAt: string;
@@ -119,6 +121,14 @@ export type CivicWorkspace = {
   connections: DataConnection[];
   reports: CivicReport[];
   runs: AgentRun[];
+  decisionHistory?: {
+    key: string;
+    state: "shortlist" | "hold";
+    note: string;
+    at: string;
+    actor: string;
+    runId?: string;
+  }[];
   decisions: Record<
     string,
     { state: "shortlist" | "hold"; note: string; at: string; runId?: string }

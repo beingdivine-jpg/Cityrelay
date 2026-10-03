@@ -22,6 +22,8 @@ export function useCivic(id: string) {
 export type ServiceStatus = {
   connected: boolean;
   ai: boolean;
+  requiresAccount: boolean;
+  backgroundMonitor?: boolean;
   model: string;
   message: string;
 };
@@ -29,6 +31,7 @@ export function useAgentService() {
   const [status, setStatus] = useState<ServiceStatus>({
     connected: false,
     ai: false,
+    requiresAccount: false,
     model: "",
     message: "Checking agent service…",
   });
@@ -42,6 +45,8 @@ export function useAgentService() {
         setStatus({
           connected: true,
           ai: body.ai,
+          requiresAccount: body.requiresAccount === true,
+          backgroundMonitor: body.backgroundMonitor === true,
           model: body.model,
           message:
             typeof body.message === "string"
@@ -56,6 +61,7 @@ export function useAgentService() {
           setStatus({
             connected: false,
             ai: false,
+            requiresAccount: false,
             model: "",
             message: "Local analysis available · Research service offline",
           });

@@ -1,3 +1,5 @@
+import { useShared } from "./SharedContext";
+import { sharedClient } from "./shared";
 import { t as tr, locale, getLanguage } from "./i18n";
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -84,6 +86,8 @@ export default function AgentStudio() {
   const { id = "" } = useParams();
   const { profile, civic, change } = useCivic(id);
   const service = useAgentService();
+  const shared = useShared();
+  const canAI = service.ai && (!service.requiresAccount || !!shared.workspace);
   const [mode, setMode] = useState<"local" | "ai">("local"),
     [selected, setSelected] = useState<AgentKey>("listener"),
     [liveSteps, setLiveSteps] = useState<AgentStep[]>([]),
@@ -130,13 +134,18 @@ export default function AgentStudio() {
         result = await localAnalysis(place, snapshot, updateStep);
       else {
         abort.current = new AbortController();
+        const token = sharedClient
+          ? (await sharedClient.auth.getSession()).data.session?.access_token
+          : undefined;
         const response = await fetch("/api/research", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify({
             profile: place,
+            workspaceId: shared.workspace?.id,
             language: getLanguage(),
             authority: `${snapshot.authority.name} / ${snapshot.authority.kind}`,
             focus: allowed(snapshot, "context")
@@ -317,12 +326,12 @@ export default function AgentStudio() {
               {tr("Local analysis")}
             </button>
             <button
-              disabled={busy || !service.ai}
+              disabled={busy || !canAI}
               aria-pressed={mode === "ai"}
               onClick={() => setMode("ai")}
             >
               {tr("Live AI research ")}
-              {tr(service.ai ? "↗" : "· not connected")}
+              {tr(canAI ? "↗" : "· not connected")}
             </button>
           </div>
           <p>

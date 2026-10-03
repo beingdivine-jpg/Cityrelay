@@ -326,3 +326,29 @@ describe("Public Vercel preview", () => {
     expect(r.status).toBe(403);
   });
 });
+
+it("requires a shared account before public paid research and fails closed on quota denial", async () => {
+  const fetcher = vi.fn(async () => new Response("{}", { status: 403 }));
+  const handler = createAgentService({
+    publicPreview: true,
+    apiKey: "test-key",
+    supabaseUrl: "https://example.supabase.co",
+    supabaseKey: "public-test-key",
+    fetcher,
+  });
+  const anonymous = await request(handler, "/api/research", {
+    consent: true,
+    workspaceId: "10000000-0000-4000-8000-000000000001",
+  });
+  expect(anonymous.status).toBe(401);
+  expect(fetcher).not.toHaveBeenCalled();
+  const denied = await request(
+    handler,
+    "/api/research",
+    { consent: true, workspaceId: "10000000-0000-4000-8000-000000000001" },
+    { authorization: "Bearer test-token" },
+  );
+  expect(denied.status).toBe(403);
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(fetcher.mock.calls[0][0]).toContain("/rest/v1/rpc/ew_claim_research");
+});

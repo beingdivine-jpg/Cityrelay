@@ -4,8 +4,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button, Icon, TextField, SelectField, useApp } from "./components";
 import { newProfile } from "./data";
 import type { Setting } from "./model";
+import { useShared } from "./SharedContext";
 export default function Entry() {
   const { state, update } = useApp();
+  const shared = useShared();
   const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState(""),
@@ -18,33 +20,33 @@ export default function Entry() {
     update((s) => ({
       ...s,
       advisor: {
-        name: name.trim() || "Municipal advisor",
+        name: name.trim() || s.advisor?.name || "Municipal advisor",
         role: "Municipal innovation advisor",
         activeCommunityId: id,
         entryMode: mode,
       },
     }));
-    navigate(`/community/${id}/data`);
+    navigate(`/community/${id}/challenge`);
   }
   function create() {
     const p = newProfile();
     p.name = city.trim();
     if (!p.name) return;
     p.setting = setting;
-    p.authorityType = `${p.name} municipal team`;
-    p.problems = ["heat"];
+    p.authorityType = "Unknown";
+    p.problems = [];
     p.goals.outcome = "all";
     update((s) => ({
       ...s,
       profiles: [...s.profiles, p],
       advisor: {
-        name: name.trim() || "Municipal advisor",
+        name: name.trim() || s.advisor?.name || "Municipal advisor",
         role: "Municipal innovation advisor",
         activeCommunityId: p.id,
         entryMode: "own",
       },
     }));
-    navigate(`/community/${p.id}/data`);
+    navigate(`/community/${p.id}/challenge`);
   }
   return (
     <div className="entry-page page-width">
@@ -80,9 +82,14 @@ export default function Entry() {
           </div>
           <p className="entry-storage">
             {tr(
-              "This preview saves your workspace on this device. No password or account is required.",
+              shared.workspace
+                ? "Your team workspace is open. Continue there, or return to local exploration from Account & backup."
+                : "Explore on this device first. Sign in to create a shared team workspace and receive resident reports.",
             )}
           </p>
+          <Link className="button secondary" to="/account">
+            {tr(shared.user ? "Account & backup" : "Sign in to collaborate")}
+          </Link>
         </div>
         <div className="entry-options">
           {tr(
@@ -163,6 +170,7 @@ export default function Entry() {
                 )}
                 <button
                   className="entry-choice own-choice"
+                  disabled={!!shared.workspace}
                   onClick={() => setCreating(true)}
                 >
                   <span className="choice-number">
@@ -185,6 +193,7 @@ export default function Entry() {
                 </button>
                 <button
                   className="entry-choice guided-choice"
+                  disabled={!!shared.workspace}
                   onClick={() => enter("krakow", "guided")}
                 >
                   <span className="choice-number">{tr("JUST EXPLORING?")}</span>

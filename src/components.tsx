@@ -1,12 +1,14 @@
 import { t as tr } from "./i18n";
 import { createContext, useContext, useId, type ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { useShared } from "./SharedContext";
 import type { AppState, CommunityProfile, MatchAssessment } from "./model";
 export const AppContext = createContext<{
   state: AppState;
   update: (fn: (s: AppState) => AppState) => void;
   notify: (message: string) => void;
   saveProfile: (p: CommunityProfile) => void;
+  restoreState: (state: AppState) => void;
 }>({} as never);
 export const useApp = () => useContext(AppContext);
 export function Icon({
@@ -218,6 +220,7 @@ export function TextField({
   hint,
   required = false,
   placeholder,
+  error,
 }: {
   label: string;
   value: string;
@@ -226,14 +229,16 @@ export function TextField({
   hint?: string;
   required?: boolean;
   placeholder?: string;
+  error?: string;
 }) {
   return (
-    <Field label={tr(label)} hint={hint}>
+    <Field label={tr(label)} hint={error || hint}>
       {tr((id) =>
         multiline ? (
           <textarea
             id={id}
-            aria-describedby={hint ? `${id}-hint` : undefined}
+            aria-invalid={!!error}
+            aria-describedby={error || hint ? `${id}-hint` : undefined}
             value={value}
             onChange={(e) => onChange(e.target.value)}
             rows={3}
@@ -243,7 +248,8 @@ export function TextField({
         ) : (
           <input
             id={id}
-            aria-describedby={hint ? `${id}-hint` : undefined}
+            aria-invalid={!!error}
+            aria-describedby={error || hint ? `${id}-hint` : undefined}
             value={value}
             onChange={(e) => onChange(e.target.value)}
             required={required}
@@ -279,6 +285,7 @@ export function Status({ assessment }: { assessment: MatchAssessment }) {
 }
 export function CommunityNav({ profile }: { profile: CommunityProfile }) {
   const { state } = useApp();
+  const shared = useShared();
   return (
     <div className="civic-navigation">
       <div className="community-nav">
@@ -298,9 +305,9 @@ export function CommunityNav({ profile }: { profile: CommunityProfile }) {
           </div>
         </div>
         <nav aria-label={tr("Your innovation journey")}>
-          <NavLink end to={`/community/${profile.id}`}>
+          <NavLink to={`/community/${profile.id}/challenge`}>
             <span>{tr("01")}</span>
-            {tr(" City signals")}
+            {tr(" Challenge")}
           </NavLink>
           <NavLink to={`/community/${profile.id}/agents`}>
             <span>{tr("02")}</span>
@@ -316,29 +323,43 @@ export function CommunityNav({ profile }: { profile: CommunityProfile }) {
           </NavLink>
         </nav>
       </div>
-      <div className="civic-utility-nav">
-        <div>
-          <Link to={`/community/${profile.id}/data`}>{tr("Team & data")}</Link>
-          <Link to={`/community/${profile.id}/brief`}>
-            {tr("Municipal brief")}
-          </Link>
-          <Link to={`/community/${profile.id}/monitor`}>
-            {tr("Monitoring")}
-            {tr(" ")}
-            <span>
-              {tr(
-                state.civic?.[profile.id]?.notices.filter((n) => !n.read)
-                  .length || 0,
-              )}
-            </span>
+      <details className="workspace-tools">
+        <summary>{tr("Workspace tools & resident reporting")}</summary>
+        <div className="civic-utility-nav">
+          <div>
+            <Link to={`/community/${profile.id}`}>
+              {tr("Resident signals")}
+            </Link>
+            <Link to={`/community/${profile.id}/data`}>
+              {tr("Team & data")}
+            </Link>
+            <Link to={`/community/${profile.id}/brief`}>
+              {tr("Municipal brief")}
+            </Link>
+            <Link to={`/community/${profile.id}/monitor`}>
+              {tr("Monitoring")}
+              {tr(" ")}
+              <span>
+                {tr(
+                  state.civic?.[profile.id]?.notices.filter((n) => !n.read)
+                    .length || 0,
+                )}
+              </span>
+            </Link>
+          </div>
+          <Link
+            to={
+              shared.workspace
+                ? `/resident/${profile.id}`
+                : `/report/${profile.id}`
+            }
+          >
+            <Icon name="chat" size={14} />
+            {tr(" Resident space ")}
+            <Icon size={14} />
           </Link>
         </div>
-        <Link to={`/report/${profile.id}`}>
-          <Icon name="chat" size={14} />
-          {tr(" Resident space ")}
-          <Icon size={14} />
-        </Link>
-      </div>
+      </details>
     </div>
   );
 }

@@ -16,7 +16,23 @@ const strings = (v: unknown): v is string[] =>
   Array.isArray(v) && v.every((x) => typeof x === "string");
 const fields = (v: unknown, keys: string[]) =>
   object(v) && keys.every((key) => typeof v[key] === "string");
-function validState(data: unknown): data is AppState {
+const validPlan = (p: unknown): boolean =>
+  object(p) &&
+  fields(p, [
+    "id",
+    "communityId",
+    "goal",
+    "retainedInitiatives",
+    "adaptations",
+    "prerequisites",
+    "roleAssignments",
+    "schedule",
+    "reviewStatus",
+    "proposal",
+  ]) &&
+  strings(p.selectedExamples) &&
+  strings(p.metrics);
+export function validState(data: unknown): data is AppState {
   if (
     !object(data) ||
     data.version !== 2 ||
@@ -47,6 +63,17 @@ function validState(data: unknown): data is AppState {
     seedProfiles.every((seed) => profiles.some((p) => p?.id === seed.id)) &&
     profiles.every(
       (p) =>
+        (p.localChecks === undefined ||
+          (object(p.localChecks) &&
+            Object.values(p.localChecks).every(
+              (group) =>
+                object(group) &&
+                Object.values(group).every(
+                  (check) =>
+                    fields(check, ["state", "evidence", "owner", "at"]) &&
+                    ["met", "unmet", "unknown"].includes(String(check.state)),
+                ),
+            ))) &&
         fields(p, [
           "id",
           "name",
@@ -78,20 +105,18 @@ function validState(data: unknown): data is AppState {
     ) &&
     plans.every(
       (p) =>
-        fields(p, [
-          "id",
-          "communityId",
-          "goal",
-          "retainedInitiatives",
-          "adaptations",
-          "prerequisites",
-          "roleAssignments",
-          "schedule",
-          "reviewStatus",
-          "proposal",
-        ]) &&
-        strings(p.selectedExamples) &&
-        strings(p.metrics),
+        validPlan(p) &&
+        (p.revisions === undefined ||
+          (Array.isArray(p.revisions) &&
+            p.revisions.every(
+              (r) =>
+                fields(r, ["at", "proposal", "goal"]) &&
+                (!r.snapshot ||
+                  (validPlan(r.snapshot) &&
+                    r.snapshot.id === p.id &&
+                    r.snapshot.communityId === p.communityId &&
+                    !("revisions" in r.snapshot))),
+            ))),
     ) &&
     events.every(
       (e) =>
@@ -134,6 +159,11 @@ export function loadState(storage?: Pick<Storage, "getItem">): {
     if (!raw) return { state: seedState(), error: "" };
     const data = JSON.parse(raw);
     if (!validState(data)) throw Error("Invalid saved data");
+    for (const civic of Object.values(data.civic || {})) {
+      for (const run of civic.runs)
+        if (run.fingerprint.startsWith("{"))
+          run.fingerprint = `legacy:${run.id}`;
+    }
     return { state: data, error: "" };
   } catch {
     return {

@@ -109,7 +109,7 @@ describe("Resident evidence and input permissions", () => {
       triageIdeas([report("1", { kind: "idea", topic: "waste" })], [])[0].state,
     ).toBe("hold");
   });
-  it("orders evidence by complaint volume and never approves unknown feasibility", () => {
+  it("orders evidence by complaint volume and routes relevant ideas to review without approving implementation", () => {
     const p = profile(),
       c = newCivic(p);
     const signals = summarizeReports([
@@ -121,7 +121,7 @@ describe("Resident evidence and input permissions", () => {
     expect(leads[0].exampleId).toBe("helsinki-info");
     expect(leads.every((l) => l.state === "investigate")).toBe(true);
     expect(triageIdeas([report("4", { kind: "idea" })], leads)[0].state).toBe(
-      "hold",
+      "review",
     );
   });
   it("processes five actual stages and excludes withheld reports from results", async () => {

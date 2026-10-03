@@ -1,4 +1,26 @@
-# Elsewhere verification — 3 October 2026
+# Audit remediation verification — 4 October 2026
+
+## Current implementation
+
+- `npm test`: **81 tests passed in eight files**.
+- TypeScript and production build passed; the main and lazy Three.js chunks still exceed the default warning threshold.
+- Format and diff checks run before commit.
+
+The audit remediation plan is in AUDIT_REMEDIATION.md. Current automated coverage includes preservation of authored pilot fields, full checkpoint validation and shared-copy remapping, Polish generated proposals for all five cases, area-aware duplicate intake, unsupported-topic visibility, consistent implementation checks, and withheld resource evidence. The PostgreSQL suite executes the actual migration in PGlite, testing RLS isolation, revision conflicts, private intake, email-bound invitations, owner revocation and atomic research quotas. These are database logic tests, not a claim of deployed email or Supabase verification.
+
+Browser checks on the isolated `127.0.0.1:4182` production preview:
+
+- A new Lublin workspace begins with no challenge selected. Choosing public services yields the documented Helsinki case.
+- The four-step journey and secondary tools work in Polish at 390px; the viewport has no horizontal overflow on the challenge page.
+- Helsinki → edited pilot → Barcelona added as evidence retains the exact original authored proposal. Both sources appear in the pilot.
+- Saving a checkpoint, changing the proposal and restoring the checkpoint recovers the original text and keeps the intervening version. Exported QA workspace JSON was validated and restored through the browser file picker.
+- Language, source dates, unknown readiness checks and explicit local/device status are visible. The user's existing localhost/live workspaces were preserved.
+
+Connected-release verification is tracked separately in BACKEND_SETUP.md. Until actual production checks are recorded, do not treat email delivery, shared account switching, scheduled execution or paid AI as verified. Historical results below describe previous builds only.
+
+---
+
+## Historical verification — 3 October 2026
 
 ## Automated checks
 

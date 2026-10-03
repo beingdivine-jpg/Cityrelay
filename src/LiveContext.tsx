@@ -1,3 +1,4 @@
+import { useLocation } from "react-router-dom";
 import { t as tr, locale } from "./i18n";
 import {
   createContext,
@@ -35,12 +36,15 @@ const pending = <T,>(): Resource<T> => ({
   error: "",
 });
 export function LiveProvider({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  const enabled = location.pathname.startsWith("/community/krakow");
   const [observation, setObservation] =
     useState<Resource<Observation>>(pending);
   const [forecast, setForecast] = useState<Resource<Forecast>>(pending);
   const [revision, setRevision] = useState(0);
   const latest = useRef(0);
   useEffect(() => {
+    if (!enabled) return;
     const generation = ++latest.current;
     const controller = new AbortController();
     setObservation(pending());
@@ -95,7 +99,7 @@ export function LiveProvider({ children }: { children: ReactNode }) {
       clearTimeout(timeout);
       clearInterval(refresh);
     };
-  }, [revision]);
+  }, [revision, enabled]);
   return (
     <LiveContext.Provider
       value={{

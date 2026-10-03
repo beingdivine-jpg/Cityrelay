@@ -1,7 +1,7 @@
 import { t as tr, locale } from "./i18n";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Button, CommunityNav, Icon } from "./components";
+import { Button, CommunityNav, Icon, useApp } from "./components";
 import { useCivic } from "./CivicContext";
 import { runFingerprint, topicLabels } from "./civicEngine";
 import { Missing } from "./Workspace";
@@ -11,6 +11,7 @@ import { getSource } from "./sources";
 import { CitedOutput } from "./AgentStudio";
 export default function Opportunities() {
   const { id = "" } = useParams();
+  const { state: appState } = useApp();
   const { profile, civic, change } = useCivic(id);
   const [tab, setTab] = useState("leads"),
     [notes, setNotes] = useState<Record<string, string>>({}),
@@ -29,6 +30,17 @@ export default function Opportunities() {
     }
     change((c) => ({
       ...c,
+      decisionHistory: [
+        ...(c.decisionHistory || []),
+        {
+          key,
+          state,
+          note,
+          at: new Date().toISOString(),
+          actor: appState.advisor?.name || "Municipal advisor",
+          runId: run?.id,
+        },
+      ].slice(-200),
       decisions: {
         ...c.decisions,
         [key]: {
@@ -172,7 +184,7 @@ export default function Opportunities() {
                 tab === "leads"
                   ? "Ordered by eligible complaint volume, then recorded readiness. Unknown costs and permissions remain unknown."
                   : tab === "ideas"
-                    ? "Ideas with missing evidence are held out of the decision queue. Advisors can explicitly escalate a case with a written reason."
+                    ? "Relevant ideas can reach human review while implementation checks remain open. A written advisor decision is required for the shortlist."
                     : "Only ideas explicitly shortlisted by an advisor appear here. No automated municipal approval is implied.",
               )}
             </p>
@@ -186,6 +198,40 @@ export default function Opportunities() {
             {tr(
               tab === "leads" && (
                 <>
+                  {run.signals
+                    .filter(
+                      (signal) =>
+                        !examples.some((ex) => ex.domain === signal.topic),
+                    )
+                    .map((signal) => (
+                      <div className="agent-notice" key={signal.topic}>
+                        <strong>
+                          {tr(topicLabels[signal.topic])}: {tr("Evidence gap")}
+                        </strong>
+                        <p>
+                          {tr(
+                            "Our curated library does not yet cover this topic. The resident signal is retained; existing priorities remain visible.",
+                          )}
+                        </p>
+                      </div>
+                    ))}
+                  {run.opportunities.length === 0 && (
+                    <div className="civic-empty">
+                      <h2>
+                        {tr(
+                          "No documented approach covers this challenge yet.",
+                        )}
+                      </h2>
+                      <p>
+                        {tr(
+                          "Your challenge is saved. Clarify the priority or connect live research; we will not invent a matching project.",
+                        )}
+                      </p>
+                      <Button to={`/community/${id}/challenge`}>
+                        {tr("Refine the challenge")}
+                      </Button>
+                    </div>
+                  )}
                   <div className="opportunity-list">
                     {tr(
                       run.opportunities.map((o, i) => {
@@ -231,20 +277,8 @@ export default function Opportunities() {
                                 {tr(" ")}
                                 <span>
                                   {tr(
-                                    o.factors.filter(
-                                      (f) => f.state === "aligned",
-                                    ).length,
-                                  )}
-                                  {tr(" ")}
-                                  {tr("supported connections ·")}
-                                  {tr(" ")}
-                                  {tr(
-                                    o.factors.filter(
-                                      (f) => f.state === "unknown",
-                                    ).length,
-                                  )}
-                                  {tr(" ")}
-                                  {tr("unknowns ")}
+                                    `Supported connections: ${o.factors.filter((f) => f.state === "aligned").length} · Implementation checks: ${o.factors.filter((f) => f.checkKey && f.state === "unknown").length}`,
+                                  )}{" "}
                                   <Icon name="plus" size={16} />
                                 </span>
                               </summary>
@@ -432,6 +466,11 @@ export default function Opportunities() {
                             )}
                           </h2>
                           <p>{d.note}</p>
+                          {!key.startsWith("idea:") && (
+                            <Button to={`/community/${id}/matches/${key}`}>
+                              {tr("Prepare a pilot draft")} <Icon />
+                            </Button>
+                          )}
                           <small>
                             {tr(new Date(d.at).toLocaleString(locale()))}
                             {tr(" ·")}

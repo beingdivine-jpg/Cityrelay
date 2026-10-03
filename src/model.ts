@@ -31,7 +31,14 @@ export interface SourceRecord {
     | "Live data"
     | "Map data";
 }
+export type LocalCheck = {
+  state: "met" | "unmet" | "unknown";
+  evidence: string;
+  owner: string;
+  at: string;
+};
 export interface CommunityProfile {
+  localChecks?: Record<string, Record<string, LocalCheck>>;
   id: string;
   name: string;
   demo: boolean;
@@ -117,6 +124,14 @@ export interface MatchAssessment {
   question: string;
 }
 export interface PilotPlan {
+  revisions?: {
+    at: string;
+    proposal: string;
+    goal: string;
+    snapshot?: Omit<PilotPlan, "revisions">;
+  }[];
+  researchRunId?: string;
+  decisionNote?: string;
   id: string;
   communityId: string;
   selectedExamples: string[];

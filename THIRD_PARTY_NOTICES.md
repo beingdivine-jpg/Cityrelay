@@ -4,6 +4,8 @@
 - **React Router:** Remix Software and contributors, MIT. https://github.com/remix-run/react-router
 - **Three.js:** three.js authors, MIT. https://github.com/mrdoob/three.js — the city scene itself is original procedural artwork in `src/CityScene.tsx`.
 - **Manrope:** Mikhail Sharanda, Mirko Velimirovic and contributors, SIL Open Font License 1.1. The unmodified variable font is self-hosted in `public/fonts/Manrope.ttf`; the full licence is `public/fonts/OFL-Manrope.txt`. https://github.com/google/fonts/tree/main/ofl/manrope
+- **Supabase JavaScript client:** Supabase and contributors, MIT. Optional authentication and shared persistence. https://github.com/supabase/supabase-js
+- **PGlite:** ElectricSQL and contributors, Apache-2.0. Embedded PostgreSQL used for database authorization tests; not shipped to the browser. https://github.com/electric-sql/pglite
 - **Tooling:** Vite, TypeScript, Vitest, Prettier and type definitions; exact versions in the lockfile. Respective licences are included in installed package directories.
 - **Municipal/public agency evidence:** publisher-specific rights apply; concise attributed summaries link to primary sources in `src/sources.ts`. No source photographs or city logos are used.
 - **IMGW-PIB:** public synoptic station observations. Provider attribution, report time and retrieval time are shown in the app. https://danepubliczne.imgw.pl/

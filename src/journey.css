@@ -1,0 +1,468 @@
+/* Focused working surfaces: readable status, one journey, resilient narrow layouts. */
+.workspace-status {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 12px 0;
+  border-bottom: 1px solid #d7dce6;
+  font-size: 13px;
+  color: #465568;
+}
+.workspace-status a {
+  margin-left: auto;
+  color: #2949e8;
+  font-weight: 650;
+}
+.workspace-status .status-dot {
+  background: #697681;
+}
+.workspace-status strong {
+  color: #263345;
+}
+.challenge-page {
+  padding-top: 24px;
+  padding-bottom: 90px;
+}
+.challenge-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 72px;
+  margin-top: 60px;
+  align-items: start;
+}
+.challenge-layout h1 {
+  font-size: clamp(38px, 4.5vw, 64px);
+  line-height: 1.08;
+  letter-spacing: -0.055em;
+}
+.challenge-layout p {
+  max-width: 520px;
+  line-height: 1.75;
+  color: #465568;
+}
+.challenge-form {
+  display: grid;
+  gap: 24px;
+  background: #fff;
+  border: 1px solid #d7dce6;
+  padding: 32px;
+  border-radius: 12px;
+}
+.challenge-form fieldset {
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.challenge-form legend {
+  margin-bottom: 14px;
+  font-weight: 650;
+}
+.challenge-choices {
+  display: grid;
+  gap: 10px;
+}
+.challenge-choices label {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  cursor: pointer;
+  padding: 18px;
+  border: 1px solid #d7dce6;
+  border-radius: 8px;
+  min-height: 74px;
+}
+.challenge-choices label.selected {
+  border-color: #2949e8;
+  background: #f2f4ff;
+}
+.challenge-choices input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: #2949e8;
+}
+.challenge-choices strong,
+.challenge-choices small {
+  display: block;
+}
+.challenge-choices small {
+  color: #465568;
+  line-height: 1.55;
+  margin-top: 5px;
+}
+.journey-preview {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 16px;
+  margin: 32px 0;
+}
+.journey-preview > span {
+  color: #2949e8;
+}
+.delivery-notice {
+  padding: 24px;
+  background: #eef1fa;
+  border: 1px solid #cfd7ee;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+.delivery-notice p {
+  line-height: 1.7;
+  margin-bottom: 0;
+}
+.safety-page {
+  padding-top: 70px;
+  padding-bottom: 90px;
+  max-width: 920px;
+}
+.safety-page section {
+  margin: 32px 0;
+  padding: 28px;
+  border: 1px solid #d7dce6;
+  border-radius: 10px;
+}
+.safety-page p {
+  line-height: 1.75;
+  color: #465568;
+}
+.evidence-checklist {
+  margin: 32px 0;
+}
+.evidence-check {
+  border-top: 1px solid #d7dce6;
+  padding: 24px 0;
+}
+.evidence-check > div {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+.evidence-check p {
+  font-size: 14px;
+  line-height: 1.7;
+}
+.evidence-check form {
+  display: grid;
+  gap: 18px;
+  background: #f3f5fa;
+  padding: 20px;
+  margin-top: 16px;
+}
+.evidence-check select {
+  display: block;
+  max-width: 100%;
+  margin-top: 8px;
+}
+.pilot-history {
+  padding: 20px;
+  border: 1px solid #d7dce6;
+  margin: 20px 0;
+}
+.pilot-history > div {
+  display: flex;
+  gap: 20px;
+  padding: 12px 0;
+}
+.pilot-history button {
+  min-height: 40px;
+}
+.micro,
+.field-hint,
+.entry-storage {
+  font-size: 13px !important;
+  line-height: 1.65 !important;
+  color: #465568 !important;
+}
+.community-nav nav a {
+  font-size: 13px;
+  min-height: 44px;
+}
+.civic-utility-nav a {
+  font-size: 13px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.eyebrow {
+  font-size: 11px;
+}
+.header-entry {
+  font-size: 12px;
+}
+.language-switcher button,
+button.quiet-link,
+a.quiet-link {
+  min-height: 40px;
+}
+.workspace-identity > span {
+  font-size: 10px;
+}
+.workspace-identity > a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+input[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border: 2px solid #a62727;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+summary:focus-visible {
+  outline: 3px solid #2949e8;
+  outline-offset: 4px;
+}
+fieldset {
+  min-width: 0;
+}
+textarea,
+input,
+select {
+  max-width: 100%;
+}
+.agent-output-text {
+  overflow-wrap: anywhere;
+}
+.fit-factor p,
+.research-lead p {
+  overflow-wrap: anywhere;
+}
+.workspace-status span,
+.workspace-status strong {
+  white-space: normal;
+}
+@media (max-width: 760px) {
+  .challenge-layout {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    margin-top: 30px;
+  }
+  .challenge-form {
+    padding: 20px;
+  }
+  .journey-preview {
+    grid-template-columns: 24px 1fr;
+    gap: 10px;
+  }
+  .site-header {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 18px;
+    padding-bottom: 18px;
+  }
+  .site-header .wordmark {
+    margin-right: auto;
+  }
+  .workspace-identity {
+    order: 3;
+    width: 100%;
+    justify-content: space-between;
+  }
+  .site-header .header-entry {
+    display: none;
+  }
+  .workspace-status {
+    gap: 8px;
+    font-size: 12px;
+  }
+  .workspace-status a {
+    margin-left: 0;
+    width: 100%;
+    padding: 8px 0;
+  }
+  .community-nav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 18px;
+  }
+  .community-nav nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    gap: 4px;
+  }
+  .community-nav nav a {
+    min-width: 0;
+    padding: 12px 8px;
+    white-space: normal;
+    gap: 6px;
+    font-size: 12px;
+  }
+  .civic-utility-nav {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .civic-utility-nav > div {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .safety-page section {
+    padding: 18px;
+  }
+  .evidence-check > div {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .evidence-check form {
+    padding: 12px;
+  }
+  .entry-layout {
+    gap: 30px;
+  }
+  .page-width {
+    max-width: calc(100% - 32px);
+  }
+  .civic-heading h1 {
+    font-size: clamp(34px, 10vw, 52px);
+  }
+  .opportunity-tabs {
+    flex-wrap: wrap;
+  }
+  .opportunity-tabs button {
+    min-height: 44px;
+  }
+  .pilot-history > div {
+    flex-wrap: wrap;
+  }
+  .site-footer {
+    flex-wrap: wrap;
+  }
+  .field {
+    min-width: 0;
+  }
+  .challenge-choices label {
+    padding: 14px;
+  }
+  .button {
+    white-space: normal;
+    text-align: left;
+  }
+  .research-lead {
+    padding: 20px;
+  }
+  .lead-header {
+    flex-wrap: wrap;
+  }
+  .fit-ledger summary {
+    flex-wrap: wrap;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+.workspace-tools > summary {
+  padding: 16px 0;
+  min-height: 48px;
+  font-size: 13px;
+  color: #465568;
+  cursor: pointer;
+  border-bottom: 1px solid #d7dce6;
+}
+.workspace-tools .civic-utility-nav {
+  padding: 12px 0;
+}
+.shared-account form,
+.safety-page form {
+  display: grid;
+  gap: 18px;
+}
+.shared-account details {
+  padding: 20px 0;
+  border-bottom: 1px solid #d7dce6;
+}
+.shared-account details > summary {
+  cursor: pointer;
+  min-height: 44px;
+  font-weight: 650;
+}
+.shared-list {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 24px 0;
+}
+.shared-account input,
+.shared-account select,
+.safety-page input {
+  display: block;
+  width: 100%;
+  margin: 8px 0 16px;
+}
+.shared-account .checkbox-label input {
+  width: 18px;
+  margin: 0;
+}
+.shared-account a {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+  .site-header .workspace-identity {
+    display: none;
+  }
+  .site-header {
+    min-height: 76px;
+  }
+  .workspace-status {
+    padding: 10px 0;
+    row-gap: 6px;
+  }
+  .workspace-status a {
+    padding: 4px 0;
+  }
+  .civic-navigation .community-nav {
+    gap: 14px;
+    margin: 0;
+    padding: 18px 0;
+    min-height: 0;
+  }
+  .civic-navigation .community-nav nav {
+    gap: 4px;
+    margin: 0;
+    grid-template-columns: 1fr 1fr;
+  }
+  .civic-navigation .community-nav nav a {
+    white-space: normal;
+    padding: 10px 6px;
+    min-height: 44px;
+    height: auto;
+    font-size: 12px;
+  }
+  .civic-navigation .community-nav nav a.active:after {
+    bottom: 0;
+  }
+  .civic-navigation .community-identity {
+    display: none;
+  }
+  .challenge-page {
+    padding-top: 0;
+  }
+  .challenge-layout {
+    margin-top: 26px;
+  }
+  .workspace-tools > summary {
+    padding: 12px 0;
+  }
+  .civic-navigation .civic-utility-nav > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+  }
+  .civic-navigation .civic-utility-nav > a {
+    width: auto;
+  }
+  .workspace-tools .civic-utility-nav {
+    gap: 8px;
+  }
+  .journey-preview {
+    display: none;
+  }
+}

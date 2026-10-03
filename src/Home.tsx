@@ -19,14 +19,18 @@ export default function Home() {
             <span>{tr("Bring them here.")}</span>
           </h1>
           <p>
-            {tr("A team of agents. The knowledge of your municipality.")}
+            {tr(
+              "For municipal advisors turning local needs into practical pilots.",
+            )}
             <br className="desktop-break" />
-            {tr(" Turn resident needs into source-backed research.")}
+            {tr(" Compare documented city projects. See why they fit.")}
             <br className="desktop-break" />
-            {tr(" See the process. Make the local decision.")}
+            {tr(
+              " Leave with a proposal, sources and the questions to resolve.",
+            )}
           </p>
           <Link className="hero-cta" to="/enter">
-            {tr("Find your next move")}
+            {tr("Start with your challenge")}
             {tr(" ")}
             <span>
               <Icon size={23} />

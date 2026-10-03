@@ -16,7 +16,10 @@ export default function CitySignals() {
   const signals = summarizeReports(civic.reports);
   const last = civic.runs.find((r) => r.status === "complete");
   const stale = last && last.fingerprint !== runFingerprint(profile, civic);
-  const next = !civic.authority.confirmed ? "data" : "agents";
+  const next =
+    !profile.problems.length || profile.problems.includes("unknown")
+      ? "challenge"
+      : "agents";
   const counts = civic.reports.filter(
     (r) => !r.duplicateOf && r.status === "received",
   );
@@ -44,8 +47,8 @@ export default function CitySignals() {
           </p>
           <Button to={`/community/${id}/${next}`}>
             {tr(
-              next === "data"
-                ? "Connect your team’s knowledge"
+              next === "challenge"
+                ? "Choose your challenge"
                 : "Open the agent studio",
             )}
             {tr(" ")}
@@ -53,48 +56,7 @@ export default function CitySignals() {
           </Button>
         </div>
       </div>
-      <div className="journey-ribbon">
-        {tr(
-          [
-            [
-              "data",
-              "01",
-              "Connect your team",
-              "Confirm the authority and shared data.",
-            ],
-            [
-              "reports",
-              "02",
-              "Listen to residents",
-              "Collect reports and ideas.",
-            ],
-            [
-              "agents",
-              "03",
-              "Watch the research",
-              "Inspect each agent’s evidence.",
-            ],
-            [
-              "opportunities",
-              "04",
-              "Review possibilities",
-              "Decide what deserves a pilot.",
-            ],
-          ].map(([path, n, title, detail]) => (
-            <Link
-              to={`/community/${id}${path === "signals" ? "" : "/" + path}`}
-              key={path}
-            >
-              <span>{tr(n)}</span>
-              <div>
-                <strong>{tr(title)}</strong>
-                <small>{tr(detail)}</small>
-              </div>
-              <Icon size={16} />
-            </Link>
-          )),
-        )}
-      </div>
+
       <div className="signals-layout">
         <section>
           <div className="civic-section-title">

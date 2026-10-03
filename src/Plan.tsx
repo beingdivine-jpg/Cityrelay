@@ -1,9 +1,9 @@
-import { t as tr } from "./i18n";
+import { t as tr, locale } from "./i18n";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { examples } from "./data";
 import { assessCase } from "./matching";
-import { exportPlan } from "./planLogic";
+import { checkpointPlan, exportPlan } from "./planLogic";
 import {
   Button,
   CommunityNav,
@@ -18,6 +18,7 @@ import { Missing } from "./Workspace";
 import { SourceList } from "./SourceList";
 import { liveSummary, useLive } from "./LiveContext";
 import type { OutcomeRecord, PilotPlan } from "./model";
+import { useShared } from "./SharedContext";
 const blankOutcome = (): Omit<
   OutcomeRecord,
   "id" | "planId" | "provenance"
@@ -32,6 +33,7 @@ const blankOutcome = (): Omit<
 export default function Plan() {
   const { id } = useParams();
   const { state, update, notify } = useApp();
+  const shared = useShared();
   const live = useLive();
   const [observation, setObservation] = useState(blankOutcome);
   const [editing, setEditing] = useState<string | null>(null);
@@ -82,9 +84,14 @@ export default function Plan() {
           : p,
       ),
     }));
+  const checkpoint = () =>
+    update((s) => ({
+      ...s,
+      plans: s.plans.map((p) => (p.id === plan.id ? checkpointPlan(p) : p)),
+    }));
   const matches = examples
     .filter((e) => plan.selectedExamples.includes(e.id))
-    .map((e) => assessCase(profile, e));
+    .map((e) => assessCase(profile, e, state.civic?.[id!]));
   const observations = state.outcomes.filter((o) => o.planId === plan.id);
   const exportText = () => exportPlan(profile, plan, state);
   const copy = async () => {
@@ -172,6 +179,43 @@ export default function Plan() {
   return (
     <div className="wrap chapter-page pilot-story">
       <CommunityNav profile={profile} />
+      <details className="pilot-history">
+        <summary>{tr("Draft history & recovery")}</summary>
+        <p>
+          {tr(
+            "Save a checkpoint before major edits. Restoring keeps a copy of your current text.",
+          )}
+        </p>
+        <Button secondary onClick={checkpoint}>
+          {tr("Save checkpoint")}
+        </Button>
+        {(plan.revisions || []).map((version, i) => (
+          <div key={version.at + String(i)}>
+            <span>{new Date(version.at).toLocaleString(locale())}</span>
+            <button
+              onClick={() =>
+                update((s) => ({
+                  ...s,
+                  plans: s.plans.map((p) =>
+                    p.id === plan.id
+                      ? {
+                          ...checkpointPlan(p),
+                          ...(version.snapshot || {
+                            proposal: version.proposal,
+                            goal: version.goal,
+                          }),
+                        }
+                      : p,
+                  ),
+                }))
+              }
+            >
+              {tr("Restore this version")}
+            </button>
+          </div>
+        ))}
+      </details>
+
       <header className="pilot-story-heading">
         <div>
           <span className="field-kicker">
@@ -199,7 +243,11 @@ export default function Plan() {
       <div className="notebook-tools">
         <span>
           <Icon name="check" size={15} />
-          {tr(" Edits are stored on this device")}
+          {tr(
+            shared.workspace
+              ? "Use Save shared changes to publish your edits to the team."
+              : " Edits are stored on this device",
+          )}
         </span>
         <div className="export-actions">
           <Button secondary onClick={() => void copy()}>
@@ -803,7 +851,9 @@ export default function Plan() {
             <Icon name="check" size={18} />
             <p>
               {tr(
-                "Changes save in this browser. Download a copy to keep or share.",
+                shared.workspace
+                  ? "Use Save shared changes to publish your edits to the team."
+                  : "Changes save in this browser. Download a copy to keep or share.",
               )}
             </p>
           </div>

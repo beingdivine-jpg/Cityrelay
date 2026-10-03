@@ -11,7 +11,8 @@ import type {
   IdeaTriage,
   TopicSignal,
 } from "./civicModel";
-import { examples, assetLabels } from "./data";
+import { examples } from "./data";
+import { assessCase, initiativeMatches } from "./matching";
 import { getSource } from "./sources";
 export const topicLabels: Record<CivicTopic, string> = {
   heat: "Heat & shade",
@@ -110,10 +111,16 @@ export function duplicateReport(
   reports: CivicReport[],
   title: string,
   detail: string,
+  area?: string,
+  kind?: CivicReport["kind"],
+  topic?: CivicTopic,
 ) {
   return reports.find(
     (r) =>
-      normalize(r.title + " " + r.detail) === normalize(title + " " + detail),
+      normalize(r.title + " " + r.detail) === normalize(title + " " + detail) &&
+      (area === undefined || normalize(r.area) === normalize(area)) &&
+      (kind === undefined || r.kind === kind) &&
+      (topic === undefined || r.topic === topic),
   )?.id;
 }
 export function needsReview(text: string) {
@@ -192,11 +199,7 @@ export function compareFactors(
     });
   const reuse = context
     ? profile.existingInitiatives.filter((i) =>
-        example.reuse.some((k) =>
-          i
-            .toLowerCase()
-            .includes(k === "library" ? "bibliot" : k === "parks" ? "park" : k),
-        ),
+        example.reuse.some((k) => initiativeMatches(i, k)),
       )
     : [];
   factors.push({
@@ -209,45 +212,29 @@ export function compareFactors(
         : "Municipal context is not shared with this run.",
     sources: context ? profile.sources : [],
   });
-  for (const p of example.preconditions) {
-    const value = resources ? profile.assets[p.asset] : "unknown";
+  const masked = resources
+    ? profile
+    : {
+        ...profile,
+        assets: Object.fromEntries(
+          Object.keys(profile.assets).map((k) => [k, "unknown"]),
+        ) as CommunityProfile["assets"],
+        resources: { budget: "unknown" as const, staff: "unknown" as const },
+        localChecks: undefined,
+      };
+  for (const check of assessCase(masked, example).readiness) {
     factors.push({
-      name: assetLabels[p.asset],
+      name: check.label,
+      checkKey: check.key,
       state:
-        value === "yes" ? "aligned" : value === "no" ? "blocked" : "unknown",
-      detail:
-        value === "yes"
-          ? "Recorded as available by the advisor; still needs site-specific verification."
-          : value === "no"
-            ? "Recorded as unavailable by the advisor. Hold this approach until a suitable alternative is evidenced."
-            : p.explanation,
+        check.state === "met"
+          ? "aligned"
+          : check.state === "unmet"
+            ? "blocked"
+            : "unknown",
+      detail: check.explanation,
     });
   }
-  factors.push({
-    name: "Budget, staff & delivery",
-    state:
-      resources &&
-      (profile.resources.budget === "none" ||
-        profile.resources.staff === "none")
-        ? "blocked"
-        : "unknown",
-    detail: !resources
-      ? "Resource data was withheld from this run."
-      : "Source projects do not establish a transferable local cost or schedule. Confirm an estimate, operator and delivery capacity.",
-  });
-  factors.push({
-    name: "Climate & urban setting",
-    state: "unknown",
-    detail:
-      "A city name or population match does not establish equivalent climate, urban form or neighbourhood needs. Compare these at the proposed local site.",
-  });
-  factors.push({
-    name: "Authority & delivery permissions",
-    state: "unknown",
-    detail: civic.authority.confirmed
-      ? `${civic.authority.name} is the advisor-confirmed review body. Institutional membership, site permissions and responsibility for delivery are not verified.`
-      : "The responsible public body still needs advisor confirmation. No delivery permission or municipal endorsement is assumed.",
-  });
   factors.push({
     name: "Municipal evidence",
     state: "aligned",
@@ -268,17 +255,18 @@ export function buildOpportunities(
   const active = signals
     .filter((s) => s.topic !== "unknown")
     .map((s) => s.topic);
-  const topics = active.length
-    ? active
-    : allowed(civic, "context")
-      ? profile.problems
-      : [];
+  const topics = [
+    ...new Set([
+      ...active,
+      ...(allowed(civic, "context") ? profile.problems : []),
+    ]),
+  ];
   return examples
     .filter((e) => topics.includes(e.domain))
     .map((e) => {
       const factors = compareFactors(profile, civic, e),
         blocked = factors.some((f) => f.state === "blocked"),
-        unknown = factors.some((f) => f.state === "unknown");
+        unknown = factors.some((f) => f.checkKey && f.state === "unknown");
       return {
         exampleId: e.id,
         topic: e.domain,
@@ -296,7 +284,17 @@ export function buildOpportunities(
       (a, b) =>
         b.reportCount - a.reportCount ||
         { ready: 0, investigate: 1, hold: 2 }[a.state] -
-          { ready: 0, investigate: 1, hold: 2 }[b.state],
+          { ready: 0, investigate: 1, hold: 2 }[b.state] ||
+        assessCase(
+          profile,
+          examples.find((e) => e.id === b.exampleId)!,
+          civic,
+        ).rank -
+          assessCase(
+            profile,
+            examples.find((e) => e.id === a.exampleId)!,
+            civic,
+          ).rank,
     );
 }
 export function triageIdeas(
@@ -307,7 +305,7 @@ export function triageIdeas(
     .filter((r) => r.kind === "idea")
     .map((r) => {
       const matched = opportunities.filter((o) => o.topic === r.topic);
-      const ready = matched.filter((o) => o.state === "ready");
+      const ready = matched.filter((o) => o.state !== "hold");
       return {
         reportId: r.id,
         state:
@@ -321,8 +319,8 @@ export function triageIdeas(
             : !matched.length
               ? "No documented approach in this library covers the topic yet."
               : !ready.length
-                ? "Local prerequisites are unresolved or blocked. Held out of the decision queue."
-                : "Documented approaches and recorded local checks align; sent for advisor review.",
+                ? "Recorded constraints block the documented approaches. Review the constraint or add an alternative."
+                : "A documented approach is relevant. Ready for advisor review; implementation checks may still be unresolved.",
         exampleIds: matched.map((o) => o.exampleId),
       };
     });
@@ -331,13 +329,21 @@ export function runFingerprint(
   profile: CommunityProfile,
   civic: CivicWorkspace,
 ) {
-  return JSON.stringify({
+  const input = JSON.stringify({
     profile,
     authority: civic.authority,
     connections: civic.connections,
     documents: civic.documents,
     reports: civic.reports,
   });
+  // Compact change detector, not a security hash. Never retain full private inputs in run fingerprints.
+  let a = 2166136261,
+    b = 5381;
+  for (let i = 0; i < input.length; i++) {
+    a = Math.imul(a ^ input.charCodeAt(i), 16777619);
+    b = Math.imul(b, 33) ^ input.charCodeAt(i);
+  }
+  return `v3:${input.length}:${(a >>> 0).toString(16)}:${(b >>> 0).toString(16)}`;
 }
 export async function localAnalysis(
   profile: CommunityProfile,

@@ -1,6 +1,6 @@
 import { t as tr, useLanguage } from "./i18n";
 import LanguageSwitcher from "./LanguageSwitcher";
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import {
   BrowserRouter,
   Link,
@@ -14,20 +14,25 @@ import { loadState, saveState, seedState, STORAGE_KEY } from "./storage";
 import type { AppState, CommunityProfile } from "./model";
 import Home from "./Home";
 import Entry from "./Entry";
-import Profile from "./Profile";
+const Profile = lazy(() => import("./Profile"));
 import Workspace, { Missing } from "./Workspace";
-import MatchDetail from "./MatchDetail";
-import Plan from "./Plan";
+const MatchDetail = lazy(() => import("./MatchDetail"));
+const Plan = lazy(() => import("./Plan"));
 import { LiveProvider } from "./LiveContext";
 import { SourceList } from "./SourceList";
 import { sources } from "./sources";
 import CitySignals from "./CitySignals";
-import CityData from "./CityData";
-import ResidentSpace from "./ResidentSpace";
-import AgentStudio from "./AgentStudio";
-import Opportunities from "./Opportunities";
-import CityMonitor from "./CityMonitor";
+const CityData = lazy(() => import("./CityData"));
+const ResidentSpace = lazy(() => import("./ResidentSpace"));
+const AgentStudio = lazy(() => import("./AgentStudio"));
+const Opportunities = lazy(() => import("./Opportunities"));
+const CityMonitor = lazy(() => import("./CityMonitor"));
 import { CivicMonitor } from "./CivicContext";
+import Challenge from "./Challenge";
+import { SharedProvider, useShared } from "./SharedContext";
+const SharedResident = lazy(() => import("./SharedResident"));
+const SharedIntake = lazy(() => import("./SharedIntake"));
+import WorkspaceSafety from "./WorkspaceSafety";
 function About() {
   return (
     <div className="about-page page-width">
@@ -98,7 +103,7 @@ function About() {
         <summary>{tr("How this preview handles your workspace")}</summary>
         <p>
           {tr(
-            "Your advisor identity, city brief, questions and pilot save in this browser. This is device-saved access, not authenticated account access. Nothing is sent to another city. Public weather requests use fixed Kraków coordinates; your notes are not included. Earlier prototype data remains separately preserved. Resident submissions, contributors, access choices and research history also save on this device. Live AI requires a server-side connection and per-run consent; only shared context and permitted reports/documents are sent to OpenAI. Source monitoring runs while this workspace is open, with explicit failures and review notices.",
+            "Local exploration stays in this browser. Signing in does not upload it: creating a shared copy is a separate action. Connected team workspaces use authenticated membership and explicit shared saves. Public resident forms deliver to the named team only when its owner enables intake. Municipal affiliation remains self-declared. Live AI needs per-run consent; only permitted inputs reach OpenAI. Source checks produce review notices, not automatic approvals. Daily background checks run only when the connected service is configured.",
           )}
         </p>
         <p>
@@ -157,9 +162,29 @@ function ResetDialog({
 function Shell() {
   const language = useLanguage();
   const [initial] = useState(loadState);
-  const [state, setState] = useState<AppState>(initial.state);
+  const [localState, setState] = useState<AppState>(initial.state);
+  const shared = useShared();
+  const state = shared.state || localState;
   const [error, setError] = useState(initial.error);
   const [blocked, setBlocked] = useState(!!initial.error);
+  const readSaved = () => {
+    try {
+      return localStorage.getItem(STORAGE_KEY);
+    } catch {
+      return null;
+    }
+  };
+  const savedText = useRef(readSaved());
+  const savedState = useRef(JSON.stringify(initial.state));
+  const localRef = useRef(localState);
+  localRef.current = localState;
+  const restoreState = (next: AppState) => {
+    savedText.current = readSaved();
+    savedState.current = JSON.stringify(next);
+    setState(next);
+    setBlocked(false);
+    setError("");
+  };
   const [toast, setToast] = useState("");
   const [reset, setReset] = useState(false);
   const location = useLocation();
@@ -173,6 +198,15 @@ function Shell() {
         getItem: () => event.newValue,
       });
       if (!incoming.error) {
+        if (JSON.stringify(localRef.current) !== savedState.current) {
+          setBlocked(true);
+          setError(
+            "Another tab changed this workspace. Download your current work, then reload the saved version from Account & backup.",
+          );
+          return;
+        }
+        savedText.current = event.newValue;
+        savedState.current = JSON.stringify(incoming.state);
         setState(incoming.state);
         setBlocked(false);
         setError("");
@@ -182,8 +216,21 @@ function Shell() {
     return () => window.removeEventListener("storage", sync);
   }, []);
   useEffect(() => {
-    if (!blocked) setError(saveState(state));
-  }, [state, blocked]);
+    if (blocked) return;
+    if (readSaved() !== savedText.current) {
+      setBlocked(true);
+      setError(
+        "Another tab changed this workspace. Download your current work, then reload the saved version from Account & backup.",
+      );
+      return;
+    }
+    const failure = saveState(localState);
+    setError(failure);
+    if (!failure) {
+      savedText.current = readSaved();
+      savedState.current = JSON.stringify(localState);
+    }
+  }, [localState, blocked]);
   useEffect(() => {
     if (toast) {
       const t = setTimeout(() => setToast(""), 5000);
@@ -191,9 +238,21 @@ function Shell() {
     }
   }, [toast]);
   useEffect(() => {
-    document.title = tr(
-      `Elsewhere — ${landing ? "Great ideas. Local possibilities." : location.pathname === "/enter" ? "Your municipal workspace" : location.pathname.endsWith("/plan") ? "Your pilot brief" : "Municipal innovation workspace"}`,
-    );
+    const pageNames: Record<string, string> = {
+      challenge: "Your challenge",
+      agents: "Agent studio",
+      opportunities: "Opportunities",
+      plan: "Your pilot brief",
+      data: "Team & data",
+      reports: "Resident inbox",
+      monitor: "Monitoring",
+      brief: "Municipal brief",
+      account: "Account & backup",
+      enter: "Your municipal workspace",
+      about: "Sources & method",
+    };
+    const segments = location.pathname.split("/").filter(Boolean);
+    document.title = `Elsewhere — ${tr(landing ? "Great ideas. Local possibilities." : pageNames[segments.at(-1) || ""] || "Municipal innovation workspace")}`;
   }, [location.pathname, landing, language]);
   useEffect(() => {
     if (location.hash) {
@@ -211,7 +270,8 @@ function Shell() {
       });
     }
   }, [location.pathname, location.hash, landing]);
-  const update = (fn: (s: AppState) => AppState) => setState(fn);
+  const update = (fn: (s: AppState) => AppState) =>
+    shared.workspace ? shared.update(fn) : setState(fn);
   const saveProfile = (p: CommunityProfile) =>
     update((s) => ({
       ...s,
@@ -219,8 +279,11 @@ function Shell() {
         ? s.profiles.map((x) => (x.id === p.id ? p : x))
         : [...s.profiles, p],
     }));
+  const routeCity = location.pathname.match(
+    /^\/(?:community|report)\/([^/]+)/,
+  )?.[1];
   const active = state.profiles.find(
-    (p) => p.id === state.advisor?.activeCommunityId,
+    (p) => p.id === (routeCity || state.advisor?.activeCommunityId),
   );
   return (
     <AppContext.Provider
@@ -229,6 +292,7 @@ function Shell() {
         update,
         notify: setToast,
         saveProfile,
+        restoreState,
       }}
     >
       <div
@@ -271,11 +335,15 @@ function Shell() {
                   <span className="advisor-avatar">
                     {tr(
                       state.advisor?.name === "Municipal advisor"
-                        ? "MA"
-                        : state.advisor?.name.slice(0, 2).toUpperCase() || "MA",
+                        ? "↗"
+                        : state.advisor?.name.slice(0, 2).toUpperCase() || "↗",
                     )}
                   </span>
-                  <span>{tr("Advisor workspace")}</span>
+                  <span>
+                    {tr(
+                      shared.workspace ? "Shared workspace" : "Local workspace",
+                    )}
+                  </span>
                 </>
               ) : (
                 <>
@@ -294,38 +362,109 @@ function Shell() {
             </div>
           ),
         )}
-        {tr(active && <CivicMonitor id={active.id} />)}
+        {working && active && <CivicMonitor id={active.id} />}
+        {!landing && !location.pathname.startsWith("/resident/") && (
+          <div className="workspace-status page-width" role="status">
+            <span className="status-dot" />
+            <strong>
+              {active && `${active.name} · `}
+              {tr(shared.workspace ? "Shared workspace" : "Local preview")}
+            </strong>
+            <span>
+              {shared.user
+                ? `${tr("Signed in as")} ${shared.user.email}`
+                : tr("Not signed in")}
+            </span>
+            <span>
+              {tr(
+                shared.workspace
+                  ? shared.pending
+                    ? "Unsaved shared changes"
+                    : "Saved to your shared account"
+                  : error
+                    ? "Changes are not saved"
+                    : "Saved on this device",
+              )}
+            </span>
+            {shared.workspace && (
+              <button
+                disabled={!shared.pending || shared.saving}
+                onClick={() => void shared.save()}
+              >
+                {tr(shared.saving ? "Saving…" : "Save shared changes")}
+              </button>
+            )}
+            <Link to="/account">{tr("Account & backup")}</Link>
+          </div>
+        )}
+        {shared.error && (
+          <p className="page-width form-error" role="alert">
+            {tr(shared.error)}
+          </p>
+        )}
         <main id="main-content" tabIndex={-1}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/enter" element={<Entry />} />
-            <Route path="/start" element={<Profile />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/community/:id" element={<CitySignals />} />
-            <Route path="/community/:id/brief" element={<Workspace />} />
-            <Route path="/community/:id/data" element={<CityData />} />
-            <Route path="/community/:id/agents" element={<AgentStudio />} />
-            <Route
-              path="/community/:id/reports"
-              element={<ResidentSpace intake />}
-            />
-            <Route
-              path="/community/:id/opportunities"
-              element={<Opportunities />}
-            />
-            <Route path="/community/:id/monitor" element={<CityMonitor />} />
-            <Route path="/report/:id" element={<ResidentSpace />} />
-            <Route
-              path="/community/:id/matches"
-              element={<Workspace matchesOnly />}
-            />
-            <Route
-              path="/community/:id/matches/:matchId"
-              element={<MatchDetail />}
-            />
-            <Route path="/community/:id/plan" element={<Plan />} />
-            <Route path="*" element={<Missing />} />
-          </Routes>
+          {shared.opening ? (
+            <p className="page-width" role="status">
+              {tr("Loading shared workspace…")}
+            </p>
+          ) : (
+            <Suspense
+              fallback={
+                <p className="page-width" role="status">
+                  {tr("Loading workspace…")}
+                </p>
+              }
+            >
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route
+                  path="/resident/:id"
+                  element={<SharedResident key={location.pathname} />}
+                />
+                <Route path="/account" element={<WorkspaceSafety />} />
+                <Route
+                  path="/community/:id/challenge"
+                  element={<Challenge key={location.pathname} />}
+                />
+                <Route path="/enter" element={<Entry />} />
+                <Route path="/start" element={<Profile />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/community/:id" element={<CitySignals />} />
+                <Route path="/community/:id/brief" element={<Workspace />} />
+                <Route path="/community/:id/data" element={<CityData />} />
+                <Route path="/community/:id/agents" element={<AgentStudio />} />
+                <Route
+                  path="/community/:id/reports"
+                  element={
+                    shared.workspace ? (
+                      <SharedIntake />
+                    ) : (
+                      <ResidentSpace intake />
+                    )
+                  }
+                />
+                <Route
+                  path="/community/:id/opportunities"
+                  element={<Opportunities />}
+                />
+                <Route
+                  path="/community/:id/monitor"
+                  element={<CityMonitor />}
+                />
+                <Route path="/report/:id" element={<ResidentSpace />} />
+                <Route
+                  path="/community/:id/matches"
+                  element={<Workspace matchesOnly />}
+                />
+                <Route
+                  path="/community/:id/matches/:matchId"
+                  element={<MatchDetail />}
+                />
+                <Route path="/community/:id/plan" element={<Plan />} />
+                <Route path="*" element={<Missing />} />
+              </Routes>
+            </Suspense>
+          )}
         </main>
         <footer className="site-footer page-width">
           <Logo />
@@ -333,7 +472,7 @@ function Shell() {
           <div>
             <Link to="/about">{tr("Sources & method")}</Link>
             {tr(
-              !landing && (
+              !landing && !shared.workspace && (
                 <button onClick={() => setReset(true)}>
                   {tr("Reset local workspace")}
                 </button>
@@ -362,7 +501,7 @@ function Shell() {
             <ResetDialog
               onClose={() => setReset(false)}
               onReset={() => {
-                setState(seedState());
+                restoreState(seedState());
                 setBlocked(false);
                 setError("");
                 setReset(false);
@@ -378,10 +517,12 @@ function Shell() {
 }
 export default function App() {
   return (
-    <LiveProvider>
-      <BrowserRouter>
-        <Shell />
-      </BrowserRouter>
-    </LiveProvider>
+    <BrowserRouter>
+      <SharedProvider>
+        <LiveProvider>
+          <Shell />
+        </LiveProvider>
+      </SharedProvider>
+    </BrowserRouter>
   );
 }

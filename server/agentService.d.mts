@@ -1,6 +1,9 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 export function createAgentService(options?: {
   apiKey?: string;
+  supabaseUrl?: string;
+  supabaseKey?: string;
+  backgroundMonitor?: boolean;
   publicPreview?: boolean;
   model?: string;
   fetcher?: typeof fetch;

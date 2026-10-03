@@ -1,4 +1,4 @@
-import { t as tr } from "./i18n";
+import { t as tr, useLanguage } from "./i18n";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { examples, localSuggestion } from "./data";
@@ -6,7 +6,7 @@ import { assessCase } from "./matching";
 import { SourceList } from "./SourceList";
 import { getSource } from "./sources";
 import { liveSummary, useLive } from "./LiveContext";
-import { createPlan } from "./planLogic";
+import { addPlanExample, createPlan } from "./planLogic";
 import {
   Button,
   CommunityNav,
@@ -18,8 +18,11 @@ import {
 } from "./components";
 import { Constraints, Missing } from "./Workspace";
 import ProjectArt from "./ProjectArt";
+import EvidenceChecklist from "./EvidenceChecklist";
 import { projectPresentation } from "./projectPresentation";
 export default function MatchDetail() {
+  const language = useLanguage();
+  const [proposalEdited, setProposalEdited] = useState(false);
   const { id, matchId } = useParams();
   const location = useLocation();
   const { state, update, notify } = useApp();
@@ -33,21 +36,31 @@ export default function MatchDetail() {
     existing?.selectedExamples.includes(matchId || "")
       ? existing.proposal
       : profile && example
-        ? localSuggestion(profile, example, "proposal")
+        ? tr(localSuggestion(profile, example, "proposal"))
         : "",
   );
   useEffect(() => {
     setPanel(location.hash === "#peer-draft" ? "fit" : "understand");
+    setProposalEdited(false);
     setProposal(
       existing?.selectedExamples.includes(matchId || "")
         ? existing.proposal
         : profile && example
-          ? localSuggestion(profile, example, "proposal")
+          ? tr(localSuggestion(profile, example, "proposal"))
           : "",
     );
   }, [id, matchId]);
+  useEffect(() => {
+    if (
+      !proposalEdited &&
+      profile &&
+      example &&
+      !existing?.selectedExamples.includes(example.id)
+    )
+      setProposal(tr(localSuggestion(profile, example, "proposal")));
+  }, [language, proposalEdited, profile, example, existing]);
   if (!profile || !example) return <Missing />;
-  const assessment = assessCase(profile, example);
+  const assessment = assessCase(profile, example, state.civic?.[id!]);
   const draft = state.drafts.find(
     (d) => d.communityId === id && d.exampleId === matchId,
   );
@@ -86,15 +99,7 @@ export default function MatchDetail() {
         ...s,
         plans: prior
           ? s.plans.map((p) =>
-              p.id === prior.id
-                ? {
-                    ...p,
-                    selectedExamples: [
-                      ...new Set([...p.selectedExamples, example!.id]),
-                    ],
-                    proposal,
-                  }
-                : p,
+              p.id === prior.id ? addPlanExample(p, example!.id) : p,
             )
           : [
               ...s.plans,
@@ -105,6 +110,10 @@ export default function MatchDetail() {
                   id === "krakow" ? liveSummary(live) : undefined,
                 ),
                 proposal,
+                researchRunId: s.civic?.[id!]?.runs.find(
+                  (r) => r.status === "complete",
+                )?.id,
+                decisionNote: s.civic?.[id!]?.decisions[example!.id]?.note,
               },
             ],
       };
@@ -258,6 +267,10 @@ export default function MatchDetail() {
                           <p>{tr(assessment.reasons[0])}</p>
                         </div>
                         <Readiness assessment={assessment} />
+                        <EvidenceChecklist
+                          profile={profile}
+                          assessment={assessment}
+                        />
                         <Constraints profile={profile} />
                         <div className="peer-question">
                           <div>
@@ -306,11 +319,21 @@ export default function MatchDetail() {
                     {tr(".")}
                   </h2>
                   <p>{tr(localSuggestion(profile, example, "adaptation"))}</p>
+                  {existing && (
+                    <p className="agent-notice">
+                      {tr(
+                        "Your existing pilot text will be preserved. This adds the project as supporting evidence.",
+                      )}
+                    </p>
+                  )}
                   <TextField
                     label={tr("What could you try locally?")}
                     multiline
                     value={proposal}
-                    onChange={setProposal}
+                    onChange={(value) => {
+                      setProposalEdited(true);
+                      setProposal(value);
+                    }}
                   />
                   <p className="field-hint">
                     {tr(
@@ -322,7 +345,11 @@ export default function MatchDetail() {
                       {tr("Take this into a practical, editable pilot brief.")}
                     </span>
                     <Button onClick={add} disabled={!assessment}>
-                      {tr("Create a pilot brief ")}
+                      {tr(
+                        existing
+                          ? "Add evidence to my pilot"
+                          : "Create a pilot brief ",
+                      )}
                       <Icon />
                     </Button>
                   </div>
