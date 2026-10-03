@@ -321,16 +321,7 @@ function Shell() {
               </nav>
             ),
           )}
-          <Link
-            className="header-entry"
-            to={
-              working
-                ? "/enter"
-                : state.advisor
-                  ? `/community/${state.advisor.activeCommunityId}`
-                  : "/enter"
-            }
-          >
+          <Link className="header-entry" to={working ? "/account" : "/demo"}>
             {tr(
               working ? (
                 <>
@@ -342,14 +333,12 @@ function Shell() {
                     )}
                   </span>
                   <span>
-                    {tr(
-                      shared.workspace ? "Shared workspace" : "Local workspace",
-                    )}
+                    {tr(shared.workspace ? "Shared account" : "Account")}
                   </span>
                 </>
               ) : (
                 <>
-                  {tr(state.advisor ? "Open workspace" : "Enter workspace")}
+                  {tr("Open the demo")}
                   <Icon size={18} />
                 </>
               ),
@@ -370,7 +359,13 @@ function Shell() {
             <span className="status-dot" />
             <strong>
               {active && `${active.name} · `}
-              {tr(shared.workspace ? "Shared workspace" : "Local preview")}
+              {tr(
+                active?.id === DEMO_ID
+                  ? "Guided demo"
+                  : shared.workspace
+                    ? "Shared workspace"
+                    : "Local preview",
+              )}
             </strong>
             <span>
               {shared.user
@@ -396,6 +391,12 @@ function Shell() {
                 {tr(shared.saving ? "Saving…" : "Save shared changes")}
               </button>
             )}
+            {active?.id === DEMO_ID && (
+              <details className="workspace-demo-note">
+                <summary>{tr("Sample data. Real sources.")}</summary>
+                <p>{tr(demoDisclosure)}</p>
+              </details>
+            )}
             <Link to="/account">{tr("Account & backup")}</Link>
           </div>
         )}
@@ -403,13 +404,6 @@ function Shell() {
           <p className="page-width form-error" role="alert">
             {tr(shared.error)}
           </p>
-        )}
-        {!landing && active?.id === DEMO_ID && (
-          <div className="demo-ribbon page-width">
-            <strong>{tr("KRAKÓW DEMO")}</strong>
-            <span>{tr(demoDisclosure)}</span>
-            <Link to={`/community/${DEMO_ID}`}>{tr("Demo overview")}</Link>
-          </div>
         )}
         <main id="main-content" tabIndex={-1}>
           {shared.opening ? (

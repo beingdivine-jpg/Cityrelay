@@ -107,17 +107,18 @@ export function Logo() {
   return (
     <Link className="wordmark" to="/" aria-label={tr("Elsewhere home")}>
       <svg
-        width="30"
-        height="30"
-        viewBox="0 0 32 32"
+        width="33"
+        height="33"
+        viewBox="0 0 40 40"
         fill="none"
         aria-hidden="true"
       >
         <path
-          d="M4 27 27 4M6 4h21v21M4 15v12h12"
+          d="M20 2V38M2 20H38M7 7L33 33M7 33L33 7"
           stroke="currentColor"
-          strokeWidth="3.5"
+          strokeWidth="5"
         />
+        <circle cx="20" cy="20" r="7" fill="currentColor" />
       </svg>
       <span>{tr("elsewhere")}</span>
     </Link>
@@ -315,21 +316,19 @@ export function CommunityNav({ profile }: { profile: CommunityProfile }) {
             end
           >
             <span>{tr("01")}</span>
-            {tr(
-              profile.id === "krakow-demo" ? " Resident voices" : " Challenge",
-            )}
+            {tr(profile.id === "krakow-demo" ? " Listen" : " Your challenge")}
           </NavLink>
           <NavLink to={`/community/${profile.id}/agents`}>
             <span>{tr("02")}</span>
-            {tr(" Agent studio")}
+            {tr(" Research")}
           </NavLink>
           <NavLink to={`/community/${profile.id}/opportunities`}>
             <span>{tr("03")}</span>
-            {tr(" Opportunities")}
+            {tr(" Compare")}
           </NavLink>
           <NavLink to={`/community/${profile.id}/plan`}>
             <span>{tr("04")}</span>
-            {tr(" Pilot plan")}
+            {tr(" Your pilot")}
           </NavLink>
         </nav>
       </div>

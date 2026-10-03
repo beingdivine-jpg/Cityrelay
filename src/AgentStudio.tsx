@@ -408,25 +408,25 @@ export default function AgentStudio() {
       <CommunityNav profile={profile} />
       <header className="agent-heading">
         <div>
-          <span className="eyebrow">{tr("THE AGENT WORKROOM")}</span>
+          <span className="eyebrow">{tr("STEP 02 / THE RESEARCH ROOM")}</span>
           <h1>
-            {tr("Follow the work.")}{" "}
-            <span className="blue-text">{tr("Keep the evidence.")}</span>
+            {tr("Now, connect")}{" "}
+            <span className="blue-text">{tr("the evidence.")}</span>
           </h1>
         </div>
         <p>
           {tr(
             id === DEMO_ID
-              ? "Turn the sample inbox into a research brief. Each agent leaves a visible record, then hands the work to the next."
+              ? "Start the research, follow each agent’s work, then compare what they found. You control when the next stage begins."
               : "Inspect each action, source and result. You decide what becomes a local pilot.",
           )}
         </p>
       </header>
       <section className="agent-launch">
         <div>
-          <span className="eyebrow">{tr("READY TO INVESTIGATE")}</span>
+          <span className="eyebrow">{tr("ON THE DESK")}</span>
           <h2>
-            {profile.name} · {tr("research desk")}
+            {profile.name} · {tr("research inputs")}
           </h2>
           <p>
             {tr(
@@ -436,56 +436,6 @@ export default function AgentStudio() {
           <Link to={`/community/${id}/data`}>{tr("Review data access")} ↗</Link>
         </div>
         <div className="agent-launch-actions">
-          <div className="agent-mode-switch">
-            <button
-              disabled={busy}
-              aria-pressed={mode === "local"}
-              onClick={() => setMode("local")}
-            >
-              {tr("Local analysis")}
-            </button>
-            <button
-              disabled={busy || !canAI}
-              aria-pressed={mode === "ai"}
-              onClick={() => setMode("ai")}
-            >
-              {tr(canAI ? "Live AI research" : "AI research · not connected")}
-            </button>
-          </div>
-          {mode === "local" ? (
-            <div className="agent-run-settings">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={guided}
-                  disabled={busy}
-                  onChange={(e) => setGuided(e.target.checked)}
-                />
-                {tr("Pause at each handoff")}
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={sourceChecks}
-                  disabled={busy}
-                  onChange={(e) => setSourceChecks(e.target.checked)}
-                />
-                {tr("Check source pages live")}
-              </label>
-            </div>
-          ) : (
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={consent}
-                disabled={busy}
-                onChange={(e) => setConsent(e.target.checked)}
-              />
-              {tr(
-                "Send the shared municipal brief, permitted reports and permitted documents to OpenAI for this run. Usage may incur API costs.",
-              )}
-            </label>
-          )}
           <Button
             disabled={
               busy ||
@@ -499,16 +449,69 @@ export default function AgentStudio() {
                 ? "Investigation in progress"
                 : last
                   ? "Start a new investigation"
-                  : "Start with the Listener",
+                  : "Start the research",
             )}{" "}
             <Icon />
           </Button>
+          <details className="research-settings">
+            <summary>{tr("Research settings")}</summary>{" "}
+            <div className="agent-mode-switch">
+              <button
+                disabled={busy}
+                aria-pressed={mode === "local"}
+                onClick={() => setMode("local")}
+              >
+                {tr("Local analysis")}
+              </button>
+              <button
+                disabled={busy || !canAI}
+                aria-pressed={mode === "ai"}
+                onClick={() => setMode("ai")}
+              >
+                {tr(canAI ? "Live AI research" : "AI research · not connected")}
+              </button>
+            </div>
+            {mode === "local" ? (
+              <div className="agent-run-settings">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={guided}
+                    disabled={busy}
+                    onChange={(e) => setGuided(e.target.checked)}
+                  />
+                  {tr("Pause at each handoff")}
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={sourceChecks}
+                    disabled={busy}
+                    onChange={(e) => setSourceChecks(e.target.checked)}
+                  />
+                  {tr("Check source pages live")}
+                </label>
+              </div>
+            ) : (
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={consent}
+                  disabled={busy}
+                  onChange={(e) => setConsent(e.target.checked)}
+                />
+                {tr(
+                  "Send the shared municipal brief, permitted reports and permitted documents to OpenAI for this run. Usage may incur API costs.",
+                )}
+              </label>
+            )}
+          </details>
         </div>
       </section>
       <p className="agent-method-note">
         {tr(
           mode === "local"
-            ? "Local rules organise the reports and compare the documented library. Live page checks are real HTTP requests; they are not an AI web search."
+            ? "Local analysis is ready. The source checks retrieve real city pages. Open Research settings to inspect the method."
             : "AI requests and reported search queries appear as the service returns them. Search details may arrive with the completed stage.",
         )}
       </p>

@@ -125,9 +125,9 @@ export default function Opportunities() {
         <div>
           <span className="eyebrow">{tr("FROM EVIDENCE TO A DECISION")}</span>
           <h1>
-            {tr("A possibility.")}
+            {tr("Ideas worth")}
             <br />
-            <span className="blue-text">{tr("With a reason.")}</span>
+            <span className="blue-text">{tr("a closer look.")}</span>
           </h1>
         </div>
         <p>

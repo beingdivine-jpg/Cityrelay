@@ -475,8 +475,8 @@ select {
   color: #526276;
 }
 .demo-choice {
-  background: #2447e6 !important;
-  color: white !important;
+  background: var(--ink);
+  color: var(--paper);
   text-decoration: none;
   display: block;
   box-shadow: 0 16px 42px #2447e626;

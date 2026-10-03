@@ -1,3 +1,14 @@
+# Civic studio redesign — 4 October 2026
+
+- Rebuilt the visual presentation around apricot, aubergine, vermilion, lavender and chartreuse, with editorial serif typography, an original animated city illustration and distinct project motifs. The welcome scene is conceptual artwork, not a live feed or map; its three city selectors link to existing documented sources. Pause and reduced-motion handling are present.
+- Replaced the demo’s overview panels with a listening desk: eligible topic counts, one sample resident voice at a time, a complete-inbox link and a clear research action. Four persistent chapters are labelled Listen, Research, Compare and Your pilot. Supporting tools and research settings remain available through disclosures.
+- Preserved the data model, source catalogue, analysis rules, consent, agent execution, history, evidence checks, pilot drafting and account/storage behavior. Existing tests: **88 passed across nine files**. Production build passes; the main application chunk still exceeds Vite’s warning threshold. The welcome page no longer loads Three.js.
+- Browser checks on the isolated 4183 preview: English and Polish welcome layouts; interactive Helsinki source selection; pause button state; resident topic changes and paging; all five research handoffs; completed record and comparison; source review and preserved existing pilot. A rebuild during preview navigation removed an old lazy chunk; reload restored the saved plan without resetting data.
+- Desktop welcome, listening desk, research console, comparison and pilot surfaces were visually inspected. English/Polish welcome and Polish listening/research views were checked at 390 and 320 pixels where applicable; measured document widths matched the tested viewport. The long Polish headline and language-switch contrast were corrected.
+- The local source-check run returned five timed-out requests, visibly recorded as unavailable. No successful live retrieval is claimed for that run. Provider/server integration was not changed by this presentation work.
+
+---
+
 # Kraków demo and observable agent workflow — 4 October 2026
 
 - Automated verification: **88 tests passed across nine files**. Production build passed; existing application and lazy Three.js chunk-size warnings remain.
