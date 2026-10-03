@@ -2,7 +2,7 @@
 
 ## Automated checks
 
-- `npm test`: **46 tests passed** across matching/persistence/export, live-response validation, civic workflow, monitoring and server research boundaries.
+- `npm test`: **51 tests passed** across matching/persistence/export, live-response validation, civic workflow, monitoring and server research boundaries.
 - `npm run build`: TypeScript and production build passed. Vite reports the separate Three.js chunk above its default 500 KB warning threshold (about 135 KB gzip). The scene is asynchronous; this warning is documented, not hidden.
 - `npm run format:check`: checked after final formatting.
 
@@ -45,3 +45,7 @@ This is a local, device-saved preview, with no authenticated login, server-side 
 Live APIs retain explicit failure states; this turn observed a successfully loaded IMGW temperature in the Kraków brief. The value is not frozen into the app. Historical programme facts are not real-time inventories.
 
 Original supplied hackathon documents and the earlier CityRelay prototype were reviewed. AI assistance, previous work, libraries and data providers are disclosed in README and THIRD_PARTY_NOTICES.
+
+## Vercel preparation
+
+Added SPA deep-link rewrites and a serverless public-preview API. Automated tests cover Vercel's pre-parsed JSON body, request-size enforcement, same-origin public POSTs, preservation of local-only restrictions and unconditional disabling of paid research in public mode. Production deployment status and the live URL are recorded after the Vercel build succeeds.

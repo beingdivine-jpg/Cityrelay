@@ -8,8 +8,8 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest run",
-    "format": "prettier --write src server *.json *.ts *.html *.md",
-    "format:check": "prettier --check src server *.json *.ts *.html *.md"
+    "format": "prettier --write src server api *.json *.ts *.html *.md",
+    "format:check": "prettier --check src server api *.json *.ts *.html *.md"
   },
   "dependencies": {
     "react": "^19.3.0",

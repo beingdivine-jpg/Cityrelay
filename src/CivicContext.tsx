@@ -43,9 +43,12 @@ export function useAgentService() {
           connected: true,
           ai: body.ai,
           model: body.model,
-          message: body.ai
-            ? "Live AI research connected"
-            : "Local engine connected · AI key not configured",
+          message:
+            typeof body.message === "string"
+              ? body.message
+              : body.ai
+                ? "Live AI research connected"
+                : "Local engine connected · AI key not configured",
         });
       })
       .catch(() => {
@@ -81,7 +84,7 @@ export async function checkSources(
   });
   if (!r.ok)
     throw Error(
-      "Source checking is unavailable. Start the local agent service and try again.",
+      "Source checking is unavailable. Try again shortly; the service may be offline or at its request limit.",
     );
   const body = await r.json();
   if (!Array.isArray(body.snapshots))

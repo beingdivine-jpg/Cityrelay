@@ -16,7 +16,7 @@ npm run build
 npm run format:check
 ```
 
-The current local preview is `http://127.0.0.1:5174/`. No public deployment has been performed. A static host must rewrite application routes to `index.html`.
+The current local preview is `http://127.0.0.1:5174/`. Vercel deployment configuration is included. `vercel.json` routes application deep links to `index.html` and preserves `/api` function routes.
 
 ## Experience
 
@@ -72,3 +72,11 @@ The current renderer imports `src/app.css` and `src/civic.css`; previous design 
 The supplied SMART CITY documents informed the emphasis on a concrete municipal user, accurate data, a clear user journey, and tested functionality. This iteration builds on an existing local prototype. Codex assisted with research, copy, code, original procedural graphics and verification; this work should be disclosed under the challenge’s AI/prior-work rules. External libraries, fonts and data providers are listed in `THIRD_PARTY_NOTICES.md`. No claim is made that all code was authored during the competition window or that source cities endorse this project.
 
 See `QA.md` for checks and limitations.
+
+## Vercel deployment
+
+Import `beingdivine-jpg/Cityrelay` into Vercel, keep the project root at `./`, and choose Vite. The repository config supplies `npm ci`, `npm run build` and `dist`. Connect the production branch to `main` so subsequent GitHub pushes deploy automatically. No environment secrets are required for the public preview.
+
+The public preview includes local analysis, browser-saved workspaces, resident intake, research history, pilot planning, public weather and a Vercel function for bounded public-source monitoring. `api/[...path].js` reuses the source checker in explicit public-preview mode, with same-origin checks, source/redirect allowlisting and request limits. Limits are per warm function instance, not a distributed abuse-prevention system. The research endpoint is disabled in this mode even if an API key exists; authenticated access and persistent usage controls are needed before enabling paid research publicly.
+
+The live domain has separate browser storage from localhost. Existing local drafts are not automatically uploaded or shared with visitors. Source monitoring still runs only while a visible workspace is open. Vercel hosting does not add authenticated municipal accounts, shared storage or a background scheduler.

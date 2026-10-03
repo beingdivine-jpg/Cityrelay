@@ -146,6 +146,7 @@ export function createAgentService({
   apiKey = "",
   model = "gpt-5.5",
   fetcher = fetch,
+  publicPreview = false,
 } = {}) {
   let running = false;
   let monitorRunning = false;
@@ -173,15 +174,31 @@ export function createAgentService({
     } catch {
       originAllowed = false;
     }
-    if (!localHost(req.headers.host) || !originAllowed)
+    if (
+      (!publicPreview && !localHost(req.headers.host)) ||
+      !originAllowed ||
+      (publicPreview && req.method === "POST" && !req.headers.origin)
+    )
       return send(403, {
-        error: "This agent service accepts same-origin local requests only.",
+        error:
+          "This agent service accepts same-origin requests only; local mode requires loopback access.",
       });
     if (path === "/status" && req.method === "GET")
       return send(200, {
-        ai: !!apiKey,
+        ai: !publicPreview && !!apiKey,
+        ...(publicPreview
+          ? {
+              message:
+                "Public preview · local analysis and source monitoring available",
+            }
+          : {}),
         model,
         monitor: "While the browser is open",
+      });
+    if (publicPreview && path === "/research")
+      return send(503, {
+        error:
+          "Live AI research is not enabled on the public preview. Use the local advisor workspace with a server-side key.",
       });
     if (
       req.method !== "POST" ||
@@ -195,11 +212,17 @@ export function createAgentService({
     times.push(now);
     let raw = "";
     try {
-      for await (const chunk of req) {
-        raw += chunk;
+      if (req.body !== undefined) {
+        raw =
+          typeof req.body === "string" ? req.body : JSON.stringify(req.body);
         if (Buffer.byteLength(raw) > 100000)
           return send(413, { error: "Request is too large." });
-      }
+      } else
+        for await (const chunk of req) {
+          raw += chunk;
+          if (Buffer.byteLength(raw) > 100000)
+            return send(413, { error: "Request is too large." });
+        }
     } catch {
       return send(400, { error: "Could not read request." });
     }

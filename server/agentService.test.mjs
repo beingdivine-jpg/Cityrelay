@@ -7,9 +7,10 @@ import {
   publicSourceUrl,
   safeText,
 } from "./agentService.mjs";
-async function request(handler, path, body, headers = {}) {
+async function request(handler, path, body, headers = {}, options = {}) {
   const req = Readable.from([JSON.stringify(body)]);
-  req.method = "POST";
+  req.method = options.method || "POST";
+  if (options.preparsed) req.body = body;
   req.url = path;
   req.headers = {
     host: "localhost:5174",
@@ -248,5 +249,80 @@ describe("Bounded server research", () => {
     expect(safeText("Contact a@example.com or +48 123 456 789")).not.toContain(
       "123 456",
     );
+  });
+});
+
+describe("Public Vercel preview", () => {
+  const headers = {
+    host: "city-preview.vercel.app",
+    origin: "https://city-preview.vercel.app",
+  };
+  it("reports public mode without enabling paid AI even if a key is present", async () => {
+    const handler = createAgentService({
+      publicPreview: true,
+      apiKey: "not-for-public-use",
+    });
+    const status = await request(handler, "/api/status", {}, headers, {
+      method: "GET",
+    });
+    expect(status.status).toBe(200);
+    expect(status.json().ai).toBe(false);
+    expect(status.json().message).toContain("Public preview");
+    const r = await request(handler, "/api/research", input, headers);
+    expect(r.status).toBe(503);
+    expect(r.output).not.toContain("not-for-public-use");
+  });
+  it("accepts serverless pre-parsed JSON for bounded public source checks", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response("<p>Public city evidence</p>", {
+          headers: { "content-type": "text/html" },
+        }),
+    );
+    const handler = createAgentService({ publicPreview: true, fetcher });
+    const r = await request(
+      handler,
+      "/api/monitor",
+      {
+        sources: [
+          { url: "https://www.hel.fi/example", title: "Official city source" },
+        ],
+      },
+      headers,
+      { preparsed: true },
+    );
+    expect(r.status).toBe(200);
+    expect(r.json().snapshots[0].status).toBe("ok");
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+  it("rejects cross-origin and missing-origin public POSTs", async () => {
+    const handler = createAgentService({ publicPreview: true });
+    for (const origin of ["https://other.example", undefined])
+      expect(
+        (
+          await request(
+            handler,
+            "/api/monitor",
+            { sources: [] },
+            { ...headers, origin },
+          )
+        ).status,
+      ).toBe(403);
+  });
+  it("preserves the size limit when Vercel has already parsed the body", async () => {
+    const r = await request(
+      createAgentService({ publicPreview: true }),
+      "/api/monitor",
+      { text: "x".repeat(100001) },
+      headers,
+      { preparsed: true },
+    );
+    expect(r.status).toBe(413);
+  });
+  it("keeps the local service closed to public hosts", async () => {
+    const r = await request(createAgentService(), "/api/status", {}, headers, {
+      method: "GET",
+    });
+    expect(r.status).toBe(403);
   });
 });
