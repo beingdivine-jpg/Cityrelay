@@ -69,7 +69,8 @@ export async function checkSources(
   const sourceRecords = [...new Set(examples.flatMap((e) => e.sources))]
     .map(getSource)
     .filter((s) => !!s)
-    .filter((s) => s.kind === "Municipal source" || s.kind === "Public agency");
+    .filter((s) => s.kind === "Municipal source" || s.kind === "Public agency")
+    .filter((s) => !new URL(s.url).pathname.toLowerCase().endsWith(".pdf"));
   const r = await fetch("/api/monitor", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

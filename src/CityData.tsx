@@ -258,6 +258,7 @@ export default function CityData() {
               <label className="sharing-toggle">
                 <input
                   type="checkbox"
+                  aria-label={`Share ${datasetLabels[c.key]} with agents`}
                   checked={c.enabled}
                   onChange={(e) =>
                     change((s) => ({
@@ -407,6 +408,7 @@ export default function CityData() {
               <label className="sharing-toggle">
                 <input
                   type="checkbox"
+                  aria-label={`Share document ${d.title} with agents`}
                   checked={d.enabled}
                   onChange={(e) =>
                     change((c) => ({

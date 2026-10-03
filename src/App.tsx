@@ -61,7 +61,9 @@ function About() {
           <p>
             The project catalogue links to municipal, public-agency and research
             sources. Historical figures retain their dates. Sources are checked
-            manually; no global project feed is claimed.
+            manually. Source monitoring can detect page changes; an optional AI
+            scout searches approved public sources. Neither is a verified global
+            project feed.
           </p>
         </section>
         <section>
@@ -99,7 +101,12 @@ function About() {
           browser. This is device-saved access, not authenticated account
           access. Nothing is sent to another city. Public weather requests use
           fixed Kraków coordinates; your notes are not included. Earlier
-          prototype data remains separately preserved.
+          prototype data remains separately preserved. Resident submissions,
+          contributors, access choices and research history also save on this
+          device. Live AI requires a server-side connection and per-run consent;
+          only shared context and permitted reports/documents are sent to
+          OpenAI. Source monitoring runs while this workspace is open, with
+          explicit failures and review notices.
         </p>
         <p>
           Open-Meteo’s non-commercial service is attributed in the interface. A

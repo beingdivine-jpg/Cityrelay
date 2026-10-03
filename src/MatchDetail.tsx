@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { examples, localSuggestion } from "./data";
-import { assessMatches } from "./matching";
+import { assessCase } from "./matching";
 import { SourceList } from "./SourceList";
 import { getSource } from "./sources";
 import { liveSummary, useLive } from "./LiveContext";
@@ -46,9 +46,7 @@ export default function MatchDetail() {
     );
   }, [id, matchId]);
   if (!profile || !example) return <Missing />;
-  const assessment = assessMatches(profile, examples).find(
-    (a) => a.example.id === matchId,
-  );
+  const assessment = assessCase(profile, example);
   const draft = state.drafts.find(
     (d) => d.communityId === id && d.exampleId === matchId,
   );
@@ -324,9 +322,11 @@ export default function MatchDetail() {
           <span className="eyebrow">YOUR LOCAL LENS</span>
           <h3>{profile.name}</h3>
           <p>
-            {profile.goals.objective ||
-              profile.goals.ambition ||
-              "Explore a useful idea for your municipality."}
+            {!profile.problems.includes(example.domain)
+              ? "Investigating a new topic alongside your current municipal brief. Review the local need before adding this approach to a pilot."
+              : profile.goals.objective ||
+                profile.goals.ambition ||
+                "Explore a useful idea for your municipality."}
           </p>
           {assessment && <Status assessment={assessment} />}
           <dl>
@@ -347,7 +347,7 @@ export default function MatchDetail() {
               <dd>To be tested</dd>
             </div>
           </dl>
-          <Link className="quiet-link" to={`/community/${id}`}>
+          <Link className="quiet-link" to={`/community/${id}/brief`}>
             Revisit your brief <Icon size={15} />
           </Link>
           <div className="margin-principle">

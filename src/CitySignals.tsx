@@ -53,7 +53,7 @@ export default function CitySignals() {
             "Confirm the authority and shared data.",
           ],
           [
-            "signals",
+            "reports",
             "02",
             "Listen to residents",
             "Collect reports and ideas.",

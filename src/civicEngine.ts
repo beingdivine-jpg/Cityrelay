@@ -236,6 +236,19 @@ export function compareFactors(
       : "Source projects do not establish a transferable local cost or schedule. Confirm an estimate, operator and delivery capacity.",
   });
   factors.push({
+    name: "Climate & urban setting",
+    state: "unknown",
+    detail:
+      "A city name or population match does not establish equivalent climate, urban form or neighbourhood needs. Compare these at the proposed local site.",
+  });
+  factors.push({
+    name: "Authority & delivery permissions",
+    state: "unknown",
+    detail: civic.authority.confirmed
+      ? `${civic.authority.name} is the advisor-confirmed review body. Institutional membership, site permissions and responsibility for delivery are not verified.`
+      : "The responsible public body still needs advisor confirmation. No delivery permission or municipal endorsement is assumed.",
+  });
+  factors.push({
     name: "Municipal evidence",
     state: "aligned",
     detail: `Documented by ${example.sources
@@ -380,7 +393,7 @@ export async function localAnalysis(
         ? `${profile.name} municipal profile`
         : "No municipal context shared";
       step.output = allowed(civic, "context")
-        ? `${civic.authority.name || profile.name} · ${civic.authority.kind}\nAuthority profile ${civic.authority.confirmed ? "confirmed by the advisor; institutional identity not verified" : "awaiting advisor confirmation"}.\n${profile.context.geography || "Local geography not recorded."}\n${profile.existingInitiatives.length ? profile.existingInitiatives.join("\n") : "No existing initiatives entered."}\n${civic.documents
+        ? `${civic.authority.name || profile.name} · ${civic.authority.kind}\nAuthority profile ${civic.authority.confirmed ? "confirmed by the advisor; institutional identity not verified" : "awaiting advisor confirmation"}.\n${profile.context.geography || "Local geography not recorded."}\n${profile.note ? `Advisor brief: ${profile.note.slice(0, 600)}\n` : ""}${profile.existingInitiatives.length ? profile.existingInitiatives.join("\n") : "No existing initiatives entered."}\n${civic.documents
             .filter((d) => d.enabled)
             .map(
               (d) =>

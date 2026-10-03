@@ -2,7 +2,7 @@
 
 ## Automated checks
 
-- `npm test`: **23 tests passed** across matching/persistence/export and live-response validation.
+- `npm test`: **46 tests passed** across matching/persistence/export, live-response validation, civic workflow, monitoring and server research boundaries.
 - `npm run build`: TypeScript and production build passed. Vite reports the separate Three.js chunk above its default 500 KB warning threshold (about 135 KB gzip). The scene is asynchronous; this warning is documented, not hidden.
 - `npm run format:check`: checked after final formatting.
 
@@ -24,9 +24,23 @@ Tested through the Codex browser. The user's existing `127.0.0.1:5174` work was 
 - Console: no application errors observed in the isolated QA session. A deprecated Three.js shadow-setting warning was found and corrected to `PCFShadowMap`.
 - Motion: pause/play browser tested; reduced-motion and offscreen/hidden-page behavior inspected in code. Reduced-motion disables the procedural movement and CSS transitions. No automated accessibility or performance score is claimed.
 
+## Agentic workflow verification
+
+The new workflow was exercised on the separate `localhost:5174` QA origin. Three explicitly labelled test submissions and a QA contributor/document were kept away from the user's `127.0.0.1` workspace.
+
+- Guided entry now opens Team & data. Authority confirmation, contributor creation and owned document entry work and persist.
+- Two distinct public-service concerns rank first; a separate waste idea does not inflate complaint volume. Local research returns the documented Helsinki lead. Its factor ledger shows sourced 2024 municipal populations and unknown delivery prerequisites.
+- Inspecting a resident-led case preserves the advisor’s original municipal focus; it does not silently rewrite the brief.
+- Unsupported waste idea is held for investigation, with no default decision-queue entry. Shortlisting without a written reason is rejected.
+- Five-stage local runs expose actual input/output. Completed handoffs replay with an explicit replay label. Reload restores run history and sources.
+- Withholding resident reports changes the Listener input to zero and excludes their topics from the new run. Automated checks separately cover withheld resources/context/library, duplicates, intake review, conservative idea triage and stale evidence detection.
+- Real source checking succeeded for Barcelona, Paris, Medellín, Singapore and Helsinki. The first baseline generated no source-change alert. A PDF was initially shown as unsupported; the final watchlist deliberately monitors HTML pages only. Changed/unchanged/failed checks are covered in tests, including preserving the last successful hash through an outage.
+- Server tests use a mocked provider: explicit consent and per-document/report permission, five streamed stages, actual-search/citation requirements, incomplete-call handling, contact redaction, response-key exclusion, same-origin restriction, URL/redirect allowlisting and malformed requests. No paid live provider call was made; production credentials and provider availability remain unverified.
+- Mobile agent studio checked at 390 px, including readable step navigation and no horizontal page overflow. Desktop studio and resident/data views inspected. Research export anchor contents are checked in the UI; OS file-save completion is not claimed.
+
 ## Scope and remaining release work
 
-This is a local, device-saved preview, with no authenticated login, server-side shared workspace or public deployment. It does not contact another city or claim endorsement. Public launch needs the real account/storage infrastructure and hosting destination. Provider availability and municipal source freshness are external dependencies. Project-source updates are manual.
+This is a local, device-saved preview, with no authenticated login, server-side shared workspace or public deployment. It does not contact another city or claim endorsement. Public launch needs the real account/storage infrastructure and hosting destination. Provider availability and municipal source freshness are external dependencies. The verified catalogue is maintained manually; the new source watcher detects public page changes for review. Live AI is integrated but not configured. Always-on monitoring and cross-device collaboration require deployed infrastructure.
 
 Live APIs retain explicit failure states; this turn observed a successfully loaded IMGW temperature in the Kraków brief. The value is not frozen into the app. Historical programme facts are not real-time inventories.
 

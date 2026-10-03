@@ -220,6 +220,11 @@ export default function AgentStudio() {
         ].slice(0, 100),
       }));
       setSelected("writer");
+      if (
+        mode === "local" &&
+        !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      )
+        setReplay(true);
     } catch (e) {
       const message = e instanceof Error ? e.message : "Analysis failed.";
       setError(message);
@@ -250,7 +255,7 @@ export default function AgentStudio() {
       <CommunityNav profile={profile} />
       <div className="civic-heading">
         <div>
-          <span className="eyebrow">03 / RESEARCH YOU CAN FOLLOW</span>
+          <span className="eyebrow">RESEARCH YOU CAN FOLLOW</span>
           <h1>
             No black box.
             <br />
@@ -338,6 +343,12 @@ export default function AgentStudio() {
           )}
         </div>
       </section>
+      {replay && (
+        <p className="agent-notice" role="status">
+          Analysis finished. Replaying the recorded handoffs so you can follow
+          the work.
+        </p>
+      )}
       {!civic.authority.confirmed && (
         <div className="agent-notice">
           The responsible authority has not been confirmed. The agents will keep
@@ -476,6 +487,15 @@ export default function AgentStudio() {
             Review the opportunities <Icon />
           </Button>
         </div>
+      )}
+      {last && !busy && (
+        <a
+          className="quiet-link research-export"
+          download={`elsewhere-${id}-research-${last.id.slice(0, 8)}.md`}
+          href={`data:text/markdown;charset=utf-8,${encodeURIComponent(`# ${profile.name} — research record\n\n${last.mode === "ai" ? "AI research; verify sources" : "Deterministic local analysis"} · ${last.status} · ${last.completedAt}\n\n${last.steps.map((step) => `## ${step.title}\n\nInput: ${step.input}\n\n${step.output}\n\n${step.citations.map((c) => `- [${c.title}](${c.url})`).join("\n")}`).join("\n\n")}\n\nUnresolved local checks require human review. This record is not municipal approval.`)}`}
+        >
+          <Icon name="download" size={16} /> Download this research record
+        </a>
       )}
       <details className="agent-history">
         <summary>

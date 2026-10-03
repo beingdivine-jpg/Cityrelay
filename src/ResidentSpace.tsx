@@ -170,7 +170,10 @@ export default function ResidentSpace({
                       />
                       <Button
                         secondary
-                        disabled={needsReview(r.title + " " + r.detail)}
+                        disabled={
+                          r.title.trim().length < 5 ||
+                          needsReview(r.title + " " + r.detail)
+                        }
                         onClick={() =>
                           change((c) => ({
                             ...c,

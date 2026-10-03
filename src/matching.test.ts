@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { examples, seedProfiles } from "./data";
-import { assessMatches } from "./matching";
+import { assessCase, assessMatches } from "./matching";
 import { exportPlan, createPlan } from "./planLogic";
 import { loadState, saveState, seedState, STORAGE_KEY } from "./storage";
 import { getSource } from "./sources";
@@ -246,4 +246,16 @@ describe("Local persistence and source-linked export", () => {
     expect(result).toContain("Test fixture observation");
     expect(examples[0].evidenceType).toBe("Documented project");
   });
+});
+
+it("can inspect a resident-led case without silently changing the municipal brief", () => {
+  const p = profile();
+  const original = structuredClone(p);
+  const helsinki = examples.find((e) => e.id === "helsinki-info")!;
+  expect(p.problems).toEqual(["heat"]);
+  expect(assessCase(p, helsinki).example.id).toBe("helsinki-info");
+  expect(assessCase(p, helsinki).category).toBe("Needs confirmation");
+  expect(p).toEqual(original);
+  p.goals.objective = "A heat adaptation objective";
+  expect(createPlan(p, helsinki).goal).not.toContain("heat adaptation");
 });

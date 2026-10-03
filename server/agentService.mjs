@@ -392,7 +392,9 @@ export function createAgentService({
             input: JSON.stringify({
               task: step.task,
               municipality: context,
-              focus: safeText(body.focus, 200),
+              focus: shared.has("context")
+                ? safeText(body.focus, 200)
+                : "Municipal focus withheld; use permitted reports only",
               previousFindings: history,
             }),
             ...(search

@@ -4,7 +4,7 @@ import type {
   ImplementationExample,
   PilotPlan,
 } from "./model";
-import { assessMatches } from "./matching";
+import { assessCase } from "./matching";
 import { assetLabels, examples, localSuggestion } from "./data";
 import { getSource } from "./sources";
 export function createPlan(
@@ -17,7 +17,9 @@ export function createPlan(
     communityId: profile.id,
     selectedExamples: [example.id],
     goal:
-      profile.goals.objective ||
+      (profile.problems.includes(example.domain)
+        ? profile.goals.objective
+        : "") ||
       `Assess whether ${example.shortTitle.toLowerCase()} can address the selected local challenge. No local benefit is predicted.`,
     retainedInitiatives: [
       ...profile.existingInitiatives.filter(Boolean),
@@ -50,7 +52,7 @@ export function exportPlan(
   const selected = plan.selectedExamples
     .map((id) => examples.find((e) => e.id === id))
     .filter((e): e is ImplementationExample => !!e);
-  const matches = assessMatches(profile, examples, state.events);
+  const matches = selected.map((e) => assessCase(profile, e));
   const references = [
     ...new Set([
       ...(profile.sources || []),

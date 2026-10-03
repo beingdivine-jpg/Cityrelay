@@ -1,18 +1,16 @@
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { Button, CommunityNav, Icon, useApp } from "./components";
+import { Link, useParams } from "react-router-dom";
+import { Button, CommunityNav, Icon } from "./components";
 import { useCivic } from "./CivicContext";
 import { runFingerprint, topicLabels } from "./civicEngine";
 import { Missing } from "./Workspace";
 import { examples } from "./data";
 import { SourceList } from "./SourceList";
+import { getSource } from "./sources";
 import { CitedOutput } from "./AgentStudio";
-import type { Domain } from "./model";
 export default function Opportunities() {
   const { id = "" } = useParams();
   const { profile, civic, change } = useCivic(id);
-  const { saveProfile } = useApp();
-  const navigate = useNavigate();
   const [tab, setTab] = useState("leads"),
     [notes, setNotes] = useState<Record<string, string>>({}),
     [error, setError] = useState("");
@@ -85,7 +83,7 @@ export default function Opportunities() {
       <CommunityNav profile={profile} />
       <div className="civic-heading">
         <div>
-          <span className="eyebrow">04 / FROM EVIDENCE TO A DECISION</span>
+          <span className="eyebrow">FROM EVIDENCE TO A DECISION</span>
           <h1>
             A possibility.
             <br />
@@ -220,22 +218,16 @@ export default function Opportunities() {
                       <div className="lead-actions">
                         <Button
                           secondary
-                          onClick={() => {
-                            saveProfile({
-                              ...profile,
-                              problems: [o.topic as Domain],
-                              updatedAt: new Date().toISOString(),
-                            });
-                            navigate(`/community/${id}/matches/${o.exampleId}`);
-                          }}
+                          to={`/community/${id}/matches/${o.exampleId}`}
                         >
                           Inspect & adapt this idea <Icon />
                         </Button>
                         <span>
                           Source authority:{" "}
-                          {ex.sources.length
-                            ? "Documented public body"
-                            : "To verify"}{" "}
+                          {ex.sources
+                            .map((id) => getSource(id)?.publisher)
+                            .filter(Boolean)
+                            .join(" / ") || "To verify"}{" "}
                           · No partnership implied
                         </span>
                       </div>

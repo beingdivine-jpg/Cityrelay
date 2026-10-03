@@ -199,3 +199,18 @@ export function assessMatches(
       );
     });
 }
+
+/** A selected case can be investigated without rewriting the municipality's focus. */
+export function assessCase(
+  profile: CommunityProfile,
+  example: ImplementationExample,
+): MatchAssessment {
+  return assessMatches(
+    {
+      ...profile,
+      problems: [example.domain],
+      goals: { ...profile.goals, outcome: "all" },
+    },
+    [example],
+  )[0];
+}

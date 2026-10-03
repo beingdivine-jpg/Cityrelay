@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { examples } from "./data";
-import { assessMatches } from "./matching";
+import { assessCase } from "./matching";
 import { exportPlan } from "./planLogic";
 import {
   Button,
@@ -69,7 +69,9 @@ export default function Plan() {
       ...s,
       plans: s.plans.map((p) => (p.id === plan.id ? { ...p, ...change } : p)),
     }));
-  const matches = assessMatches(profile, examples, state.events);
+  const matches = examples
+    .filter((e) => plan.selectedExamples.includes(e.id))
+    .map((e) => assessCase(profile, e));
   const observations = state.outcomes.filter((o) => o.planId === plan.id);
   const exportText = () => exportPlan(profile, plan, state);
   const copy = async () => {
@@ -654,7 +656,7 @@ export default function Plan() {
               Recomputed from your current profile. Editing the working document
               does not change readiness.
             </p>
-            <Link className="text-link" to={`/community/${id}`}>
+            <Link className="text-link" to={`/community/${id}/brief`}>
               Review local constraints <Icon size={16} />
             </Link>
           </div>
