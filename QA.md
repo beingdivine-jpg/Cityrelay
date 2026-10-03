@@ -16,6 +16,8 @@ Browser checks on the isolated `127.0.0.1:4182` production preview:
 - Saving a checkpoint, changing the proposal and restoring the checkpoint recovers the original text and keeps the intervening version. Exported QA workspace JSON was validated and restored through the browser file picker.
 - Language, source dates, unknown readiness checks and explicit local/device status are visible. The user's existing localhost/live workspaces were preserved.
 
+Production: commit `93eb091` was pushed to GitHub main and Vercel reported success. The live Kraków challenge and Account & backup pages were inspected in Polish; the new city/sign-in/save banner is visible and the console reported no warnings or errors in this check. Shared accounts correctly display disconnected. `/api/status` reports AI and background monitoring disabled until configured.
+
 Connected-release verification is tracked separately in BACKEND_SETUP.md. Until actual production checks are recorded, do not treat email delivery, shared account switching, scheduled execution or paid AI as verified. Historical results below describe previous builds only.
 
 ---
