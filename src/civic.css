@@ -3101,3 +3101,103 @@
     font-size: 11px;
   }
 }
+
+/* The language control stays visible on every route and at phone sizes. */
+.language-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+.language-switcher button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  padding: 8px 4px;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+}
+.language-switcher button[aria-pressed="true"] {
+  opacity: 1;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+.language-switcher span {
+  opacity: 0.4;
+}
+.app-landing .language-switcher {
+  border-color: #ffffff66;
+  color: white;
+}
+.language-switcher button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+@media (max-width: 700px) {
+  .site-header {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-bottom: 16px;
+  }
+  .site-header .wordmark {
+    margin-right: auto;
+  }
+  .site-header .language-switcher {
+    order: 2;
+    margin-left: auto;
+  }
+  .site-header .header-entry {
+    order: 3;
+  }
+  .site-header nav,
+  .site-header .workspace-identity {
+    order: 4;
+    width: 100%;
+  }
+  .language-switcher {
+    gap: 4px;
+    padding: 2px 6px;
+  }
+  .language-switcher button {
+    min-height: 36px;
+    font-size: 12px;
+  }
+}
+html[lang="pl"] .hero h1 {
+  font-size: clamp(44px, 5.2vw, 78px);
+}
+html[lang="pl"] .civic-heading h1 {
+  font-size: clamp(36px, 4vw, 56px);
+}
+html[lang="pl"] .community-nav nav {
+  gap: 20px;
+}
+html[lang="pl"] .community-nav nav a {
+  white-space: normal;
+}
+@media (max-width: 560px) {
+  html[lang="pl"] .community-nav nav {
+    gap: 4px 12px;
+  }
+}
+@media (max-width: 700px) {
+  .site-header,
+  .app-working .site-header {
+    height: auto;
+    min-height: 88px;
+    padding-top: 12px;
+    padding-bottom: 14px;
+  }
+  html[lang="pl"] .hero h1 {
+    font-size: clamp(32px, 10vw, 44px);
+    letter-spacing: -2px;
+  }
+}

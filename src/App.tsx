@@ -1,3 +1,5 @@
+import { t as tr, useLanguage } from "./i18n";
+import LanguageSwitcher from "./LanguageSwitcher";
 import { useEffect, useRef, useState } from "react";
 import {
   BrowserRouter,
@@ -30,99 +32,88 @@ function About() {
   return (
     <div className="about-page page-width">
       <Link className="quiet-link" to="/">
-        <Icon name="back" size={16} /> The idea
+        <Icon name="back" size={16} />
+        {tr(" The idea")}
       </Link>
-      <span className="eyebrow">A CLEAR VIEW OF THE EVIDENCE</span>
+      <span className="eyebrow">{tr("A CLEAR VIEW OF THE EVIDENCE")}</span>
       <h1>
-        Good decisions need
+        {tr("Good decisions need")}
         <br />
-        <span className="blue-text">more than a good story.</span>
+        <span className="blue-text">{tr("more than a good story.")}</span>
       </h1>
       <div className="about-intro">
         <p>
-          Elsewhere helps municipal teams understand ideas in context, test
-          their local fit, and prepare a pilot. The final judgement belongs to
-          the people who know the place.
+          {tr(
+            "Elsewhere helps municipal teams understand ideas in context, test their local fit, and prepare a pilot. The final judgement belongs to the people who know the place.",
+          )}
         </p>
         <p>
-          Our approach draws on URBACT’s understand–adapt–reuse process and
-          public-sector innovation practice. This is an independent hackathon
-          project; no affiliation with the source cities is implied.
+          {tr(
+            "Our approach draws on URBACT’s understand–adapt–reuse process and public-sector innovation practice. This is an independent hackathon project; no affiliation with the source cities is implied.",
+          )}
         </p>
       </div>
       <div className="about-principles">
         <section>
-          <span>01</span>
+          <span>{tr("01")}</span>
           <h2>
-            Real projects.
+            {tr("Real projects.")}
             <br />
-            Visible sources.
+            {tr("Visible sources.")}
           </h2>
           <p>
-            The project catalogue links to municipal, public-agency and research
-            sources. Historical figures retain their dates. Sources are checked
-            manually. Source monitoring can detect page changes; an optional AI
-            scout searches approved public sources. Neither is a verified global
-            project feed.
+            {tr(
+              "The project catalogue links to municipal, public-agency and research sources. Historical figures retain their dates. Sources are checked manually. Source monitoring can detect page changes; an optional AI scout searches approved public sources. Neither is a verified global project feed.",
+            )}
           </p>
         </section>
         <section>
-          <span>02</span>
+          <span>{tr("02")}</span>
           <h2>
-            Local questions.
+            {tr("Local questions.")}
             <br />
-            Honest unknowns.
+            {tr("Honest unknowns.")}
           </h2>
           <p>
-            Transfer checks and suggested pilots are planning tools. A result in
-            one city is not a prediction for another. Costs, staff, site
-            suitability and delivery dates need local confirmation.
+            {tr(
+              "Transfer checks and suggested pilots are planning tools. A result in one city is not a prediction for another. Costs, staff, site suitability and delivery dates need local confirmation.",
+            )}
           </p>
         </section>
         <section>
-          <span>03</span>
+          <span>{tr("03")}</span>
           <h2>
-            Current context.
+            {tr("Current context.")}
             <br />
-            Clear boundaries.
+            {tr("Clear boundaries.")}
           </h2>
           <p>
-            The Kraków walkthrough connects IMGW observations and Open-Meteo
-            forecasts. Report and retrieval times are visible. A failed request
-            shows an unavailable state. Weather is context, not an official
-            alert or a ranking signal.
+            {tr(
+              "The Kraków walkthrough connects IMGW observations and Open-Meteo forecasts. Report and retrieval times are visible. A failed request shows an unavailable state. Weather is context, not an official alert or a ranking signal.",
+            )}
           </p>
         </section>
       </div>
       <details className="about-storage">
-        <summary>How this preview handles your workspace</summary>
+        <summary>{tr("How this preview handles your workspace")}</summary>
         <p>
-          Your advisor identity, city brief, questions and pilot save in this
-          browser. This is device-saved access, not authenticated account
-          access. Nothing is sent to another city. Public weather requests use
-          fixed Kraków coordinates; your notes are not included. Earlier
-          prototype data remains separately preserved. Resident submissions,
-          contributors, access choices and research history also save on this
-          device. Live AI requires a server-side connection and per-run consent;
-          only shared context and permitted reports/documents are sent to
-          OpenAI. Source monitoring runs while this workspace is open, with
-          explicit failures and review notices.
+          {tr(
+            "Your advisor identity, city brief, questions and pilot save in this browser. This is device-saved access, not authenticated account access. Nothing is sent to another city. Public weather requests use fixed Kraków coordinates; your notes are not included. Earlier prototype data remains separately preserved. Resident submissions, contributors, access choices and research history also save on this device. Live AI requires a server-side connection and per-run consent; only shared context and permitted reports/documents are sent to OpenAI. Source monitoring runs while this workspace is open, with explicit failures and review notices.",
+          )}
         </p>
         <p>
-          Open-Meteo’s non-commercial service is attributed in the interface. A
-          commercial release needs appropriate provider terms, secure account
-          infrastructure and shared storage. The animated city is an original
-          conceptual illustration, not a map or a representation of a specific
-          city.
+          {tr(
+            "Open-Meteo’s non-commercial service is attributed in the interface. A commercial release needs appropriate provider terms, secure account infrastructure and shared storage. The animated city is an original conceptual illustration, not a map or a representation of a specific city.",
+          )}
         </p>
       </details>
       <section className="source-directory">
         <div className="section-title">
           <div>
-            <span className="eyebrow">THE RESEARCH NOTEBOOK</span>
-            <h2>Follow the evidence.</h2>
+            <span className="eyebrow">{tr("THE RESEARCH NOTEBOOK")}</span>
+            <h2>{tr("Follow the evidence.")}</h2>
           </div>
-          <span>Checked 3 October 2026</span>
+          <span>{tr("Checked 3 October 2026")}</span>
         </div>
         <SourceList
           ids={sources.filter((s) => s.id !== "world-map").map((s) => s.id)}
@@ -144,24 +135,27 @@ function ResetDialog({
   }, []);
   return (
     <dialog ref={dialog} onCancel={onClose} aria-labelledby="reset-title">
-      <span className="eyebrow">A FRESH START</span>
-      <h2 id="reset-title">Reset this workspace?</h2>
+      <span className="eyebrow">{tr("A FRESH START")}</span>
+      <h2 id="reset-title">{tr("Reset this workspace?")}</h2>
       <p>
-        Your locally saved profiles, plans, questions and observations in this
-        version will be removed. Export anything you need to keep first.
+        {tr(
+          "Your locally saved profiles, plans, questions and observations in this version will be removed. Export anything you need to keep first.",
+        )}
       </p>
       <div className="actions">
         <Button secondary onClick={onClose}>
-          Keep my work
+          {tr("Keep my work")}
         </Button>
         <Button onClick={onReset}>
-          Reset workspace <Icon />
+          {tr("Reset workspace ")}
+          <Icon />
         </Button>
       </div>
     </dialog>
   );
 }
 function Shell() {
+  const language = useLanguage();
   const [initial] = useState(loadState);
   const [state, setState] = useState<AppState>(initial.state);
   const [error, setError] = useState(initial.error);
@@ -175,7 +169,9 @@ function Shell() {
   useEffect(() => {
     const sync = (event: StorageEvent) => {
       if (event.key !== STORAGE_KEY || !event.newValue) return;
-      const incoming = loadState({ getItem: () => event.newValue });
+      const incoming = loadState({
+        getItem: () => event.newValue,
+      });
       if (!incoming.error) {
         setState(incoming.state);
         setBlocked(false);
@@ -195,14 +191,24 @@ function Shell() {
     }
   }, [toast]);
   useEffect(() => {
-    document.title = `Elsewhere — ${landing ? "Great ideas. Local possibilities." : location.pathname === "/enter" ? "Your municipal workspace" : location.pathname.endsWith("/plan") ? "Your pilot brief" : "Municipal innovation workspace"}`;
+    document.title = tr(
+      `Elsewhere — ${landing ? "Great ideas. Local possibilities." : location.pathname === "/enter" ? "Your municipal workspace" : location.pathname.endsWith("/plan") ? "Your pilot brief" : "Municipal innovation workspace"}`,
+    );
+  }, [location.pathname, landing, language]);
+  useEffect(() => {
     if (location.hash) {
       requestAnimationFrame(() =>
         document.getElementById(location.hash.slice(1))?.scrollIntoView(),
       );
     } else {
-      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-      document.getElementById("main-content")?.focus({ preventScroll: true });
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "instant",
+      });
+      document.getElementById("main-content")?.focus({
+        preventScroll: true,
+      });
     }
   }, [location.pathname, location.hash, landing]);
   const update = (fn: (s: AppState) => AppState) => setState(fn);
@@ -218,28 +224,36 @@ function Shell() {
   );
   return (
     <AppContext.Provider
-      value={{ state, update, notify: setToast, saveProfile }}
+      value={{
+        state,
+        update,
+        notify: setToast,
+        saveProfile,
+      }}
     >
       <div
         className={`app ${landing ? "app-landing" : ""} ${working ? "app-working" : ""}`}
       >
         <a className="skip-link" href="#main-content">
-          Skip to content
+          {tr("Skip to content")}
         </a>
         <header className="site-header page-width">
           <Logo />
-          {working ? (
-            <div className="workspace-identity">
-              <span>CIVIC INTELLIGENCE</span>
-              <Link to="/enter">
-                {active?.name || "Municipal advisor"} <span>⌄</span>
-              </Link>
-            </div>
-          ) : (
-            <nav aria-label="Main navigation">
-              <Link to="/#how-it-works">The approach</Link>
-              <Link to="/about">Our sources</Link>
-            </nav>
+          {tr(
+            working ? (
+              <div className="workspace-identity">
+                <span>{tr("CIVIC INTELLIGENCE")}</span>
+                <Link to="/enter">
+                  {tr(active?.name || "Municipal advisor")}{" "}
+                  <span>{tr("⌄")}</span>
+                </Link>
+              </div>
+            ) : (
+              <nav aria-label={tr("Main navigation")}>
+                <Link to="/#how-it-works">{tr("The approach")}</Link>
+                <Link to="/about">{tr("Our sources")}</Link>
+              </nav>
+            ),
           )}
           <Link
             className="header-entry"
@@ -251,29 +265,36 @@ function Shell() {
                   : "/enter"
             }
           >
-            {working ? (
-              <>
-                <span className="advisor-avatar">
-                  {state.advisor?.name === "Municipal advisor"
-                    ? "MA"
-                    : state.advisor?.name.slice(0, 2).toUpperCase() || "MA"}
-                </span>
-                <span>Advisor workspace</span>
-              </>
-            ) : (
-              <>
-                {state.advisor ? "Open workspace" : "Enter workspace"}
-                <Icon size={18} />
-              </>
+            {tr(
+              working ? (
+                <>
+                  <span className="advisor-avatar">
+                    {tr(
+                      state.advisor?.name === "Municipal advisor"
+                        ? "MA"
+                        : state.advisor?.name.slice(0, 2).toUpperCase() || "MA",
+                    )}
+                  </span>
+                  <span>{tr("Advisor workspace")}</span>
+                </>
+              ) : (
+                <>
+                  {tr(state.advisor ? "Open workspace" : "Enter workspace")}
+                  <Icon size={18} />
+                </>
+              ),
             )}
           </Link>
+          <LanguageSwitcher />
         </header>
-        {error && (
-          <div className="storage-warning page-width" role="alert">
-            {error}
-          </div>
+        {tr(
+          error && (
+            <div className="storage-warning page-width" role="alert">
+              {tr(error)}
+            </div>
+          ),
         )}
-        {active && <CivicMonitor id={active.id} />}
+        {tr(active && <CivicMonitor id={active.id} />)}
         <main id="main-content" tabIndex={-1}>
           <Routes>
             <Route path="/" element={<Home />} />
@@ -308,42 +329,48 @@ function Shell() {
         </main>
         <footer className="site-footer page-width">
           <Logo />
-          <p>Shared ideas. Local possibilities.</p>
+          <p>{tr("Shared ideas. Local possibilities.")}</p>
           <div>
-            <Link to="/about">Sources & method</Link>
-            {!landing && (
-              <button onClick={() => setReset(true)}>
-                Reset local workspace
-              </button>
+            <Link to="/about">{tr("Sources & method")}</Link>
+            {tr(
+              !landing && (
+                <button onClick={() => setReset(true)}>
+                  {tr("Reset local workspace")}
+                </button>
+              ),
             )}
-            <span>INDEPENDENT HACKATHON PROJECT / 2026</span>
+            <span>{tr("INDEPENDENT HACKATHON PROJECT / 2026")}</span>
           </div>
         </footer>
-        {toast && (
-          <div className="toast" role="status">
-            <Icon name="check" size={17} />
-            {toast}
-            <button
-              className="icon-button"
-              aria-label="Dismiss notification"
-              onClick={() => setToast("")}
-            >
-              <Icon name="close" size={16} />
-            </button>
-          </div>
+        {tr(
+          toast && (
+            <div className="toast" role="status">
+              <Icon name="check" size={17} />
+              {tr(toast)}
+              <button
+                className="icon-button"
+                aria-label={tr("Dismiss notification")}
+                onClick={() => setToast("")}
+              >
+                <Icon name="close" size={16} />
+              </button>
+            </div>
+          ),
         )}
-        {reset && (
-          <ResetDialog
-            onClose={() => setReset(false)}
-            onReset={() => {
-              setState(seedState());
-              setBlocked(false);
-              setError("");
-              setReset(false);
-              navigate("/enter");
-              setToast("Your local workspace has been reset.");
-            }}
-          />
+        {tr(
+          reset && (
+            <ResetDialog
+              onClose={() => setReset(false)}
+              onReset={() => {
+                setState(seedState());
+                setBlocked(false);
+                setError("");
+                setReset(false);
+                navigate("/enter");
+                setToast("Your local workspace has been reset.");
+              }}
+            />
+          ),
         )}
       </div>
     </AppContext.Provider>

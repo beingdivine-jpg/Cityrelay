@@ -1,3 +1,4 @@
+import { t as tr, locale } from "./i18n";
 import {
   createContext,
   useContext,
@@ -49,7 +50,11 @@ export function LiveProvider({ children }: { children: ReactNode }) {
       .then((raw) => {
         const data = parseObservation(raw);
         if (generation === latest.current)
-          setObservation({ status: "ready", data, error: "" });
+          setObservation({
+            status: "ready",
+            data,
+            error: "",
+          });
       })
       .catch(() => {
         if (generation === latest.current)
@@ -64,7 +69,11 @@ export function LiveProvider({ children }: { children: ReactNode }) {
       .then((raw) => {
         const data = parseForecast(raw);
         if (generation === latest.current)
-          setForecast({ status: "ready", data, error: "" });
+          setForecast({
+            status: "ready",
+            data,
+            error: "",
+          });
       })
       .catch(() => {
         if (generation === latest.current)
@@ -97,7 +106,7 @@ export function LiveProvider({ children }: { children: ReactNode }) {
           observation.status === "loading" || forecast.status === "loading",
       }}
     >
-      {children}
+      {tr(children)}
     </LiveContext.Provider>
   );
 }
@@ -121,113 +130,155 @@ export function LiveWeather({ compact = false }: { compact?: boolean }) {
   return (
     <section
       className={`live-weather ${compact ? "live-compact" : ""}`}
-      aria-label="Kraków current weather context"
+      aria-label={tr("Kraków current weather context")}
     >
       <div className="live-heading">
         <span className="field-kicker">
           <span
             className={`live-dot ${live.observation.status === "ready" && !o?.outdated ? "" : "is-muted"}`}
           />
-          KRAKÓW / LATEST AVAILABLE DATA
+          {tr("KRAKÓW / LATEST AVAILABLE DATA")}
         </span>
         <button onClick={live.refresh} disabled={live.refreshing}>
-          {live.refreshing ? "Updating…" : "Refresh ↻"}
+          {tr(live.refreshing ? "Updating…" : "Refresh ↻")}
         </button>
       </div>
       <div className="weather-reading">
         <div>
           <span className="weather-value">
-            {o
-              ? `${o.temperature.toFixed(1)}°`
-              : live.observation.status === "loading"
-                ? "…"
-                : "—"}
+            {tr(
+              o
+                ? `${o.temperature.toFixed(1)}°`
+                : live.observation.status === "loading"
+                  ? "…"
+                  : "—",
+            )}
           </span>
           <span className="weather-caption">
-            {o?.outdated ? "Older station report" : "Station measurement"}
-            <small>IMGW-PIB · Kraków · station 12566</small>
+            {tr(o?.outdated ? "Older station report" : "Station measurement")}
+            <small>{tr("IMGW-PIB · Kraków · station 12566")}</small>
           </span>
         </div>
-        {o ? (
-          <p className="weather-timestamp">
-            Reported {o.reportedTime}
-            <br />
-            <span>
-              Provider timestamp; timezone not included. Retrieved{" "}
-              {formatTime(o.fetchedAt)} Warsaw time.
-            </span>
-          </p>
-        ) : (
-          <p className="weather-timestamp" role="status">
-            {live.observation.status === "error"
-              ? live.observation.error
-              : "Requesting the latest station report…"}
-          </p>
-        )}
-      </div>
-      {!compact && (
-        <>
-          <div className="forecast-heading">
-            <strong>The next seven days</strong>
-            <span>Forecast · °C / rainfall in mm</span>
-          </div>
-          {f ? (
-            <div className="forecast-days">
-              {f.days.map((d, i) => (
-                <div key={d.time}>
-                  <small>
-                    {i === 0
-                      ? "Today"
-                      : new Date(d.time * 1000).toLocaleDateString("en-GB", {
-                          weekday: "short",
-                          timeZone: "Europe/Warsaw",
-                        })}
-                  </small>
-                  <span
-                    className="forecast-range"
-                    style={{
-                      height: `${Math.max(12, Math.min(45, (d.max - d.min) * 2))}px`,
-                    }}
-                  />
-                  <strong>{Math.round(d.max)}°</strong>
-                  <span>{Math.round(d.min)}°</span>
-                  <small>{d.rain.toFixed(1)} mm</small>
-                </div>
-              ))}
-            </div>
+        {tr(
+          o ? (
+            <p className="weather-timestamp">
+              {tr("Reported ")}
+              {tr(o.reportedTime)}
+              <br />
+              <span>
+                {tr("Provider timestamp; timezone not included. Retrieved")}
+                {tr(" ")}
+                {tr(formatTime(o.fetchedAt))}
+                {tr(" Warsaw time.")}
+              </span>
+            </p>
           ) : (
             <p className="weather-timestamp" role="status">
-              {live.forecast.status === "loading"
-                ? "Requesting the current forecast…"
-                : live.forecast.error}
+              {tr(
+                live.observation.status === "error"
+                  ? live.observation.error
+                  : "Requesting the latest station report…",
+              )}
             </p>
-          )}
-          {f && (
-            <p className="forecast-note">
-              {Math.max(...f.days.map((d) => d.max)) >= 30
-                ? "The forecast includes a daily maximum of at least 30°C. This is weather context, not an official heat alert."
-                : "A longer-term heat project can be explored even when the current forecast is mild."}{" "}
-              Fetched {formatTime(f.fetchedAt)} (Warsaw).
-            </p>
-          )}
-        </>
+          ),
+        )}
+      </div>
+      {tr(
+        !compact && (
+          <>
+            <div className="forecast-heading">
+              <strong>{tr("The next seven days")}</strong>
+              <span>{tr("Forecast · °C / rainfall in mm")}</span>
+            </div>
+            {tr(
+              f ? (
+                <div className="forecast-days">
+                  {tr(
+                    f.days.map((d, i) => (
+                      <div key={d.time}>
+                        <small>
+                          {tr(
+                            i === 0
+                              ? "Today"
+                              : new Date(d.time * 1000).toLocaleDateString(
+                                  locale(),
+                                  {
+                                    weekday: "short",
+                                    timeZone: "Europe/Warsaw",
+                                  },
+                                ),
+                          )}
+                        </small>
+                        <span
+                          className="forecast-range"
+                          style={{
+                            height: `${Math.max(12, Math.min(45, (d.max - d.min) * 2))}px`,
+                          }}
+                        />
+                        <strong>
+                          {tr(Math.round(d.max))}
+                          {tr("°")}
+                        </strong>
+                        <span>
+                          {tr(Math.round(d.min))}
+                          {tr("°")}
+                        </span>
+                        <small>
+                          {tr(d.rain.toFixed(1))}
+                          {tr(" mm")}
+                        </small>
+                      </div>
+                    )),
+                  )}
+                </div>
+              ) : (
+                <p className="weather-timestamp" role="status">
+                  {tr(
+                    live.forecast.status === "loading"
+                      ? "Requesting the current forecast…"
+                      : live.forecast.error,
+                  )}
+                </p>
+              ),
+            )}
+            {tr(
+              f && (
+                <p className="forecast-note">
+                  {tr(
+                    Math.max(...f.days.map((d) => d.max)) >= 30
+                      ? "The forecast includes a daily maximum of at least 30°C. This is weather context, not an official heat alert."
+                      : "A longer-term heat project can be explored even when the current forecast is mild.",
+                  )}
+                  {tr(" ")}
+                  {tr("Fetched ")}
+                  {tr(formatTime(f.fetchedAt))}
+                  {tr(" (Warsaw).")}
+                </p>
+              ),
+            )}
+          </>
+        ),
       )}
       <div className="live-sources">
         <a href={STATION_URL} target="_blank" rel="noreferrer">
-          IMGW observation ↗
+          {tr("IMGW observation ↗")}
         </a>
-        {!compact && (
-          <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
-            Forecast by Open-Meteo · CC BY 4.0 ↗
-          </a>
+        {tr(
+          !compact && (
+            <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
+              {tr("Forecast by Open-Meteo · CC BY 4.0 ↗")}
+            </a>
+          ),
         )}
       </div>
-      {!compact && (
-        <small className="weather-scope">
-          Station conditions are not a neighbourhood heat map. The forecast is
-          modelled; official weather warnings are not connected. Refreshes every
-          15 minutes while open.
-        </small>
+      {tr(
+        !compact && (
+          <small className="weather-scope">
+            {tr(
+              "Station conditions are not a neighbourhood heat map. The forecast is modelled; official weather warnings are not connected. Refreshes every 15 minutes while open.",
+            )}
+          </small>
+        ),
       )}
     </section>
   );

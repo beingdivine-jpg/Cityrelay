@@ -51,3 +51,18 @@ Original supplied hackathon documents and the earlier CityRelay prototype were r
 Added SPA deep-link rewrites and a serverless public-preview API. Automated tests cover Vercel's pre-parsed JSON body, request-size enforcement, same-origin public POSTs, preservation of local-only restrictions and unconditional disabling of paid research in public mode. Vercel successfully deployed commit `2c6f2da` to https://cityrelay.vercel.app on 3 October 2026. The production dashboard identifies GitHub `main` as its update source.
 
 Verified on the public domain: welcome page, guided Kraków entry, direct `/community/krakow/agents` reload, completed five-stage local analysis, source-monitor API and successful checks of all five public HTML sources. An unauthenticated HTTP request to `/api/status` succeeded with AI explicitly disabled. No local private workspace content was uploaded; the live domain starts with its own browser storage. Screenshot: `artifacts/elsewhere-live-vercel.png`.
+
+## English / Polish — 3 October 2026
+
+- Verified a visible English / Polski header switch on desktop and at 390px.
+- Verified Polish selection survives reload, updates the page title and `lang`,
+  and persists while navigating to agent studio, opportunities and resident forms.
+- Verified an unfinished resident title with Polish diacritics survives switching
+  to English, unchanged. The test title was cleared without submitting.
+- Checked local agent summaries, authority/context output, evidence factors,
+  historical population figures and source attribution in Polish.
+- Fixed canonical authority option values and multi-line agent output handling.
+- 59 tests pass, including locale fallback, template placeholders, counts across
+  multiple report topics, Polish pilot/export text and unchanged authored fields.
+- Production build passes. Vite still warns about large application/Three.js
+  chunks; the translation dictionary adds about 44 KB gzip to the main bundle.

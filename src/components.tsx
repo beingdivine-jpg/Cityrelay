@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import { createContext, useContext, useId, type ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
 import type { AppState, CommunityProfile, MatchAssessment } from "./model";
@@ -96,13 +97,13 @@ export function Icon({
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {paths[name]}
+      {tr(paths[name])}
     </svg>
   );
 }
 export function Logo() {
   return (
-    <Link className="wordmark" to="/" aria-label="Elsewhere home">
+    <Link className="wordmark" to="/" aria-label={tr("Elsewhere home")}>
       <svg
         width="30"
         height="30"
@@ -116,7 +117,7 @@ export function Logo() {
           strokeWidth="3.5"
         />
       </svg>
-      <span>elsewhere</span>
+      <span>{tr("elsewhere")}</span>
     </Link>
   );
 }
@@ -138,7 +139,7 @@ export function Button({
   const className = `button ${secondary ? "secondary" : ""}`;
   return to ? (
     <Link className={className} to={to}>
-      {children}
+      {tr(children)}
     </Link>
   ) : (
     <button
@@ -147,7 +148,7 @@ export function Button({
       type={type}
       disabled={disabled}
     >
-      {children}
+      {tr(children)}
     </button>
   );
 }
@@ -163,12 +164,14 @@ export function Field({
   const id = useId();
   return (
     <div className="field">
-      <label htmlFor={id}>{label}</label>
-      {children(id)}
-      {hint && (
-        <p id={`${id}-hint`} className="field-hint">
-          {hint}
-        </p>
+      <label htmlFor={id}>{tr(label)}</label>
+      {tr(children(id))}
+      {tr(
+        hint && (
+          <p id={`${id}-hint`} className="field-hint">
+            {tr(hint)}
+          </p>
+        ),
       )}
     </div>
   );
@@ -187,21 +190,23 @@ export function SelectField({
   hint?: string;
 }) {
   return (
-    <Field label={label} hint={hint}>
-      {(id) => (
+    <Field label={tr(label)} hint={hint}>
+      {tr((id) => (
         <select
           id={id}
           aria-describedby={hint ? `${id}-hint` : undefined}
           value={value}
           onChange={(e) => onChange(e.target.value)}
         >
-          {Object.entries(options).map(([key, text]) => (
-            <option key={key} value={key}>
-              {text}
-            </option>
-          ))}
+          {tr(
+            Object.entries(options).map(([key, text]) => (
+              <option key={key} value={key}>
+                {tr(text)}
+              </option>
+            )),
+          )}
         </select>
-      )}
+      ))}
     </Field>
   );
 }
@@ -223,8 +228,8 @@ export function TextField({
   placeholder?: string;
 }) {
   return (
-    <Field label={label} hint={hint}>
-      {(id) =>
+    <Field label={tr(label)} hint={hint}>
+      {tr((id) =>
         multiline ? (
           <textarea
             id={id}
@@ -233,7 +238,7 @@ export function TextField({
             onChange={(e) => onChange(e.target.value)}
             rows={3}
             required={required}
-            placeholder={placeholder}
+            placeholder={tr(placeholder)}
           />
         ) : (
           <input
@@ -242,10 +247,10 @@ export function TextField({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             required={required}
-            placeholder={placeholder}
+            placeholder={tr(placeholder)}
           />
-        )
-      }
+        ),
+      )}
     </Field>
   );
 }
@@ -255,7 +260,7 @@ export const Tag = ({
 }: {
   children: ReactNode;
   kind?: string;
-}) => <span className={`tag ${kind}`}>{children}</span>;
+}) => <span className={`tag ${kind}`}>{tr(children)}</span>;
 export function Status({ assessment }: { assessment: MatchAssessment }) {
   return (
     <Tag
@@ -268,7 +273,7 @@ export function Status({ assessment }: { assessment: MatchAssessment }) {
       }
     >
       <span className="status-dot" />
-      {assessment.category}
+      {tr(assessment.category)}
     </Tag>
   );
 }
@@ -279,46 +284,59 @@ export function CommunityNav({ profile }: { profile: CommunityProfile }) {
       <div className="community-nav">
         <div className="community-identity">
           <span className="community-initial">
-            {profile.name.slice(0, 1) || "↗"}
+            {tr(profile.name.slice(0, 1) || "↗")}
           </span>
           <div>
-            <strong>{profile.name || "Your municipality"}</strong>
+            <strong>{tr(profile.name || "Your municipality")}</strong>
             <span>
-              {state.advisor?.entryMode === "guided" && profile.id === "krakow"
-                ? "Guided municipal workspace"
-                : "Municipal intelligence workspace"}
+              {tr(
+                state.advisor?.entryMode === "guided" && profile.id === "krakow"
+                  ? "Guided municipal workspace"
+                  : "Municipal intelligence workspace",
+              )}
             </span>
           </div>
         </div>
-        <nav aria-label="Your innovation journey">
+        <nav aria-label={tr("Your innovation journey")}>
           <NavLink end to={`/community/${profile.id}`}>
-            <span>01</span> City signals
+            <span>{tr("01")}</span>
+            {tr(" City signals")}
           </NavLink>
           <NavLink to={`/community/${profile.id}/agents`}>
-            <span>02</span> Agent studio
+            <span>{tr("02")}</span>
+            {tr(" Agent studio")}
           </NavLink>
           <NavLink to={`/community/${profile.id}/opportunities`}>
-            <span>03</span> Opportunities
+            <span>{tr("03")}</span>
+            {tr(" Opportunities")}
           </NavLink>
           <NavLink to={`/community/${profile.id}/plan`}>
-            <span>04</span> Pilot plan
+            <span>{tr("04")}</span>
+            {tr(" Pilot plan")}
           </NavLink>
         </nav>
       </div>
       <div className="civic-utility-nav">
         <div>
-          <Link to={`/community/${profile.id}/data`}>Team & data</Link>
-          <Link to={`/community/${profile.id}/brief`}>Municipal brief</Link>
+          <Link to={`/community/${profile.id}/data`}>{tr("Team & data")}</Link>
+          <Link to={`/community/${profile.id}/brief`}>
+            {tr("Municipal brief")}
+          </Link>
           <Link to={`/community/${profile.id}/monitor`}>
-            Monitoring{" "}
+            {tr("Monitoring")}
+            {tr(" ")}
             <span>
-              {state.civic?.[profile.id]?.notices.filter((n) => !n.read)
-                .length || 0}
+              {tr(
+                state.civic?.[profile.id]?.notices.filter((n) => !n.read)
+                  .length || 0,
+              )}
             </span>
           </Link>
         </div>
         <Link to={`/report/${profile.id}`}>
-          <Icon name="chat" size={14} /> Resident space <Icon size={14} />
+          <Icon name="chat" size={14} />
+          {tr(" Resident space ")}
+          <Icon size={14} />
         </Link>
       </div>
     </div>
@@ -334,38 +352,44 @@ export function EmptyState({
   return (
     <div className="empty-state">
       <Icon name="leaf" size={34} />
-      <h2>{title}</h2>
-      <div>{children}</div>
+      <h2>{tr(title)}</h2>
+      <div>{tr(children)}</div>
     </div>
   );
 }
 export function Readiness({ assessment }: { assessment: MatchAssessment }) {
   return (
     <div className="readiness-list">
-      {assessment.readiness.map((check) => (
-        <div key={check.key} className="readiness-row">
-          <span className={`readiness-symbol ${check.state}`}>
-            {check.state === "met"
-              ? "✓"
-              : check.state === "unknown"
-                ? "?"
-                : "−"}
-          </span>
-          <div>
-            <div className="readiness-label">
-              <strong>{check.label}</strong>
-              <span>
-                {check.state === "met"
-                  ? "Met"
-                  : check.state === "unmet"
-                    ? "Unmet"
-                    : "Unknown"}
-              </span>
+      {tr(
+        assessment.readiness.map((check) => (
+          <div key={check.key} className="readiness-row">
+            <span className={`readiness-symbol ${check.state}`}>
+              {tr(
+                check.state === "met"
+                  ? "✓"
+                  : check.state === "unknown"
+                    ? "?"
+                    : "−",
+              )}
+            </span>
+            <div>
+              <div className="readiness-label">
+                <strong>{tr(check.label)}</strong>
+                <span>
+                  {tr(
+                    check.state === "met"
+                      ? "Met"
+                      : check.state === "unmet"
+                        ? "Unmet"
+                        : "Unknown",
+                  )}
+                </span>
+              </div>
+              <p>{tr(check.explanation)}</p>
             </div>
-            <p>{check.explanation}</p>
           </div>
-        </div>
-      ))}
+        )),
+      )}
     </div>
   );
 }

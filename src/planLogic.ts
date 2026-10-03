@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import type {
   AppState,
   CommunityProfile,
@@ -12,7 +13,7 @@ export function createPlan(
   example: ImplementationExample,
   contextSnapshot?: string,
 ): PilotPlan {
-  return {
+  const plan: PilotPlan = {
     id: `plan-${profile.id}`,
     communityId: profile.id,
     selectedExamples: [example.id],
@@ -43,6 +44,17 @@ export function createPlan(
     proposal: localSuggestion(profile, example, "proposal"),
     contextSnapshot,
   };
+  for (const key of [
+    "adaptations",
+    "prerequisites",
+    "roleAssignments",
+    "schedule",
+    "proposal",
+  ] as const)
+    plan[key] = t(plan[key]);
+  if (!profile.goals.objective || !profile.problems.includes(example.domain))
+    plan.goal = t(plan.goal);
+  return plan;
 }
 export function exportPlan(
   profile: CommunityProfile,
@@ -61,31 +73,33 @@ export function exportPlan(
   ]
     .map(getSource)
     .filter((s) => !!s);
-  return `# ${profile.name || "Your community"} — proposed local pilot\n\n${plan.reviewStatus} • An Elsewhere working proposal, not an approved municipal project\nResponsible authority in the profile: ${profile.authorityType}\n\n## Documented projects informing this proposal\n${selected.map((e) => `- ${e.title} — ${e.origin.name}, ${e.origin.country} (${e.evidenceType})`).join("\n")}\n\n## Proposed local objective\n${plan.goal}\n\n## Proposed action\n${plan.proposal}\n\n## Existing initiatives to consult\n${plan.retainedInitiatives}\n\n## Proposed local adaptations\n${plan.adaptations}\n\n## Unresolved local checks\n${selected
+  return `# ${profile.name || "Your community"} — ${t("proposed local pilot")}\n\n${t(plan.reviewStatus)} • ${t("An Elsewhere working proposal, not an approved municipal project")}\n${t("Responsible authority in the profile")}: ${profile.authorityType}\n\n## ${t("Documented projects informing this proposal")}\n${selected.map((e) => `- ${t(e.title)} — ${e.origin.name}, ${t(e.origin.country)} (${t(e.evidenceType)})`).join("\n")}\n\n## ${t("Proposed local objective")}\n${plan.goal}\n\n## ${t("Proposed action")}\n${plan.proposal}\n\n## ${t("Existing initiatives to consult")}\n${plan.retainedInitiatives}\n\n## ${t("Proposed local adaptations")}\n${plan.adaptations}\n\n## ${t("Unresolved local checks")}\n${selected
     .map((ex) => {
       const a = matches.find((m) => m.example.id === ex.id);
-      return `${ex.shortTitle}:\n${
+      return `${t(ex.shortTitle)}:\n${
         a
           ? a.readiness
               .filter((c) => c.state !== "met")
               .map(
                 (c) =>
-                  `- ${c.state.toUpperCase()}: ${c.label}. ${c.explanation}`,
+                  `- ${t(c.state.toUpperCase())}: ${t(c.label)}. ${t(c.explanation)}`,
               )
               .join("\n") ||
-            "Listed checks entered as met by the user; site-specific confirmation still required."
-          : "No longer matches your selected focus. Reassess."
+            t(
+              "Listed checks entered as met by the user; site-specific confirmation still required.",
+            )
+          : t("No longer matches your selected focus. Reassess.")
       }`;
     })
     .join(
       "\n\n",
-    )}\n\n## Local prerequisite notes\n${plan.prerequisites}\n\n## Proposed roles\n${plan.roleAssignments}\n\n## Proposed sequence / timeline\n${plan.schedule}\n\n## Intended evaluation\n${plan.metrics.map((m) => `- ${m}`).join("\n")}\n\n## Source-reported facts (not local predictions)\n${selected.map((e) => `${e.origin.name} — ${e.shortTitle}\n${e.reportedOutcomes.map((r) => `- ${r}`).join("\n")}\nLimitations: ${e.limitations}`).join("\n\n")}\n\n## Weather context saved with this draft\n${plan.contextSnapshot || "No live context was captured. No weather values are assumed."}\n\n## Sources\n${references.map((s) => `- ${s.publisher}: ${s.title}\n  Published: ${s.published}. Checked: ${s.checked}.\n  ${s.url}`).join("\n")}\n\n## User-reported observations — unverified\n${
+    )}\n\n## ${t("Local prerequisite notes")}\n${plan.prerequisites}\n\n## ${t("Proposed roles")}\n${plan.roleAssignments}\n\n## ${t("Proposed sequence / timeline")}\n${plan.schedule}\n\n## ${t("Intended evaluation")}\n${plan.metrics.map((m) => `- ${t(m)}`).join("\n")}\n\n## ${t("Source-reported facts (not local predictions)")}\n${selected.map((e) => `${e.origin.name} — ${t(e.shortTitle)}\n${e.reportedOutcomes.map((r) => `- ${t(r)}`).join("\n")}\n${t("Limitations")}: ${t(e.limitations)}`).join("\n\n")}\n\n## ${t("Weather context saved with this draft")}\n${t(plan.contextSnapshot || "No live context was captured. No weather values are assumed.")}\n\n## ${t("Sources")}\n${references.map((s) => `- ${s.publisher}: ${s.title}\n  ${t("Published")}: ${t(s.published)}. ${t("Checked")}: ${s.checked}.\n  ${s.url}`).join("\n")}\n\n## ${t("User-reported observations — unverified")}\n${
     state.outcomes
       .filter((o) => o.planId === plan.id)
       .map(
         (o) =>
-          `### ${o.date}\nAction: ${o.action}\nObserved: ${o.observations}\nEffort: ${o.effort}\nObstacles: ${o.obstacles}\nLessons: ${o.lessons}\nProvenance: ${o.provenance}`,
+          `### ${o.date}\n${t("Action")}: ${o.action}\n${t("Observed")}: ${o.observations}\n${t("Effort")}: ${o.effort}\n${t("Obstacles")}: ${o.obstacles}\n${t("Lessons")}: ${o.lessons}\n${t("Provenance")}: ${t(o.provenance)}`,
       )
-      .join("\n\n") || "No observations recorded."
-  }\n\nPublished project facts, live weather context and proposed local actions are distinct. Local suitability, costs, delivery times and outcomes require local evidence.\n`;
+      .join("\n\n") || t("No observations recorded.")
+  }\n\n${t("Published project facts, live weather context and proposed local actions are distinct. Local suitability, costs, delivery times and outcomes require local evidence.")}\n`;
 }

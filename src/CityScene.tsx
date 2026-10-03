@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import { useEffect, useRef, useState } from "react";
 // An original architectural illustration, never presented as a geographic model.
 export default function CityScene() {
@@ -178,12 +179,17 @@ export default function CityScene() {
         group.add(line);
         const pulse = new T.Mesh(
           new T.SphereGeometry(0.16, 12, 12),
-          new T.MeshBasicMaterial({ color: 0xeaff8c }),
+          new T.MeshBasicMaterial({
+            color: 0xeaff8c,
+          }),
         );
         group.add(pulse);
         const base = new T.Mesh(
           new T.PlaneGeometry(100, 100),
-          new T.ShadowMaterial({ color: 0x101b83, opacity: 0.29 }),
+          new T.ShadowMaterial({
+            color: 0x101b83,
+            opacity: 0.29,
+          }),
         );
         base.rotation.x = -Math.PI / 2;
         base.position.y = -0.44;
@@ -281,20 +287,22 @@ export default function CityScene() {
       <div className="scene-fallback" aria-hidden="true">
         <div />
         <div />
-        <span>↗</span>
+        <span>{tr("↗")}</span>
       </div>
       <span className="scene-city scene-city-origin">
         <i />
-        An idea, elsewhere
+        {tr("An idea, elsewhere")}
       </span>
       <span className="scene-city scene-city-local">
-        <i />A possibility, here
+        <i />
+        {tr("A possibility, here")}
       </span>
       <div className="scene-caption">
-        <span>A STUDY IN SHARED POSSIBILITIES</span>
+        <span>{tr("A STUDY IN SHARED POSSIBILITIES")}</span>
         <button aria-pressed={paused} onClick={() => setPaused(!paused)}>
-          {paused ? "Play motion" : "Pause motion"}{" "}
-          <span aria-hidden="true">{paused ? "▷" : "Ⅱ"}</span>
+          {tr(paused ? "Play motion" : "Pause motion")}
+          {tr(" ")}
+          <span aria-hidden="true">{tr(paused ? "▷" : "Ⅱ")}</span>
         </button>
       </div>
     </div>

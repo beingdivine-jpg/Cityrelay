@@ -1,3 +1,4 @@
+import { t as tr, locale } from "./i18n";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Button, CommunityNav, Icon, TextField } from "./components";
@@ -39,32 +40,33 @@ export default function CityData() {
       <div className="civic-heading">
         <div>
           <span className="eyebrow">
-            01 / GIVE THE AGENTS A LOCAL FOUNDATION
+            {tr("01 / GIVE THE AGENTS A LOCAL FOUNDATION")}
           </span>
           <h1>
-            Shared knowledge.
+            {tr("Shared knowledge.")}
             <br />
-            <span className="blue-text">Clear permission.</span>
+            <span className="blue-text">{tr("Clear permission.")}</span>
           </h1>
         </div>
         <p>
-          Different advisors see different parts of the city. Bring that
-          knowledge together and choose exactly what the research workflow can
-          use.
+          {tr(
+            "Different advisors see different parts of the city. Bring that knowledge together and choose exactly what the research workflow can use.",
+          )}
         </p>
       </div>
       <div className="data-authority">
         <div>
-          <span className="eyebrow">WHO IS THIS WORKSPACE FOR?</span>
-          <h2>Start with the authority.</h2>
+          <span className="eyebrow">{tr("WHO IS THIS WORKSPACE FOR?")}</span>
+          <h2>{tr("Start with the authority.")}</h2>
           <p>
-            A city name and a responsible public body are different things.
-            Record the organisation that would review a proposal.
+            {tr(
+              "A city name and a responsible public body are different things. Record the organisation that would review a proposal.",
+            )}
           </p>
         </div>
         <div className="authority-form">
           <label className="field">
-            Authority type
+            {tr("Authority type")}
             <select
               value={civic.authority.kind}
               onChange={(e) =>
@@ -78,18 +80,22 @@ export default function CityData() {
                 }))
               }
             >
-              {[
-                "Municipality",
-                "City council",
-                "Regional authority",
-                "Public agency",
-              ].map((v) => (
-                <option key={v}>{v}</option>
-              ))}
+              {tr(
+                [
+                  "Municipality",
+                  "City council",
+                  "Regional authority",
+                  "Public agency",
+                ].map((v) => (
+                  <option key={v} value={v}>
+                    {tr(v)}
+                  </option>
+                )),
+              )}
             </select>
           </label>
           <TextField
-            label="Responsible organisation"
+            label={tr("Responsible organisation")}
             value={civic.authority.name}
             onChange={(v) =>
               change((c) => ({
@@ -101,7 +107,7 @@ export default function CityData() {
                 },
               }))
             }
-            placeholder="The municipality, council or public agency"
+            placeholder={tr("The municipality, council or public agency")}
           />
           <label className="checkbox-label">
             <input
@@ -111,44 +117,59 @@ export default function CityData() {
               onChange={(e) =>
                 change((c) => ({
                   ...c,
-                  authority: { ...c.authority, confirmed: e.target.checked },
+                  authority: {
+                    ...c.authority,
+                    confirmed: e.target.checked,
+                  },
                 }))
               }
             />
             <span>
-              I have checked this authority profile for this workspace.
+              {tr("I have checked this authority profile for this workspace.")}
             </span>
           </label>
           <small>
-            {civic.authority.confirmed
-              ? "Confirmed by the advisor. This does not verify institutional membership."
-              : "A typed organisation name is not institutional verification."}
+            {tr(
+              civic.authority.confirmed
+                ? "Confirmed by the advisor. This does not verify institutional membership."
+                : "A typed organisation name is not institutional verification.",
+            )}
           </small>
         </div>
       </div>
       <section className="data-section">
         <div className="civic-section-title">
           <div>
-            <span className="eyebrow">THE PEOPLE BEHIND THE CONTEXT</span>
-            <h2>Your municipal team.</h2>
+            <span className="eyebrow">
+              {tr("THE PEOPLE BEHIND THE CONTEXT")}
+            </span>
+            <h2>{tr("Your municipal team.")}</h2>
           </div>
           <span className="tag">
-            Local role planning · no account invitations
+            {tr("Local role planning · no account invitations")}
           </span>
         </div>
         <div className="contributor-grid">
-          {civic.contributors.map((c) => (
-            <article key={c.id}>
-              <span className="contributor-avatar">
-                {c.name.slice(0, 2).toUpperCase()}
-              </span>
-              <div>
-                <h3>{c.name}</h3>
-                <p>{c.department}</p>
-                <small>{c.role}</small>
-              </div>
-            </article>
-          ))}
+          {tr(
+            civic.contributors.map((c) => (
+              <article key={c.id}>
+                <span className="contributor-avatar">
+                  {tr(c.name.slice(0, 2).toUpperCase())}
+                </span>
+                <div>
+                  <h3>
+                    {c.id === "lead" && c.name === "You" ? tr(c.name) : c.name}
+                  </h3>
+                  <p>
+                    {c.id === "lead" && c.department === "Innovation team"
+                      ? tr(c.department)
+                      : c.department}
+                  </p>
+                  <small>{tr(c.role)}</small>
+                </div>
+              </article>
+            )),
+          )}
         </div>
         <form
           className="contributor-form"
@@ -172,137 +193,163 @@ export default function CityData() {
           }}
         >
           <TextField
-            label="Advisor name or role"
+            label={tr("Advisor name or role")}
             value={name}
             onChange={setName}
             required
-            placeholder="e.g. Climate advisor"
+            placeholder={tr("e.g. Climate advisor")}
           />
           <TextField
-            label="Team / department"
+            label={tr("Team / department")}
             value={department}
             onChange={setDepartment}
             required
-            placeholder="e.g. Environment team"
+            placeholder={tr("e.g. Environment team")}
           />
           <Button type="submit">
-            Add contributor <Icon name="plus" />
+            {tr("Add contributor ")}
+            <Icon name="plus" />
           </Button>
         </form>
         <p className="micro">
-          Contributors and ownership are recorded locally. Separate
-          authenticated users and cross-device access are not connected in this
-          preview.
+          {tr(
+            "Contributors and ownership are recorded locally. Separate authenticated users and cross-device access are not connected in this preview.",
+          )}
         </p>
       </section>
       <section className="data-section">
         <div className="civic-section-title">
           <div>
-            <span className="eyebrow">SHARE ONLY WHAT THE AGENTS NEED</span>
-            <h2>The data room.</h2>
+            <span className="eyebrow">
+              {tr("SHARE ONLY WHAT THE AGENTS NEED")}
+            </span>
+            <h2>{tr("The data room.")}</h2>
           </div>
           <Link className="quiet-link" to={`/start?edit=${id}`}>
-            Edit municipal context <Icon name="edit" size={16} />
+            {tr("Edit municipal context ")}
+            <Icon name="edit" size={16} />
           </Link>
         </div>
         <div className="connection-table">
-          {civic.connections.map((c) => (
-            <div key={c.key}>
-              <div className={`connection-icon ${c.enabled ? "enabled" : ""}`}>
-                <Icon
-                  name={
-                    c.key === "reports"
-                      ? "chat"
-                      : c.key === "catalogue"
-                        ? "book"
-                        : c.key === "resources"
-                          ? "leaf"
-                          : "pin"
-                  }
-                  size={23}
-                />
-              </div>
-              <div>
-                <h3>{datasetLabels[c.key]}</h3>
-                <p>
-                  {c.key === "reports"
-                    ? `${civic.reports.length} submitted reports · reporter consent required for external AI`
-                    : c.key === "context"
-                      ? `${profile.existingInitiatives.length} initiatives · ${civic.documents.filter((d) => d.enabled).length} shared local documents`
-                      : c.key === "resources"
-                        ? "Available assets, budget band and staff availability"
-                        : "5 documented city projects · primary source links"}
-                </p>
-              </div>
-              <label className="connection-owner">
-                Data steward
-                <select
-                  aria-label={`Data steward for ${datasetLabels[c.key]}`}
-                  value={c.ownerId}
-                  onChange={(e) =>
-                    change((s) => ({
-                      ...s,
-                      connections: s.connections.map((x) =>
-                        x.key === c.key ? { ...x, ownerId: e.target.value } : x,
-                      ),
-                    }))
-                  }
+          {tr(
+            civic.connections.map((c) => (
+              <div key={c.key}>
+                <div
+                  className={`connection-icon ${c.enabled ? "enabled" : ""}`}
                 >
-                  {civic.contributors.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="sharing-toggle">
-                <input
-                  type="checkbox"
-                  aria-label={`Share ${datasetLabels[c.key]} with agents`}
-                  checked={c.enabled}
-                  onChange={(e) =>
-                    change((s) => ({
-                      ...s,
-                      connections: s.connections.map((x) =>
-                        x.key === c.key
-                          ? { ...x, enabled: e.target.checked }
-                          : x,
-                      ),
-                    }))
-                  }
-                />
-                <span>{c.enabled ? "Shared" : "Withheld"}</span>
-              </label>
-            </div>
-          ))}
+                  <Icon
+                    name={
+                      c.key === "reports"
+                        ? "chat"
+                        : c.key === "catalogue"
+                          ? "book"
+                          : c.key === "resources"
+                            ? "leaf"
+                            : "pin"
+                    }
+                    size={23}
+                  />
+                </div>
+                <div>
+                  <h3>{tr(datasetLabels[c.key])}</h3>
+                  <p>
+                    {tr(
+                      c.key === "reports"
+                        ? `${civic.reports.length} submitted reports · reporter consent required for external AI`
+                        : c.key === "context"
+                          ? `${profile.existingInitiatives.length} initiatives · ${civic.documents.filter((d) => d.enabled).length} shared local documents`
+                          : c.key === "resources"
+                            ? "Available assets, budget band and staff availability"
+                            : "5 documented city projects · primary source links",
+                    )}
+                  </p>
+                </div>
+                <label className="connection-owner">
+                  {tr("Data steward")}
+                  <select
+                    aria-label={tr(`Data steward for ${datasetLabels[c.key]}`)}
+                    value={c.ownerId}
+                    onChange={(e) =>
+                      change((s) => ({
+                        ...s,
+                        connections: s.connections.map((x) =>
+                          x.key === c.key
+                            ? {
+                                ...x,
+                                ownerId: e.target.value,
+                              }
+                            : x,
+                        ),
+                      }))
+                    }
+                  >
+                    {tr(
+                      civic.contributors.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      )),
+                    )}
+                  </select>
+                </label>
+                <label className="sharing-toggle">
+                  <input
+                    type="checkbox"
+                    aria-label={tr(`Share ${datasetLabels[c.key]} with agents`)}
+                    checked={c.enabled}
+                    onChange={(e) =>
+                      change((s) => ({
+                        ...s,
+                        connections: s.connections.map((x) =>
+                          x.key === c.key
+                            ? {
+                                ...x,
+                                enabled: e.target.checked,
+                              }
+                            : x,
+                        ),
+                      }))
+                    }
+                  />
+                  <span>{tr(c.enabled ? "Shared" : "Withheld")}</span>
+                </label>
+              </div>
+            )),
+          )}
         </div>
         <p className="micro">
-          These switches control inputs to new analysis runs. They are workflow
-          permissions, not authenticated access control. Previously recorded run
-          outputs remain in the audit history.
+          {tr(
+            "These switches control inputs to new analysis runs. They are workflow permissions, not authenticated access control. Previously recorded run outputs remain in the audit history.",
+          )}
         </p>
       </section>
       <section className="data-section document-room">
         <div>
-          <span className="eyebrow">LOCAL KNOWLEDGE, WITH AN OWNER</span>
+          <span className="eyebrow">
+            {tr("LOCAL KNOWLEDGE, WITH AN OWNER")}
+          </span>
           <h2>
-            Add the context
+            {tr("Add the context")}
             <br />
-            only your team knows.
+            {tr("only your team knows.")}
           </h2>
           <p>
-            A policy note, a resource constraint or an existing initiative.
-            Local contributions remain advisor-supplied evidence.
+            {tr(
+              "A policy note, a resource constraint or an existing initiative. Local contributions remain advisor-supplied evidence.",
+            )}
           </p>
-          {profile.sources?.length ? (
-            <details className="data-source-details">
-              <summary>
-                Published context already available{" "}
-                <Icon name="plus" size={16} />
-              </summary>
-              <SourceList ids={profile.sources} compact />
-            </details>
-          ) : null}
+          {tr(
+            profile.sources?.length ? (
+              <details className="data-source-details">
+                <summary>
+                  {tr("Published context already available")}
+                  {tr(" ")}
+                  <Icon name="plus" size={16} />
+                </summary>
+                <SourceList ids={profile.sources} compact />
+              </details>
+            ) : null,
+          )}
         </div>
         <form
           className="document-form"
@@ -333,30 +380,37 @@ export default function CityData() {
           }}
         >
           <TextField
-            label="Document title"
+            label={tr("Document title")}
             value={docTitle}
             onChange={setDocTitle}
             required
           />
           <label className="field">
-            Contributing advisor
+            {tr("Contributing advisor")}
             <select value={owner} onChange={(e) => setOwner(e.target.value)}>
-              {civic.contributors.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} / {c.department}
-                </option>
-              ))}
+              {tr(
+                civic.contributors.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.id === "lead" && c.name === "You" ? tr(c.name) : c.name}
+                    {tr(" / ")}
+                    {c.id === "lead" && c.department === "Innovation team"
+                      ? tr(c.department)
+                      : c.department}
+                  </option>
+                )),
+              )}
             </select>
           </label>
           <TextField
-            label="Local context"
+            label={tr("Local context")}
             value={text}
             onChange={(v) => setText(v.slice(0, 30000))}
             required
             multiline
           />
           <label className="document-upload">
-            Or import a .txt file{" "}
+            {tr("Or import a .txt file")}
+            {tr(" ")}
             <input
               type="file"
               accept=".txt,text/plain"
@@ -370,69 +424,90 @@ export default function CityData() {
               onChange={(e) => setExternal(e.target.checked)}
             />
             <span>
-              Allow this document’s text to be sent to OpenAI when an advisor
-              starts live AI research.
+              {tr(
+                "Allow this document’s text to be sent to OpenAI when an advisor starts live AI research.",
+              )}
             </span>
           </label>
-          {error && (
-            <p role="alert" className="form-error">
-              {error}
-            </p>
+          {tr(
+            error && (
+              <p role="alert" className="form-error">
+                {tr(error)}
+              </p>
+            ),
           )}
           <Button type="submit">
-            Add to the data room <Icon name="plus" />
+            {tr("Add to the data room ")}
+            <Icon name="plus" />
           </Button>
         </form>
       </section>
-      {civic.documents.length > 0 && (
-        <div className="document-list">
-          {civic.documents.map((d) => (
-            <article key={d.id}>
-              <div>
-                <span className="eyebrow">
-                  LOCAL CONTRIBUTION /{" "}
-                  {civic.contributors.find((c) => c.id === d.ownerId)?.name}
-                </span>
-                <h3>{d.title}</h3>
-                <p>
-                  {d.text.slice(0, 260)}
-                  {d.text.length > 260 ? "…" : ""}
-                </p>
-                <small>
-                  {d.externalConsent
-                    ? "Permitted for external AI runs"
-                    : "Local processing only"}{" "}
-                  · {new Date(d.createdAt).toLocaleDateString()}
-                </small>
-              </div>
-              <label className="sharing-toggle">
-                <input
-                  type="checkbox"
-                  aria-label={`Share document ${d.title} with agents`}
-                  checked={d.enabled}
-                  onChange={(e) =>
-                    change((c) => ({
-                      ...c,
-                      documents: c.documents.map((x) =>
-                        x.id === d.id ? { ...x, enabled: e.target.checked } : x,
-                      ),
-                    }))
-                  }
-                />
-                <span>{d.enabled ? "Shared" : "Withheld"}</span>
-              </label>
-            </article>
-          ))}
-        </div>
+      {tr(
+        civic.documents.length > 0 && (
+          <div className="document-list">
+            {tr(
+              civic.documents.map((d) => (
+                <article key={d.id}>
+                  <div>
+                    <span className="eyebrow">
+                      {tr("LOCAL CONTRIBUTION /")}
+                      {tr(" ")}
+                      {civic.contributors.find((c) => c.id === d.ownerId)?.name}
+                    </span>
+                    <h3>{d.title}</h3>
+                    <p>
+                      {d.text.slice(0, 260)}
+                      {tr(d.text.length > 260 ? "…" : "")}
+                    </p>
+                    <small>
+                      {tr(
+                        d.externalConsent
+                          ? "Permitted for external AI runs"
+                          : "Local processing only",
+                      )}
+                      {tr(" ")}
+                      {tr("· ")}
+                      {tr(new Date(d.createdAt).toLocaleDateString(locale()))}
+                    </small>
+                  </div>
+                  <label className="sharing-toggle">
+                    <input
+                      type="checkbox"
+                      aria-label={tr(`Share document ${d.title} with agents`)}
+                      checked={d.enabled}
+                      onChange={(e) =>
+                        change((c) => ({
+                          ...c,
+                          documents: c.documents.map((x) =>
+                            x.id === d.id
+                              ? {
+                                  ...x,
+                                  enabled: e.target.checked,
+                                }
+                              : x,
+                          ),
+                        }))
+                      }
+                    />
+                    <span>{tr(d.enabled ? "Shared" : "Withheld")}</span>
+                  </label>
+                </article>
+              )),
+            )}
+          </div>
+        ),
       )}
       <div className="civic-next">
         <p>
-          {civic.authority.confirmed
-            ? "The local foundation is ready. Collect resident input or begin a research run."
-            : "Confirm the responsible authority to complete the first step."}
+          {tr(
+            civic.authority.confirmed
+              ? "The local foundation is ready. Collect resident input or begin a research run."
+              : "Confirm the responsible authority to complete the first step.",
+          )}
         </p>
         <Button to={`/community/${id}/agents`}>
-          Continue to the agent studio <Icon />
+          {tr("Continue to the agent studio ")}
+          <Icon />
         </Button>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { examples, localSuggestion } from "./data";
@@ -115,17 +116,23 @@ export default function MatchDetail() {
     <div className="work-page page-width case-page">
       <CommunityNav profile={profile} />
       <Link className="quiet-link case-back" to={`/community/${id}/matches`}>
-        <Icon name="back" size={16} /> All relevant ideas
+        <Icon name="back" size={16} />
+        {tr(" All relevant ideas")}
       </Link>
       <header className="case-heading">
         <div>
           <span className="eyebrow">
-            LEARN FROM {example.origin.name.toUpperCase()},{" "}
-            {example.origin.country.toUpperCase()}
+            {tr("LEARN FROM ")}
+            {tr(example.origin.name.toUpperCase())}
+            {tr(",")}
+            {tr(" ")}
+            {tr(example.origin.country.toUpperCase())}
           </span>
-          <h1>{meta?.headline || example.title}</h1>
+          <h1>{tr(meta?.headline || example.title)}</h1>
           <p>
-            {example.shortTitle} <span>→</span> A possibility for {profile.name}
+            {tr(example.shortTitle)} <span>{tr("→")}</span>
+            {tr(" A possibility for ")}
+            {profile.name}
           </p>
         </div>
         <div className="case-art-small">
@@ -134,228 +141,287 @@ export default function MatchDetail() {
       </header>
       <div className="case-layout">
         <div className="case-main">
-          <nav className="case-tabs" aria-label="Explore this idea">
-            {[
-              ["understand", "Understand the idea"],
-              ["fit", "Check the local fit"],
-              ["adapt", "Make it yours"],
-            ].map(([key, label], i) => (
-              <button
-                key={key}
-                aria-pressed={panel === key}
-                onClick={() => setPanel(key)}
-              >
-                <span>0{i + 1}</span>
-                {label}
-              </button>
-            ))}
+          <nav className="case-tabs" aria-label={tr("Explore this idea")}>
+            {tr(
+              [
+                ["understand", "Understand the idea"],
+                ["fit", "Check the local fit"],
+                ["adapt", "Make it yours"],
+              ].map(([key, label], i) => (
+                <button
+                  key={key}
+                  aria-pressed={panel === key}
+                  onClick={() => setPanel(key)}
+                >
+                  <span>
+                    {tr("0")}
+                    {tr(i + 1)}
+                  </span>
+                  {tr(label)}
+                </button>
+              )),
+            )}
           </nav>
           <section
             className="case-panel"
-            aria-label={
+            aria-label={tr(
               panel === "understand"
                 ? "Understand the idea"
                 : panel === "fit"
                   ? "Check the local fit"
-                  : "Make it yours"
-            }
+                  : "Make it yours",
+            )}
           >
-            {panel === "understand" && (
-              <>
-                <span className="eyebrow">WHAT HAPPENED ELSEWHERE</span>
-                <h2>{example.title}.</h2>
-                <p className="case-mechanism">{example.mechanism}</p>
-                <div className="source-fact">
-                  <strong>{example.fact.value}</strong>
-                  <div>
-                    <span>{example.fact.label}</span>
-                    <small>{example.fact.asOf}</small>
-                    <a
-                      href={getSource(example.fact.sourceId)?.url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {getSource(example.fact.sourceId)?.publisher}{" "}
-                      <span>↗</span>
-                    </a>
+            {tr(
+              panel === "understand" && (
+                <>
+                  <span className="eyebrow">
+                    {tr("WHAT HAPPENED ELSEWHERE")}
+                  </span>
+                  <h2>
+                    {tr(example.title)}
+                    {tr(".")}
+                  </h2>
+                  <p className="case-mechanism">{tr(example.mechanism)}</p>
+                  <div className="source-fact">
+                    <strong>{tr(example.fact.value)}</strong>
+                    <div>
+                      <span>{tr(example.fact.label)}</span>
+                      <small>{tr(example.fact.asOf)}</small>
+                      <a
+                        href={getSource(example.fact.sourceId)?.url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {tr(getSource(example.fact.sourceId)?.publisher)}
+                        {tr(" ")}
+                        <span>{tr("↗")}</span>
+                      </a>
+                    </div>
                   </div>
-                </div>
-                <div className="lesson-note">
-                  <span>THE TRANSFERABLE IDEA</span>
-                  <p>
-                    {meta?.lesson || "Study the mechanism before adapting it."}
-                  </p>
-                </div>
-                <details className="evidence-details">
-                  <summary>
-                    Read the evidence & limitations{" "}
-                    <Icon name="plus" size={17} />
-                  </summary>
-                  {example.reportedOutcomes.map((o) => (
-                    <p key={o}>{o}</p>
-                  ))}
-                  <p className="evidence-limit">{example.limitations}</p>
-                  <SourceList ids={example.sources} />
-                </details>
-                <div className="panel-next">
-                  <span>Now, bring your local context into the picture.</span>
-                  <Button onClick={() => setPanel("fit")}>
-                    Check the local fit <Icon />
-                  </Button>
-                </div>
-              </>
+                  <div className="lesson-note">
+                    <span>{tr("THE TRANSFERABLE IDEA")}</span>
+                    <p>
+                      {tr(
+                        meta?.lesson ||
+                          "Study the mechanism before adapting it.",
+                      )}
+                    </p>
+                  </div>
+                  <details className="evidence-details">
+                    <summary>
+                      {tr("Read the evidence & limitations")}
+                      {tr(" ")}
+                      <Icon name="plus" size={17} />
+                    </summary>
+                    {tr(
+                      example.reportedOutcomes.map((o) => (
+                        <p key={o}>{tr(o)}</p>
+                      )),
+                    )}
+                    <p className="evidence-limit">{tr(example.limitations)}</p>
+                    <SourceList ids={example.sources} />
+                  </details>
+                  <div className="panel-next">
+                    <span>
+                      {tr("Now, bring your local context into the picture.")}
+                    </span>
+                    <Button onClick={() => setPanel("fit")}>
+                      {tr("Check the local fit ")}
+                      <Icon />
+                    </Button>
+                  </div>
+                </>
+              ),
             )}
-            {panel === "fit" && (
-              <>
-                <span className="eyebrow">
-                  FROM {example.origin.name.toUpperCase()} TO{" "}
-                  {profile.name.toUpperCase()}
-                </span>
-                <h2>What would it take here?</h2>
-                <p>
-                  An idea can travel. Its conditions need checking. These are
-                  suggested transfer checks, using your current brief.
-                </p>
-                {assessment ? (
-                  <>
-                    <div className="fit-connection">
-                      <span>WHAT YOU CAN BUILD ON</span>
-                      <p>{assessment.reasons[0]}</p>
-                    </div>
-                    <Readiness assessment={assessment} />
-                    <Constraints profile={profile} />
-                    <div className="peer-question">
-                      <div>
-                        <span className="eyebrow">
-                          ONE QUESTION CAN MOVE THINGS FORWARD
-                        </span>
-                        <h3>{assessment.question}</h3>
-                      </div>
-                      <button className="quiet-link" onClick={ask}>
-                        Draft this question <Icon name="chat" size={18} />
-                      </button>
-                    </div>
-                    <div className="panel-next">
-                      <span>Keep the useful parts. Adapt the rest.</span>
-                      <Button onClick={() => setPanel("adapt")}>
-                        Shape the local version <Icon />
-                      </Button>
-                    </div>
-                  </>
-                ) : (
+            {tr(
+              panel === "fit" && (
+                <>
+                  <span className="eyebrow">
+                    {tr("FROM ")}
+                    {tr(example.origin.name.toUpperCase())}
+                    {tr(" TO")}
+                    {tr(" ")}
+                    {tr(profile.name.toUpperCase())}
+                  </span>
+                  <h2>{tr("What would it take here?")}</h2>
                   <p>
-                    Your challenge has changed.{" "}
-                    <Link to={`/community/${id}/matches`}>
-                      Return to the current ideas.
-                    </Link>
+                    {tr(
+                      "An idea can travel. Its conditions need checking. These are suggested transfer checks, using your current brief.",
+                    )}
                   </p>
-                )}
-              </>
+                  {tr(
+                    assessment ? (
+                      <>
+                        <div className="fit-connection">
+                          <span>{tr("WHAT YOU CAN BUILD ON")}</span>
+                          <p>{tr(assessment.reasons[0])}</p>
+                        </div>
+                        <Readiness assessment={assessment} />
+                        <Constraints profile={profile} />
+                        <div className="peer-question">
+                          <div>
+                            <span className="eyebrow">
+                              {tr("ONE QUESTION CAN MOVE THINGS FORWARD")}
+                            </span>
+                            <h3>{tr(assessment.question)}</h3>
+                          </div>
+                          <button className="quiet-link" onClick={ask}>
+                            {tr("Draft this question ")}
+                            <Icon name="chat" size={18} />
+                          </button>
+                        </div>
+                        <div className="panel-next">
+                          <span>
+                            {tr("Keep the useful parts. Adapt the rest.")}
+                          </span>
+                          <Button onClick={() => setPanel("adapt")}>
+                            {tr("Shape the local version ")}
+                            <Icon />
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <p>
+                        {tr("Your challenge has changed.")}
+                        {tr(" ")}
+                        <Link to={`/community/${id}/matches`}>
+                          {tr("Return to the current ideas.")}
+                        </Link>
+                      </p>
+                    ),
+                  )}
+                </>
+              ),
             )}
-            {panel === "adapt" && (
-              <>
-                <span className="eyebrow">
-                  YOUR LOCAL VERSION / A WORKING PROPOSAL
-                </span>
-                <h2>Make it belong to {profile.name}.</h2>
-                <p>{localSuggestion(profile, example, "adaptation")}</p>
-                <TextField
-                  label="What could you try locally?"
-                  multiline
-                  value={proposal}
-                  onChange={setProposal}
-                />
-                <p className="field-hint">
-                  A proposal to investigate. Local resources, permissions and
-                  outcomes are still to be established.
-                </p>
-                <div className="panel-next">
-                  <span>Take this into a practical, editable pilot brief.</span>
-                  <Button onClick={add} disabled={!assessment}>
-                    Create a pilot brief <Icon />
-                  </Button>
-                </div>
-              </>
+            {tr(
+              panel === "adapt" && (
+                <>
+                  <span className="eyebrow">
+                    {tr("YOUR LOCAL VERSION / A WORKING PROPOSAL")}
+                  </span>
+                  <h2>
+                    {tr("Make it belong to ")}
+                    {profile.name}
+                    {tr(".")}
+                  </h2>
+                  <p>{tr(localSuggestion(profile, example, "adaptation"))}</p>
+                  <TextField
+                    label={tr("What could you try locally?")}
+                    multiline
+                    value={proposal}
+                    onChange={setProposal}
+                  />
+                  <p className="field-hint">
+                    {tr(
+                      "A proposal to investigate. Local resources, permissions and outcomes are still to be established.",
+                    )}
+                  </p>
+                  <div className="panel-next">
+                    <span>
+                      {tr("Take this into a practical, editable pilot brief.")}
+                    </span>
+                    <Button onClick={add} disabled={!assessment}>
+                      {tr("Create a pilot brief ")}
+                      <Icon />
+                    </Button>
+                  </div>
+                </>
+              ),
             )}
           </section>
-          {draft && (
-            <section id="peer-draft" className="peer-draft">
-              <span className="eyebrow">
-                A QUESTION FOR {example.origin.name.toUpperCase()}
-              </span>
-              <h2>Ask what the report can’t tell you.</h2>
-              <TextField
-                label="Your draft question"
-                value={draft.text}
-                multiline
-                onChange={(text) =>
-                  update((s) => ({
-                    ...s,
-                    drafts: s.drafts.map((d) =>
-                      d.id === draft.id
-                        ? { ...d, text, updatedAt: new Date().toISOString() }
-                        : d,
-                    ),
-                  }))
-                }
-              />
-              <p className="micro">
-                Saved locally. No message has been sent. Use the public source
-                to identify the appropriate organisation.
-              </p>
-              <button
-                className="quiet-link"
-                onClick={() => {
-                  update((s) => ({
-                    ...s,
-                    drafts: s.drafts.filter((d) => d.id !== draft.id),
-                  }));
-                  notify("Draft question removed.");
-                }}
-              >
-                Remove draft <Icon name="close" size={15} />
-              </button>
-            </section>
+          {tr(
+            draft && (
+              <section id="peer-draft" className="peer-draft">
+                <span className="eyebrow">
+                  {tr("A QUESTION FOR ")}
+                  {tr(example.origin.name.toUpperCase())}
+                </span>
+                <h2>{tr("Ask what the report can’t tell you.")}</h2>
+                <TextField
+                  label={tr("Your draft question")}
+                  value={draft.text}
+                  multiline
+                  onChange={(text) =>
+                    update((s) => ({
+                      ...s,
+                      drafts: s.drafts.map((d) =>
+                        d.id === draft.id
+                          ? {
+                              ...d,
+                              text,
+                              updatedAt: new Date().toISOString(),
+                            }
+                          : d,
+                      ),
+                    }))
+                  }
+                />
+                <p className="micro">
+                  {tr(
+                    "Saved locally. No message has been sent. Use the public source to identify the appropriate organisation.",
+                  )}
+                </p>
+                <button
+                  className="quiet-link"
+                  onClick={() => {
+                    update((s) => ({
+                      ...s,
+                      drafts: s.drafts.filter((d) => d.id !== draft.id),
+                    }));
+                    notify("Draft question removed.");
+                  }}
+                >
+                  {tr("Remove draft ")}
+                  <Icon name="close" size={15} />
+                </button>
+              </section>
+            ),
           )}
         </div>
         <aside className="case-margin">
-          <span className="eyebrow">YOUR LOCAL LENS</span>
+          <span className="eyebrow">{tr("YOUR LOCAL LENS")}</span>
           <h3>{profile.name}</h3>
           <p>
-            {!profile.problems.includes(example.domain)
-              ? "Investigating a new topic alongside your current municipal brief. Review the local need before adding this approach to a pilot."
-              : profile.goals.objective ||
-                profile.goals.ambition ||
-                "Explore a useful idea for your municipality."}
+            {tr(
+              !profile.problems.includes(example.domain)
+                ? "Investigating a new topic alongside your current municipal brief. Review the local need before adding this approach to a pilot."
+                : profile.goals.objective ||
+                    profile.goals.ambition ||
+                    "Explore a useful idea for your municipality.",
+            )}
           </p>
-          {assessment && <Status assessment={assessment} />}
+          {tr(assessment && <Status assessment={assessment} />)}
           <dl>
             <div>
-              <dt>Source evidence</dt>
-              <dd>Documented project</dd>
+              <dt>{tr("Source evidence")}</dt>
+              <dd>{tr("Documented project")}</dd>
             </div>
             <div>
-              <dt>Local feasibility</dt>
+              <dt>{tr("Local feasibility")}</dt>
               <dd>
-                {assessment
-                  ? `${assessment.readiness.filter((c) => c.state !== "met").length} checks to resolve`
-                  : "Reassess your brief"}
+                {tr(
+                  assessment
+                    ? `${assessment.readiness.filter((c) => c.state !== "met").length} checks to resolve`
+                    : "Reassess your brief",
+                )}
               </dd>
             </div>
             <div>
-              <dt>Local outcome</dt>
-              <dd>To be tested</dd>
+              <dt>{tr("Local outcome")}</dt>
+              <dd>{tr("To be tested")}</dd>
             </div>
           </dl>
           <Link className="quiet-link" to={`/community/${id}/brief`}>
-            Revisit your brief <Icon size={15} />
+            {tr("Revisit your brief ")}
+            <Icon size={15} />
           </Link>
           <div className="margin-principle">
-            <span>↗</span>
+            <span>{tr("↗")}</span>
             <p>
-              The best idea is the one
+              {tr("The best idea is the one")}
               <br />
-              you can make your own.
+              {tr("you can make your own.")}
             </p>
           </div>
         </aside>

@@ -84,3 +84,19 @@ Import `beingdivine-jpg/Cityrelay` into Vercel, keep the project root at `./`, a
 The public preview includes local analysis, browser-saved workspaces, resident intake, research history, pilot planning, public weather and a Vercel function for bounded public-source monitoring. `api/[...path].js` reuses the source checker in explicit public-preview mode, with same-origin checks, source/redirect allowlisting and request limits. Limits are per warm function instance, not a distributed abuse-prevention system. The research endpoint is disabled in this mode even if an API key exists; authenticated access and persistent usage controls are needed before enabling paid research publicly.
 
 The live domain has separate browser storage from localhost. Existing local drafts are not automatically uploaded or shared with visitors. Source monitoring still runs only while a visible workspace is open. Vercel hosting does not add authenticated municipal accounts, shared storage or a background scheduler.
+
+### Interface languages
+
+The header offers **English / Polski** on every route. Selection persists in
+`elsewhere.language`, updates the document language and page title, and stays in
+sync across tabs. Switching does not remount forms or rewrite saved workspaces.
+Polish product copy lives in `src/locales/pl.json`; structured explanations use
+`src/locales/pl-patterns.json`. Dates use the selected locale. Keep new visible
+copy translated at the presentation boundary, and keep form option values,
+model identifiers and matching rules canonical.
+
+Official source titles/URLs and user-authored submissions, notes and existing
+pilot drafts retain their original language. New generated pilot text uses the
+selected language; exports localize headings and source explanations. When the
+optional live AI service is configured, new runs request the selected language;
+previous AI outputs and citation offsets are preserved.

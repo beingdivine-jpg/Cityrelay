@@ -1,3 +1,4 @@
+import { locale } from "./i18n";
 export const STATION_URL =
   "https://danepubliczne.imgw.pl/api/data/synop/station/krakow";
 export const FORECAST_URL =
@@ -150,7 +151,7 @@ export async function fetchPublicJson(
   return response.json();
 }
 export const formatTime = (time: string) =>
-  new Date(time).toLocaleString("en-GB", {
+  new Date(time).toLocaleString(locale(), {
     timeZone: "Europe/Warsaw",
     day: "numeric",
     month: "short",
