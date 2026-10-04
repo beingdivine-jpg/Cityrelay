@@ -66,20 +66,39 @@ export default function JuryTour() {
   const modal = useRef<HTMLDialogElement>(null);
   const [targetFound, setTargetFound] = useState(false);
   const [locate, setLocate] = useState(0);
+  const demo = state.civic?.["krakow-demo"];
+  const profile = state.profiles.find((p) => p.id === "krakow-demo");
+  const latest = demo?.runs.find((run) => run.status === "complete");
+  const completedRun =
+    latest &&
+    profile &&
+    demo &&
+    latest.fingerprint === runFingerprint(profile, demo);
+  const needsResearch =
+    progress?.step === "choose" &&
+    (!completedRun || !latest?.opportunities.length);
   const baseCopy = progress ? juryCopy[progress.step] : null;
   const stageCopy =
     progress?.step === "run" && agent.id
       ? agentWalkthroughCopy[agent.id]
       : null;
   const copy =
-    baseCopy && stageCopy
+    needsResearch && baseCopy
       ? {
           ...baseCopy,
-          ...(agent.waiting
-            ? stageCopy.handoff || stageCopy.working
-            : stageCopy.working),
+          title: "No current leads to compare.",
+          body: "Check the shared inputs and your challenge, then run the agents again. The guide will continue when there are documented results.",
+          action: "Review your inputs, then restart the research.",
+          target: "research-recovery",
         }
-      : baseCopy;
+      : baseCopy && stageCopy
+        ? {
+            ...baseCopy,
+            ...(agent.waiting
+              ? stageCopy.handoff || stageCopy.working
+              : stageCopy.working),
+          }
+        : baseCopy;
   const expected = progress ? juryRoute(progress.step, progress.caseId) : "";
   const onRoute = location.pathname === expected;
   const visible = !!progress && !intro && !shared.workspace;
@@ -224,6 +243,8 @@ export default function JuryTour() {
       navigate(expected);
       return;
     }
+    if (progress?.step === "choose" && !targetFound)
+      document.querySelector<HTMLButtonElement>('[data-tour="leads"]')?.click();
     const target = document.querySelector<HTMLElement>(
       `[data-tour="${progress?.step === "run" && agent.waiting ? "handoff" : copy?.target}"]`,
     );
@@ -237,14 +258,6 @@ export default function JuryTour() {
     setLocate((n) => n + 1);
   }
   // A browser reload cancels a run. Resume at launch; a saved completed run can still be inspected.
-  const demo = state.civic?.["krakow-demo"];
-  const profile = state.profiles.find((p) => p.id === "krakow-demo");
-  const latest = demo?.runs[0];
-  const completedRun =
-    latest?.status === "complete" &&
-    profile &&
-    demo &&
-    latest.fingerprint === runFingerprint(profile, demo);
   return (
     <>
       {intro && (
@@ -389,10 +402,12 @@ export default function JuryTour() {
                     )}
                   </p>
                 </div>
-                <button className="jury-show" onClick={showTarget}>
-                  {t(!onRoute ? "Return to this step" : "Show me where")}{" "}
-                  <Icon size={17} />
-                </button>
+                {!needsResearch && (
+                  <button className="jury-show" onClick={showTarget}>
+                    {t(!onRoute ? "Return to this step" : "Show me where")}{" "}
+                    <Icon size={17} />
+                  </button>
+                )}
                 {onRoute &&
                   !targetFound &&
                   ["reality", "shape"].includes(progress.step) && (
@@ -403,6 +418,17 @@ export default function JuryTour() {
                 {progress.step === "access" && (
                   <Link className="jury-show" to={`${juryRoot}/agents`}>
                     {t("Continue to the agent studio")} <Icon size={17} />
+                  </Link>
+                )}
+                {needsResearch && (
+                  <Link
+                    className="jury-show"
+                    to={`${juryRoot}/data`}
+                    onClick={() =>
+                      setProgress((p) => p && { ...p, step: "access" })
+                    }
+                  >
+                    {t("Review inputs & try again")} <Icon size={17} />
                   </Link>
                 )}
                 {["reality", "shape"].includes(progress.step) && (

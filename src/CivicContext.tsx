@@ -147,29 +147,36 @@ export function CivicMonitor({ id }: { id: string }) {
   latest.current = { civic, change };
   useEffect(() => {
     if (!civic?.monitor.enabled) return;
+    let active = true;
     const check = async () => {
       const current = latest.current;
       if (busy.current || document.hidden || !current.civic) return;
       busy.current = true;
       try {
         const snapshots = await checkSources(current.civic);
-        latest.current.change((c) => applySnapshots(c, snapshots));
+        if (active) current.change((c) => applySnapshots(c, snapshots));
       } catch (e) {
-        latest.current.change((c) => ({
-          ...c,
-          monitor: {
-            ...c.monitor,
-            lastError:
-              e instanceof Error ? e.message : "Automatic source check failed.",
-            lastChecked: new Date().toISOString(),
-          },
-        }));
+        if (active)
+          current.change((c) => ({
+            ...c,
+            monitor: {
+              ...c.monitor,
+              lastError:
+                e instanceof Error
+                  ? e.message
+                  : "Automatic source check failed.",
+              lastChecked: new Date().toISOString(),
+            },
+          }));
       } finally {
         busy.current = false;
       }
     };
     const timer = setInterval(() => void check(), 15 * 60 * 1000);
-    return () => clearInterval(timer);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
   }, [id, civic?.monitor.enabled]);
   useEffect(() => {
     if (!profile || !civic?.monitor.enabled) return;

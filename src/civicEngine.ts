@@ -15,6 +15,7 @@ import type {
 import { examples } from "./data";
 import { assessCase, initiativeMatches } from "./matching";
 import { getSource } from "./sources";
+import { calculateFitScore } from "./fitScore";
 export const topicLabels: Record<CivicTopic, string> = {
   heat: "Heat & shade",
   water: "Rain & water",
@@ -117,6 +118,8 @@ export function duplicateReport(
 ) {
   return reports.find(
     (r) =>
+      r.status === "received" &&
+      !r.duplicateOf &&
       normalize(r.title + " " + r.detail) === normalize(title + " " + detail) &&
       (area === undefined || normalize(r.area) === normalize(area)) &&
       (kind === undefined || r.kind === kind) &&
@@ -277,6 +280,7 @@ export function buildOpportunities(
         reportCount: signals.find((s) => s.topic === e.domain)?.count || 0,
         state: blocked ? "hold" : unknown ? "investigate" : "ready",
         factors,
+        scorecard: calculateFitScore(assessCase(profile, e, civic)),
         reason: blocked
           ? "A stated local constraint blocks this approach."
           : unknown
@@ -569,13 +573,21 @@ export async function localAnalysis(
           detail:
             reports.find((r) => r.id === idea.reportId)?.title || idea.reason,
         });
-      for (const o of run.opportunities)
+      for (const o of run.opportunities) {
         for (const factor of o.factors)
           await emit({
             kind: "check",
             title: `${examples.find((e) => e.id === o.exampleId)!.origin.name} · ${factor.name}`,
             detail: `${factor.state.toUpperCase()}: ${factor.detail}`,
           });
+        if (o.scorecard)
+          await emit({
+            kind: "check",
+            title: "Fit score calculated",
+            detail: `${examples.find((e) => e.id === o.exampleId)!.origin.name}: ${o.scorecard.score}/100 · ${o.scorecard.points}/${o.scorecard.maximum} points.`,
+            scorecard: o.scorecard,
+          });
+      }
       step.input = `${run.opportunities.length} approaches and ${reports.filter((r) => r.kind === "idea").length} submitted ideas`;
       step.output =
         run.opportunities

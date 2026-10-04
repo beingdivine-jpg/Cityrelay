@@ -43,7 +43,8 @@ export function buildPilotPdf(text: string, font: string, city: string) {
   }
   header();
   // Render plain text only: authored text is never interpreted as HTML or code.
-  for (const raw of text.split("\n")) {
+  const paragraphs = text.split("\n");
+  for (const [index, raw] of paragraphs.entries()) {
     const heading = raw.match(/^(#{1,3})\s+(.*)$/);
     const level = heading?.[1].length || 0;
     const value = (heading ? heading[2] : raw).replace(
@@ -58,6 +59,19 @@ export function buildPilotPdf(text: string, font: string, city: string) {
     const leading = level === 1 ? 10 : level ? 6 : 4.8;
     doc.setFontSize(size);
     const lines: string[] = doc.splitTextToSize(value, width);
+    // Keep a source's title, publication note and URL on the same page.
+    if (
+      raw.startsWith("- ") &&
+      /^https?:\/\/\S+$/.test((paragraphs[index + 2] || "").trim())
+    ) {
+      const citationLines = [
+        raw,
+        paragraphs[index + 1],
+        paragraphs[index + 2],
+      ].flatMap((line) => doc.splitTextToSize(line, width)).length;
+      if (citationLines <= 10 && y + citationLines * leading > bottom)
+        nextPage();
+    }
     if (!level && lines.length <= 10 && y + lines.length * leading > bottom)
       nextPage();
     if (level) {

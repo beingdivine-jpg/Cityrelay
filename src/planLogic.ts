@@ -6,6 +6,7 @@ import type {
   PilotPlan,
 } from "./model";
 import { assessCase } from "./matching";
+import { calculateFitScore, fitScoreMethod, fitScoreLimits } from "./fitScore";
 import { assetLabels, examples, localSuggestion } from "./data";
 import { getSource } from "./sources";
 export function createPlan(
@@ -105,6 +106,12 @@ export function exportPlan(
   const matches = selected.map((e) =>
     assessCase(profile, e, state.civic?.[profile.id]),
   );
+  const scorecards = matches
+    .map((assessment) => {
+      const score = calculateFitScore(assessment);
+      return `### ${assessment.example.origin.name} — ${t(assessment.example.shortTitle)}\n${t("Research fit score")}: ${score.score}/100\n${t("Met")}: ${score.met} · ${t("Unknown")}: ${score.unknown} · ${t("Blocked")}: ${score.blocked}\n${t(assessment.category)}\n${score.factors.map((factor) => `- ${t(factor.label)}: ${factor.value}/${factor.maximum} ${t("points")}. ${t(factor.explanation)}`).join("\n")}\n${t("Calculation")}: ${score.points} / ${score.maximum} × 100 = ${score.score}/100 (${t("rounded and bounded to 0–100")}).\n${t("Scoring method")}: ${score.version} · ${score.calculatedAt}`;
+    })
+    .join("\n\n");
   const references = [
     ...new Set([
       ...(profile.sources || []),
@@ -113,7 +120,7 @@ export function exportPlan(
   ]
     .map(getSource)
     .filter((s) => !!s);
-  return `${profile.id === "krakow-demo" ? t("DEMO: based on sample resident reports, not real public demand.") + "\n" + t("Budget, team and feasibility notes labelled as demo assumptions are hypothetical. No municipal funding, permission or delivery commitment is confirmed.") + "\n\n" : ""}# ${profile.name || "Your community"} — ${t("proposed local pilot")}\n\n${t(plan.reviewStatus)} • ${t("An Elsewhere working proposal, not an approved municipal project")}\n${t("Responsible authority in the profile")}: ${profile.authorityType}\n\n## ${t("Documented projects informing this proposal")}\n${selected.map((e) => `- ${t(e.title)} — ${e.origin.name}, ${t(e.origin.country)} (${t(e.evidenceType)})`).join("\n")}\n\n## ${t("Proposed local objective")}\n${plan.goal}\n\n## ${t("Proposed action")}\n${plan.proposal}\n\n## ${t("Existing initiatives to consult")}\n${plan.retainedInitiatives}\n\n## ${t("Proposed local adaptations")}\n${plan.adaptations}\n\n## ${t("Unresolved local checks")}\n${selected
+  return `${profile.id === "krakow-demo" ? t("DEMO: based on sample resident reports, not real public demand.") + "\n" + t("Budget, team and feasibility notes labelled as demo assumptions are hypothetical. No municipal funding, permission or delivery commitment is confirmed.") + "\n\n" : ""}# ${profile.name || "Your community"} — ${t("proposed local pilot")}\n\n${t(plan.reviewStatus)} • ${t("An Elsewhere working proposal, not an approved municipal project")}\n${t("Responsible authority in the profile")}: ${t(profile.authorityType)}\n\n## ${t("Documented projects informing this proposal")}\n${selected.map((e) => `- ${t(e.title)} — ${e.origin.name}, ${t(e.origin.country)} (${t(e.evidenceType)})`).join("\n")}\n\n## ${t("Fit scorecards & scoring matrix")}\n${t("Scores are recalculated from your current permitted inputs. The exported report includes this matrix; research history keeps the original scores.")}\n\n${scorecards}\n\n${t(fitScoreMethod)}\n${t(fitScoreLimits)}\n\n## ${t("Proposed local objective")}\n${plan.goal}\n\n## ${t("Proposed action")}\n${plan.proposal}\n\n## ${t("Existing initiatives to consult")}\n${plan.retainedInitiatives}\n\n## ${t("Proposed local adaptations")}\n${plan.adaptations}\n\n## ${t("Unresolved local checks")}\n${selected
     .map((ex) => {
       const a = matches.find((m) => m.example.id === ex.id);
       return `${t(ex.shortTitle)}:\n${

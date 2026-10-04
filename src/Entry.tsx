@@ -5,6 +5,7 @@ import { Button, Icon, TextField, SelectField, useApp } from "./components";
 import { newProfile } from "./data";
 import type { Setting } from "./model";
 import { useShared } from "./SharedContext";
+import { sharedClient } from "./shared";
 export default function Entry() {
   const { state, update } = useApp();
   const shared = useShared();
@@ -84,11 +85,17 @@ export default function Entry() {
             {tr(
               shared.workspace
                 ? "Your team workspace is open. Continue there, or return to local exploration from Account & backup."
-                : "Explore on this device first. Sign in to create a shared team workspace and receive resident reports.",
+                : sharedClient
+                  ? "Explore on this device first. Sign in to create a shared team workspace and receive resident reports."
+                  : "Start on this device with no account. Shared sign-in is not connected yet; you can download and restore your work from Account & backup.",
             )}
           </p>
           <Link className="button secondary" to="/account">
-            {tr(shared.user ? "Account & backup" : "Sign in to collaborate")}
+            {tr(
+              shared.user || !sharedClient
+                ? "Account & backup"
+                : "Sign in to collaborate",
+            )}
           </Link>
         </div>
         <div className="entry-options">

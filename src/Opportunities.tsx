@@ -4,13 +4,14 @@ import { useParams } from "react-router-dom";
 import { Link } from "./navigation";
 import { Button, CommunityNav, Icon, useApp } from "./components";
 import { useCivic } from "./CivicContext";
-import { runFingerprint, topicLabels } from "./civicEngine";
+import { allowed, runFingerprint, topicLabels } from "./civicEngine";
 import { Missing } from "./Workspace";
 import { examples } from "./data";
 import { SourceList } from "./SourceList";
 import { getSource } from "./sources";
 import { CitedOutput } from "./AgentStudio";
 import { DEMO_ID } from "./demo";
+import FitScorecard from "./FitScorecard";
 export default function Opportunities() {
   const { id = "" } = useParams();
   const { state: appState } = useApp();
@@ -197,6 +198,7 @@ export default function Opportunities() {
                 ].map(([key, label]) => (
                   <button
                     key={key}
+                    data-tour={key === "leads" ? "leads" : undefined}
                     aria-pressed={tab === key}
                     onClick={() => setTab(key)}
                   >
@@ -245,16 +247,27 @@ export default function Opportunities() {
                     <div className="civic-empty">
                       <h2>
                         {tr(
-                          "No documented approach covers this challenge yet.",
+                          !allowed(civic, "catalogue")
+                            ? "Project library access is switched off."
+                            : "No documented approach covers this challenge yet.",
                         )}
                       </h2>
                       <p>
                         {tr(
-                          "Your challenge is saved. Clarify the priority or connect live research; we will not invent a matching project.",
+                          !allowed(civic, "catalogue")
+                            ? "The agents respected your data settings. Review library access, then run the research again to compare documented projects."
+                            : "Your challenge is saved. Our current library has no matching project. Refine the priority or keep this evidence gap for further research.",
                         )}
                       </p>
-                      <Button to={`/community/${id}/challenge`}>
-                        {tr("Refine the challenge")}
+                      <Button
+                        data-tour="research-recovery"
+                        to={`/community/${id}/${!allowed(civic, "catalogue") ? "data" : "challenge"}`}
+                      >
+                        {tr(
+                          !allowed(civic, "catalogue")
+                            ? "Review data access"
+                            : "Refine the challenge",
+                        )}
                       </Button>
                     </div>
                   )}
@@ -297,6 +310,9 @@ export default function Opportunities() {
                               <span>{tr(topicLabels[o.topic])}</span>
                               <p>{tr(o.reason)}</p>
                             </div>
+                            {o.scorecard && (
+                              <FitScorecard score={o.scorecard} />
+                            )}
                             <details className="fit-ledger">
                               <summary>
                                 {tr("Why this idea appeared")}
@@ -338,6 +354,11 @@ export default function Opportunities() {
                             </details>
                             <div className="lead-actions">
                               <Button
+                                data-tour={
+                                  !firstExample && i === 0
+                                    ? "choose"
+                                    : undefined
+                                }
                                 secondary
                                 to={`/community/${id}/matches/${o.exampleId}`}
                               >
@@ -370,18 +391,6 @@ export default function Opportunities() {
                       }),
                     )}
                   </div>
-                  {tr(
-                    !run.opportunities.length && (
-                      <div className="civic-empty">
-                        <h2>{tr("No supported approach in this run.")}</h2>
-                        <p>
-                          {tr(
-                            "Share the project repository and municipal context, or connect live AI research to investigate beyond the five-project catalogue.",
-                          )}
-                        </p>
-                      </div>
-                    ),
-                  )}
                   {tr(
                     run.mode === "ai" && (
                       <section className="live-research-memo">

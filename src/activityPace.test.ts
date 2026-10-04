@@ -9,6 +9,23 @@ afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
+it("yields full-speed work to a browser task and still responds to cancellation", async () => {
+  const controller = new AbortController();
+  let delivered = false;
+  const task = waitForActivity(controller.signal, 0).then(() => {
+    delivered = true;
+  });
+  await Promise.resolve();
+  expect(delivered).toBe(false);
+  await task;
+  expect(delivered).toBe(true);
+
+  const interrupted = new AbortController();
+  const reason = new Error("Research stopped");
+  const pending = waitForActivity(interrupted.signal, 0);
+  interrupted.abort(reason);
+  await expect(pending).rejects.toBe(reason);
+});
 it("exposes one action at a time and cannot hand off while it is being read", async () => {
   vi.stubGlobal("requestAnimationFrame", (cb: () => void) => {
     cb();

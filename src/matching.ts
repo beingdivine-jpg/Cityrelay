@@ -243,6 +243,13 @@ export function assessmentProfile(
   profile: CommunityProfile,
   civic?: CivicWorkspace,
 ): CommunityProfile {
+  if (civic && !civic.connections.some((c) => c.key === "context" && c.enabled))
+    profile = {
+      ...profile,
+      setting: "unknown",
+      existingInitiatives: [],
+      problems: [],
+    };
   if (
     !civic ||
     civic.connections.some((c) => c.key === "resources" && c.enabled)
@@ -263,7 +270,18 @@ export function assessCase(
   civic?: CivicWorkspace,
 ): MatchAssessment {
   profile = assessmentProfile(profile, civic);
-  return assessMatches(
+  const relevant =
+    profile.problems.includes(example.domain) ||
+    !!(
+      civic?.connections.some((c) => c.key === "reports" && c.enabled) &&
+      civic.reports.some(
+        (report) =>
+          report.status === "received" &&
+          !report.duplicateOf &&
+          report.topic === example.domain,
+      )
+    );
+  const assessment = assessMatches(
     {
       ...profile,
       problems: [example.domain],
@@ -271,4 +289,16 @@ export function assessCase(
     },
     [example],
   )[0];
+  assessment.factors[0] = {
+    label: "Priority & direction",
+    value: relevant ? 40 : 0,
+    explanation: relevant
+      ? "Matches a shared municipal priority or an eligible resident topic (40 points)."
+      : "No matching shared priority or eligible resident topic. This is an exploratory comparison (0 points).",
+  };
+  assessment.rank = assessment.factors.reduce(
+    (sum, factor) => sum + factor.value,
+    0,
+  );
+  return assessment;
 }

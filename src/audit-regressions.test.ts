@@ -137,6 +137,38 @@ it("does not collapse different areas or report types into duplicates", () => {
     ),
   ).toBeUndefined();
 });
+it("does not create duplicate chains or discard concerns against held submissions", () => {
+  const canonical = report({ kind: "complaint" });
+  const held = report({
+    id: "held",
+    kind: "complaint",
+    status: "needs-review",
+  });
+  const duplicate = report({
+    id: "duplicate",
+    kind: "complaint",
+    duplicateOf: canonical.id,
+  });
+  const args = [
+    canonical.title,
+    canonical.detail,
+    canonical.area,
+    canonical.kind,
+    canonical.topic,
+  ] as const;
+  expect(duplicateReport([held], ...args)).toBeUndefined();
+  expect(duplicateReport([duplicate, canonical], ...args)).toBe(canonical.id);
+  expect(
+    duplicateReport(
+      [canonical],
+      canonical.title,
+      canonical.detail,
+      "South",
+      canonical.kind,
+      canonical.topic,
+    ),
+  ).toBeUndefined();
+});
 it("generates Polish pilot suggestions for every project and a custom city", () => {
   setLanguage("pl");
   const p = newProfile();

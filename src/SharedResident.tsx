@@ -95,11 +95,18 @@ export default function SharedResident() {
       ) : (
         <>
           {!place ? (
-            <p className="delivery-notice">
-              {tr(
-                "This reporting link is unavailable or has been closed by its owner. No report has been sent.",
-              )}
-            </p>
+            <div className="delivery-notice">
+              <p>
+                {tr(
+                  sharedClient
+                    ? "This reporting link is unavailable or has been closed by its owner. No report has been sent."
+                    : "Shared resident reporting is not connected on this deployment. No report has been sent. You can explore the practice demo instead.",
+                )}
+              </p>
+              <Link className="button" to="/demo?tour=demo">
+                {tr("Demo Walkthrough")}
+              </Link>
+            </div>
           ) : (
             <>
               <div className="delivery-notice">
@@ -203,17 +210,19 @@ export default function SharedResident() {
               </p>
             </section>
           )}
-          <details>
-            <summary>{tr("Check a previous report")}</summary>
-            <TextField
-              label={tr("Complete receipt reference")}
-              value={token}
-              onChange={setToken}
-            />
-            <Button disabled={busy || !token} onClick={() => void track()}>
-              {tr("Check status")}
-            </Button>
-          </details>
+          {sharedClient && (
+            <details>
+              <summary>{tr("Check a previous report")}</summary>
+              <TextField
+                label={tr("Complete receipt reference")}
+                value={token}
+                onChange={setToken}
+              />
+              <Button disabled={busy || !token} onClick={() => void track()}>
+                {tr("Check status")}
+              </Button>
+            </details>
+          )}
         </>
       )}
       {error && (

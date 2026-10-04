@@ -1,5 +1,11 @@
 import { validCivic } from "./civicStorage";
-import { assetLabels, budgetLabels, seedProfiles, staffLabels } from "./data";
+import {
+  assetLabels,
+  budgetLabels,
+  examples,
+  seedProfiles,
+  staffLabels,
+} from "./data";
 import type { AppState } from "./model";
 export const STORAGE_KEY = "cityrelay.real.v2";
 export const seedState = (): AppState => ({
@@ -31,6 +37,11 @@ const validPlan = (p: unknown): boolean =>
     "proposal",
   ]) &&
   strings(p.selectedExamples) &&
+  p.selectedExamples.every((id) =>
+    examples.some((example) => example.id === id),
+  ) &&
+  ["Draft", "Ready for local review"].includes(String(p.reviewStatus)) &&
+  (p.contextSnapshot === undefined || typeof p.contextSnapshot === "string") &&
   strings(p.metrics);
 export function validState(data: unknown): data is AppState {
   if (
@@ -63,6 +74,7 @@ export function validState(data: unknown): data is AppState {
     seedProfiles.every((seed) => profiles.some((p) => p?.id === seed.id)) &&
     profiles.every(
       (p) =>
+        object(p) &&
         (p.localChecks === undefined ||
           (object(p.localChecks) &&
             Object.values(p.localChecks).every(
@@ -101,11 +113,16 @@ export function validState(data: unknown): data is AppState {
           ["heat", "water", "services", "unknown"].includes(d),
         ) &&
         strings(p.priorities) &&
+        (p.sources === undefined || strings(p.sources)) &&
         strings(p.existingInitiatives),
     ) &&
+    new Set(profiles.map((p) => p.id)).size === profiles.length &&
+    profiles.every((p) => /^[\w-]+$/.test(p.id)) &&
+    new Set(plans.map((p) => p?.id)).size === plans.length &&
     plans.every(
       (p) =>
         validPlan(p) &&
+        profiles.some((profile) => profile.id === p.communityId) &&
         (p.revisions === undefined ||
           (Array.isArray(p.revisions) &&
             p.revisions.every(

@@ -20,7 +20,14 @@ import {
 import { Missing } from "./Workspace";
 import { DEMO_ID } from "./demo";
 import ActivityLog from "./ActivityLog";
+import FitScorecard from "./FitScorecard";
 import { waitForActivity } from "./activityPace";
+import {
+  partialRunMessage,
+  recordedRun,
+  researchCheckpoint,
+  saveResearchRecord,
+} from "./researchRecord";
 import type {
   AgentEvent,
   AgentCitation,
@@ -134,14 +141,25 @@ export default function AgentStudio() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [busy]);
   if (!profile || !civic) return <Missing />;
-  const last =
-    (viewId && civic.runs.find((r) => r.id === viewId)) || civic.runs[0];
+  const last = recordedRun(
+    (viewId && civic.runs.find((r) => r.id === viewId)) || civic.runs[0],
+  );
   const steps = busy ? liveSteps : last?.steps || [],
     events = busy ? liveEvents : last?.events || [];
   const selectedStep = steps.find((s) => s.id === selected),
     completed = steps.filter((s) => s.status === "complete").length;
   const displayMode = busy ? mode : last?.mode || mode;
   const activeAgent = steps.find((s) => s.status === "running")?.id;
+  const recordedScores = events
+    .filter((event) => !!event.scorecard)
+    .map((event) => event.scorecard!);
+  const scorecards = recordedScores.length
+    ? recordedScores
+    : !busy
+      ? last?.opportunities.flatMap((opportunity) =>
+          opportunity.scorecard ? [opportunity.scorecard] : [],
+        ) || []
+      : [];
   async function run() {
     if (!profile || !civic || busy) return;
     setBusy(true);
@@ -166,13 +184,27 @@ export default function AgentStudio() {
     const snapshot = structuredClone(civic),
       place = structuredClone(profile),
       startedAt = new Date().toISOString();
+    const recordBase = {
+      id: crypto.randomUUID(),
+      startedAt,
+      mode,
+      fingerprint: runFingerprint(place, snapshot),
+    };
     let completedSteps: AgentStep[] = [],
+      observedSteps: AgentStep[] = [],
       recorded: AgentEvent[] = [],
       currentAgent: AgentKey = "listener",
       runningStep: AgentStep | undefined;
+    const checkpoint = () => {
+      // Shared work still uses explicit saves; local work survives reloads.
+      if (shared.workspace) return;
+      const record = researchCheckpoint(recordBase, observedSteps, recorded);
+      change((c) => ({ ...c, runs: saveResearchRecord(c.runs, record) }));
+    };
     const log = (event: AgentEvent) => {
       recorded = [...recorded, event];
       setLiveEvents(recorded);
+      checkpoint();
     };
     const emit = (
       agent: AgentKey,
@@ -192,6 +224,11 @@ export default function AgentStudio() {
       });
     const onStep = (step: AgentStep) => {
       currentAgent = step.id;
+      observedSteps = [
+        ...observedSteps.filter((s) => s.id !== step.id),
+        structuredClone(step),
+      ];
+      checkpoint();
       if (id === DEMO_ID && step.status === "running")
         reportJuryEvent({
           agent: step.id,
@@ -413,9 +450,10 @@ export default function AgentStudio() {
           ).length,
         };
       }
+      result = { ...result, id: recordBase.id };
       change((c) => ({
         ...c,
-        runs: [result, ...c.runs].slice(0, 20),
+        runs: saveResearchRecord(c.runs, result),
         notices: [
           {
             id: `run-${result.id}`,
@@ -443,7 +481,7 @@ export default function AgentStudio() {
       if (id === DEMO_ID) reportJuryEvent({ action: "stopped" });
       emit(currentAgent, "error", "Run stopped", message);
       const failed: AgentRun = {
-        id: crypto.randomUUID(),
+        id: recordBase.id,
         startedAt,
         completedAt: new Date().toISOString(),
         mode,
@@ -467,7 +505,7 @@ export default function AgentStudio() {
         reportCount: 0,
         error: message,
       };
-      change((c) => ({ ...c, runs: [failed, ...c.runs].slice(0, 20) }));
+      change((c) => ({ ...c, runs: saveResearchRecord(c.runs, failed) }));
     } finally {
       setTransferring(false);
       setBusy(false);
@@ -483,7 +521,7 @@ export default function AgentStudio() {
         <div>
           <span className="eyebrow">{tr("STEP 02 / THE RESEARCH ROOM")}</span>
           <h1>
-            {profile.name}
+            {profile.name}{" "}
             <span className="research-heading-slash" aria-hidden="true">
               {" "}
               /{" "}
@@ -589,7 +627,9 @@ export default function AgentStudio() {
       <p className="agent-method-note">
         {tr(
           mode === "local"
-            ? "Local analysis is ready. The source checks retrieve real city pages. Open Research settings to inspect the method."
+            ? sourceChecks
+              ? "Local analysis is ready. The source checks retrieve real city pages. Open Research settings to inspect the method."
+              : "Local analysis is ready. Live source-page checks are switched off for this run. Open Research settings to change this."
             : "AI requests and reported search queries appear as the service returns them. Search details may arrive with the completed stage.",
         )}
       </p>
@@ -692,6 +732,22 @@ export default function AgentStudio() {
               setReadable(value);
             }}
           />
+          {scorecards.length > 0 &&
+            ["reviewer", "writer"].includes(selected) && (
+              <div
+                className="agent-fit-scores"
+                aria-label={tr("Fit review scorecards")}
+              >
+                <p className="micro">
+                  {tr(
+                    "Calculated from the permitted inputs in this investigation. Open a card to inspect every factor.",
+                  )}
+                </p>
+                {(busy ? scorecards.slice(-1) : scorecards).map((score) => (
+                  <FitScorecard key={score.exampleId} score={score} />
+                ))}
+              </div>
+            )}
           <div className="agent-handoff" role="status">
             {transferring && (
               <div className="handoff-transfer" aria-hidden="true">
@@ -764,9 +820,11 @@ export default function AgentStudio() {
             ) : (
               <p>
                 {tr(
-                  last?.status === "failed"
-                    ? "This run stopped. Its recorded actions are saved. Start a new investigation when you are ready."
-                    : "Start the investigation above. Every action will appear here.",
+                  last?.status === "incomplete"
+                    ? partialRunMessage
+                    : last?.status === "failed"
+                      ? "This run stopped. Its recorded actions are saved. Start a new investigation when you are ready."
+                      : "Start the investigation above. Every action will appear here.",
                 )}
               </p>
             )}

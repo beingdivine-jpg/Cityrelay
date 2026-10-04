@@ -11,7 +11,8 @@ import {
 } from "react-router-dom";
 import { Link, useNavigate } from "./navigation";
 import { AppContext, Button, Icon, Logo } from "./components";
-import { loadState, saveState, seedState, STORAGE_KEY } from "./storage";
+import { loadState, seedState, STORAGE_KEY } from "./storage";
+import { WorkspacePersistence, saveConflict } from "./workspacePersistence";
 import type { AppState, CommunityProfile } from "./model";
 import Home from "./Home";
 import { ErrorFallback } from "./ErrorBoundary";
@@ -171,20 +172,16 @@ function Shell() {
   const state = shared.state || localState;
   const [error, setError] = useState(initial.error);
   const [blocked, setBlocked] = useState(!!initial.error);
-  const readSaved = () => {
-    try {
-      return localStorage.getItem(STORAGE_KEY);
-    } catch {
-      return null;
-    }
-  };
-  const savedText = useRef(readSaved());
-  const savedState = useRef(JSON.stringify(initial.state));
-  const localRef = useRef(localState);
-  localRef.current = localState;
+  const [persistence] = useState(
+    () =>
+      new WorkspacePersistence(initial.state, {
+        getItem: (key) => localStorage.getItem(key),
+        setItem: (key, value) => localStorage.setItem(key, value),
+      }),
+  );
+  persistence.observe(localState);
   const restoreState = (next: AppState) => {
-    savedText.current = readSaved();
-    savedState.current = JSON.stringify(next);
+    persistence.restore(next);
     setState(next);
     setBlocked(false);
     setError("");
@@ -198,19 +195,11 @@ function Shell() {
   useEffect(() => {
     const sync = (event: StorageEvent) => {
       if (event.key !== STORAGE_KEY || !event.newValue) return;
-      const incoming = loadState({
-        getItem: () => event.newValue,
-      });
-      if (!incoming.error) {
-        if (JSON.stringify(localRef.current) !== savedState.current) {
-          setBlocked(true);
-          setError(
-            "Another tab changed this workspace. Download your current work, then reload the saved version from Account & backup.",
-          );
-          return;
-        }
-        savedText.current = event.newValue;
-        savedState.current = JSON.stringify(incoming.state);
+      const incoming = persistence.receive(event.newValue);
+      if (incoming.error) {
+        setBlocked(true);
+        setError(incoming.error);
+      } else if (incoming.state) {
         setState(incoming.state);
         setBlocked(false);
         setError("");
@@ -218,23 +207,13 @@ function Shell() {
     };
     window.addEventListener("storage", sync);
     return () => window.removeEventListener("storage", sync);
-  }, []);
+  }, [persistence]);
   useEffect(() => {
     if (blocked) return;
-    if (readSaved() !== savedText.current) {
-      setBlocked(true);
-      setError(
-        "Another tab changed this workspace. Download your current work, then reload the saved version from Account & backup.",
-      );
-      return;
-    }
-    const failure = saveState(localState);
+    const failure = persistence.save(localState);
     setError(failure);
-    if (!failure) {
-      savedText.current = readSaved();
-      savedState.current = JSON.stringify(localState);
-    }
-  }, [localState, blocked]);
+    if (failure === saveConflict) setBlocked(true);
+  }, [localState, blocked, persistence]);
   useEffect(() => {
     if (toast) {
       const t = setTimeout(() => setToast(""), 5000);

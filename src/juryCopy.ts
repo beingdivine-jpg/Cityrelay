@@ -47,7 +47,7 @@ export const juryCopy: Record<
   },
   choose: {
     title: "Choose a promising approach.",
-    body: "These leads respond to the resident concerns. Open one to see its source and conditions for use in Kraków.",
+    body: "Compare the fit scores and their factors. Open a lead to check its source and local requirements; the score is not approval.",
     action: "Click Inspect this approach.",
     target: "choose",
   },
@@ -109,7 +109,7 @@ export const agentWalkthroughCopy: Record<
   scout: {
     working: {
       title: "Looking for documented approaches.",
-      body: "The Research scout searches the project catalogue and checks source pages. Successful requests and failures appear in the log.",
+      body: "The Research scout works with permitted documented projects. The log shows its queries, evidence and any live source-page checks.",
       action: "Follow the sources as they are checked.",
     },
     handoff: {

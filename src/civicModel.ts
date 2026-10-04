@@ -1,4 +1,5 @@
 import type { Domain } from "./model";
+import type { FitScore } from "./fitScore";
 export type CivicTopic = Domain | "mobility" | "waste";
 export type DatasetKey = "reports" | "context" | "resources" | "catalogue";
 export type AgentKey = "listener" | "context" | "scout" | "reviewer" | "writer";
@@ -57,6 +58,7 @@ export type FitFactor = {
   sources?: string[];
 };
 export type CivicOpportunity = {
+  scorecard?: FitScore;
   exampleId: string;
   topic: CivicTopic;
   reportCount: number;
@@ -76,7 +78,7 @@ export type AgentRun = {
   startedAt: string;
   completedAt: string;
   mode: "local" | "ai";
-  status: "complete" | "failed";
+  status: "complete" | "failed" | "incomplete";
   fingerprint: string;
   steps: AgentStep[];
   signals: TopicSignal[];
@@ -86,6 +88,7 @@ export type AgentRun = {
   error?: string;
 };
 export type AgentEvent = {
+  scorecard?: FitScore;
   id: string;
   at: string;
   agent: AgentKey;

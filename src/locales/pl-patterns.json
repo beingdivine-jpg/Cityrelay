@@ -77,5 +77,6 @@
   "DIFFERENT: {0}": "RÓŻNICE: {0}",
   "BLOCKED: {0}": "BLOKADA: {0}",
   "{0}: Relevant evidence found; local feasibility still needs investigation.": "{0}: Znaleziono istotne dowody; lokalna wykonalność wymaga dalszego zbadania.",
-  "{0} topic-relevant approaches retrieved. {1}. Catalogue retrieval is complete. Live source-page checks are listed in the activity log. No broader web discovery was run.": "Znalezione podejścia zgodne z tematem: {0}. {1}. Przeszukiwanie katalogu zakończone. Sprawdzenia stron źródłowych na żywo są zapisane w dzienniku aktywności. Nie przeprowadzono szerszego wyszukiwania w internecie."
+  "{0} topic-relevant approaches retrieved. {1}. Catalogue retrieval is complete. Live source-page checks are listed in the activity log. No broader web discovery was run.": "Znalezione podejścia zgodne z tematem: {0}. {1}. Przeszukiwanie katalogu zakończone. Sprawdzenia stron źródłowych na żywo są zapisane w dzienniku aktywności. Nie przeprowadzono szerszego wyszukiwania w internecie.",
+  "{0}: {1}/100 · {2}/{3} points.": "{0}: {1}/100 · {2}/{3} pkt."
 }

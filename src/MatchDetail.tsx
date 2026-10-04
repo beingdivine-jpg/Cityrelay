@@ -6,6 +6,8 @@ import { useParams, useLocation } from "react-router-dom";
 import { Link, useNavigate } from "./navigation";
 import { examples, localSuggestion } from "./data";
 import { assessCase } from "./matching";
+import { calculateFitScore } from "./fitScore";
+import FitScorecard from "./FitScorecard";
 import { SourceList } from "./SourceList";
 import { getSource } from "./sources";
 import { liveSummary, useLive } from "./LiveContext";
@@ -56,13 +58,12 @@ export default function MatchDetail() {
     );
   }, [id, matchId]);
   useEffect(() => {
-    if (
-      !proposalEdited &&
-      profile &&
-      example &&
-      !existing?.selectedExamples.includes(example.id)
-    )
-      setProposal(tr(localSuggestion(profile, example, "proposal")));
+    if (!proposalEdited && profile && example)
+      setProposal(
+        existing?.selectedExamples.includes(example.id)
+          ? existing.proposal
+          : tr(localSuggestion(profile, example, "proposal")),
+      );
   }, [language, proposalEdited, profile, example, existing]);
   useEffect(() => {
     if (profile) {
@@ -371,15 +372,25 @@ export default function MatchDetail() {
                       )}
                     </p>
                   )}
-                  <TextField
-                    label={tr("What could you try locally?")}
-                    multiline
-                    value={proposal}
-                    onChange={(value) => {
-                      setProposalEdited(true);
-                      setProposal(value);
-                    }}
-                  />
+                  {existing ? (
+                    <div>
+                      <p>{proposal}</p>
+                      <Link className="quiet-link" to={`/community/${id}/plan`}>
+                        {tr("Edit your saved pilot")}
+                        <Icon />
+                      </Link>
+                    </div>
+                  ) : (
+                    <TextField
+                      label={tr("What could you try locally?")}
+                      multiline
+                      value={proposal}
+                      onChange={(value) => {
+                        setProposalEdited(true);
+                        setProposal(value);
+                      }}
+                    />
+                  )}
                   <p className="field-hint">
                     {tr(
                       "A proposal to investigate. Local resources, permissions and outcomes are still to be established.",
@@ -458,6 +469,7 @@ export default function MatchDetail() {
         <aside className="case-margin">
           <span className="eyebrow">{tr("YOUR LOCAL LENS")}</span>
           <h3>{profile.name}</h3>
+          <FitScorecard score={calculateFitScore(assessment)} />
           <p>
             {tr(
               !profile.problems.includes(example.domain)

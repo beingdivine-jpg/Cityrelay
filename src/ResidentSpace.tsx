@@ -240,11 +240,28 @@ export default function ResidentSpace({
                                   }))
                                 }
                               />
+                              <TextField
+                                label={tr("Neighbourhood or area")}
+                                value={r.area}
+                                onChange={(value) =>
+                                  change((c) => ({
+                                    ...c,
+                                    reports: c.reports.map((x) =>
+                                      x.id === r.id
+                                        ? { ...x, area: value.slice(0, 100) }
+                                        : x,
+                                    ),
+                                  }))
+                                }
+                              />
                               <Button
                                 secondary
                                 disabled={
                                   r.title.trim().length < 5 ||
-                                  needsReview(r.title + " " + r.detail)
+                                  r.detail.trim().length < 20 ||
+                                  needsReview(
+                                    r.title + " " + r.detail + " " + r.area,
+                                  )
                                 }
                                 onClick={() =>
                                   change((c) => ({
@@ -260,6 +277,9 @@ export default function ResidentSpace({
                                               ),
                                               x.title,
                                               x.detail,
+                                              x.area,
+                                              x.kind,
+                                              x.topic,
                                             ),
                                           }
                                         : x,

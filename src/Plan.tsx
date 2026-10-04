@@ -5,6 +5,8 @@ import { useParams } from "react-router-dom";
 import { Link } from "./navigation";
 import { examples } from "./data";
 import { assessCase } from "./matching";
+import { calculateFitScore } from "./fitScore";
+import FitScorecard from "./FitScorecard";
 import { checkpointPlan, exportPlan, localizeDemoPlan } from "./planLogic";
 import {
   Button,
@@ -262,6 +264,22 @@ export default function Plan() {
           <small>{tr("WORKING PILOT BRIEF")}</small>
         </div>
       </header>
+      <section
+        className="pilot-fit-summary"
+        aria-label={tr("Pilot fit scorecards")}
+      >
+        <p className="micro">
+          {tr(
+            "Scores are recalculated from your current permitted inputs. The exported report includes this matrix; research history keeps the original scores.",
+          )}
+        </p>
+        {matches.map((match) => (
+          <FitScorecard
+            key={match.example.id}
+            score={calculateFitScore(match)}
+          />
+        ))}
+      </section>
       <div className="notebook-tools">
         <span>
           <Icon name="check" size={15} />

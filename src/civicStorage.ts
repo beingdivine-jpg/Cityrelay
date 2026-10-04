@@ -1,4 +1,12 @@
 import type { CivicWorkspace } from "./civicModel";
+import { examples } from "./data";
+import { validFitScore } from "./fitScore";
+const validScorecard = (value: unknown) =>
+  validFitScore(value) &&
+  examples.some((example) => example.id === value.exampleId);
+const agents = ["listener", "context", "scout", "reviewer", "writer"];
+const topics = ["heat", "water", "services", "mobility", "waste", "unknown"];
+const count = (v: unknown) => Number.isSafeInteger(v) && Number(v) >= 0;
 const obj = (v: unknown): v is Record<string, unknown> =>
   !!v && typeof v === "object" && !Array.isArray(v);
 const text = (v: unknown) => typeof v === "string";
@@ -6,7 +14,12 @@ const httpsUrl = (v: unknown) => {
   if (typeof v !== "string") return false;
   try {
     const url = new URL(v);
-    return url.protocol === "https:" && !!url.hostname;
+    return (
+      url.protocol === "https:" &&
+      !!url.hostname &&
+      !url.username &&
+      !url.password
+    );
   } catch {
     return false;
   }
@@ -85,12 +98,15 @@ export function validCivic(
             "completedAt",
             "fingerprint",
           ]) &&
-          typeof x.reportCount === "number" &&
+          ["local", "ai"].includes(String(x.mode)) &&
+          ["complete", "failed", "incomplete"].includes(String(x.status)) &&
+          count(x.reportCount) &&
           (x.events === undefined ||
             list(
               x.events,
               (e) =>
                 obj(e) &&
+                (e.scorecard === undefined || validScorecard(e.scorecard)) &&
                 fields(e, ["id", "at", "agent", "kind", "title", "detail"]) &&
                 ["listener", "context", "scout", "reviewer", "writer"].includes(
                   String(e.agent),
@@ -118,23 +134,36 @@ export function validCivic(
                 "input",
                 "output",
               ]) &&
-              list(s.citations, (z) => fields(z, ["url", "title"])),
+              agents.includes(String(s.id)) &&
+              ["running", "complete", "failed"].includes(String(s.status)) &&
+              list(
+                s.citations,
+                (z) => fields(z, ["url", "title"]) && obj(z) && httpsUrl(z.url),
+              ),
           ) &&
           list(
             x.signals,
             (s) =>
               obj(s) &&
               fields(s, ["topic", "summary"]) &&
-              typeof s.count === "number" &&
-              typeof s.ideas === "number" &&
+              topics.includes(String(s.topic)) &&
+              count(s.count) &&
+              count(s.ideas) &&
               list(s.reportIds, text),
           ) &&
           list(
             x.opportunities,
             (o) =>
               obj(o) &&
+              (o.scorecard === undefined ||
+                (validScorecard(o.scorecard) &&
+                  (o.scorecard as { exampleId: string }).exampleId ===
+                    o.exampleId)) &&
               fields(o, ["exampleId", "topic", "state", "reason"]) &&
-              typeof o.reportCount === "number" &&
+              examples.some((example) => example.id === o.exampleId) &&
+              topics.includes(String(o.topic)) &&
+              ["ready", "investigate", "hold"].includes(String(o.state)) &&
+              count(o.reportCount) &&
               list(o.factors, (f) => fields(f, ["name", "state", "detail"])),
           ) &&
           list(
@@ -142,6 +171,7 @@ export function validCivic(
             (i) =>
               obj(i) &&
               fields(i, ["reportId", "state", "reason"]) &&
+              ["review", "hold"].includes(String(i.state)) &&
               list(i.exampleIds, text),
           ),
       ) &&
@@ -154,7 +184,8 @@ export function validCivic(
         (x) =>
           obj(x) &&
           fields(x, ["id", "title", "detail", "at", "kind"]) &&
-          typeof x.read === "boolean",
+          typeof x.read === "boolean" &&
+          (x.href === undefined || httpsUrl(x.href)),
       ) &&
       obj(c.monitor) &&
       typeof c.monitor.enabled === "boolean" &&
@@ -163,6 +194,8 @@ export function validCivic(
         (x) =>
           obj(x) &&
           fields(x, ["url", "title", "checkedAt", "status"]) &&
+          httpsUrl(x.url) &&
+          ["ok", "unavailable"].includes(String(x.status)) &&
           (x.hash === null || text(x.hash)),
       ),
   );

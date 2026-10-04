@@ -216,7 +216,9 @@ export default function ActivityLog({
         <p className="visible-pace-note">
           {t(
             mode === "local"
-              ? "Local analysis · actions paced for reading · source requests use real response times."
+              ? readable
+                ? "Local analysis · actions paced for reading · source requests use real response times."
+                : "Local analysis · full speed · source requests use real response times."
               : "AI service activity · source and search events appear when received.",
           )}
         </p>
@@ -240,7 +242,9 @@ export default function ActivityLog({
               </div>
               <p>
                 {t(
-                  "Local actions are spaced for reading. Live requests use their actual response time.",
+                  readable
+                    ? "Local actions are spaced for reading. Live requests use their actual response time."
+                    : "Local analysis · full speed · source requests use real response times.",
                 )}
               </p>
             </div>
