@@ -137,6 +137,7 @@ export function Button({
   onClick,
   type = "button",
   disabled = false,
+  "data-tour": tour,
 }: {
   children: ReactNode;
   to?: string;
@@ -144,15 +145,17 @@ export function Button({
   onClick?: () => void;
   type?: "button" | "submit";
   disabled?: boolean;
+  "data-tour"?: string;
 }) {
   const className = `button ${secondary ? "secondary" : ""}`;
   return to ? (
-    <Link className={className} to={to}>
+    <Link className={className} to={to} data-tour={tour}>
       {tr(children)}
     </Link>
   ) : (
     <button
       className={className}
+      data-tour={tour}
       onClick={onClick}
       type={type}
       disabled={disabled}
@@ -338,6 +341,11 @@ export function CommunityNav({ profile }: { profile: CommunityProfile }) {
           </NavLink>
         </nav>
       </div>
+      {profile.id === "krakow-demo" && (
+        <Link className="quiet-link jury-entry" to="/demo?tour=jury">
+          {tr("Jury walkthrough")} ↗
+        </Link>
+      )}
       <details className="workspace-tools">
         <summary>{tr("Workspace tools & resident reporting")}</summary>
         <div className="civic-utility-nav">

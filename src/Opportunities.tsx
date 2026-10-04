@@ -180,7 +180,10 @@ export default function Opportunities() {
                     )}
                   </small>
                 </div>
-                <Button to={`/community/${id}/matches/${firstExample.id}`}>
+                <Button
+                  data-tour="choose"
+                  to={`/community/${id}/matches/${firstExample.id}`}
+                >
                   {tr("Inspect this approach")} <Icon />
                 </Button>
               </div>

@@ -2,6 +2,7 @@ import type { AppState } from "./model";
 import type { CivicReport, CivicTopic } from "./civicModel";
 import { seedProfiles } from "./data";
 import { newCivic } from "./civicEngine";
+import { withDemoReality } from "./demoReality";
 export const DEMO_ID = "krakow-demo";
 export const demoDisclosure =
   "Demo workspace · Sample resident reports and team inputs. City facts and project sources are real. Nothing is sent to a municipality.";
@@ -90,6 +91,7 @@ export function startDemo(state: AppState): AppState {
   if (state.profiles.some((p) => p.id === DEMO_ID))
     return {
       ...state,
+      profiles: state.profiles.map(withDemoReality),
       advisor: {
         name: state.advisor?.name || "Demo advisor",
         role: "Municipal innovation advisor",
@@ -97,7 +99,10 @@ export function startDemo(state: AppState): AppState {
         entryMode: "guided",
       },
     };
-  const profile = { ...structuredClone(seedProfiles[0]), id: DEMO_ID };
+  const profile = withDemoReality({
+    ...structuredClone(seedProfiles[0]),
+    id: DEMO_ID,
+  });
   const civic = newCivic(profile);
   civic.authority.name = "Gmina Miejska Kraków";
   civic.contributors = [

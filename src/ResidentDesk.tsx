@@ -1,3 +1,4 @@
+import { reportJuryEvent } from "./juryTourModel";
 import { useState } from "react";
 import { Link } from "./navigation";
 import { t } from "./i18n";
@@ -64,6 +65,7 @@ export default function ResidentDesk({
                 onClick={() => {
                   setChosen(s.topic);
                   setPage(0);
+                  reportJuryEvent({ action: "voice" });
                 }}
               >
                 <span>{t(topicLabels[s.topic])}</span>
@@ -109,8 +111,12 @@ export default function ResidentDesk({
               / {String(reports.length).padStart(2, "0")}
             </span>
             <button
+              data-tour="voice"
               disabled={reports.length < 2}
-              onClick={() => setPage((p) => p + 1)}
+              onClick={() => {
+                setPage((p) => p + 1);
+                reportJuryEvent({ action: "voice" });
+              }}
             >
               {t("Another voice")} <Icon size={20} />
             </button>
@@ -156,7 +162,7 @@ export default function ResidentDesk({
           {civic.reports.filter((r) => r.kind === "idea").length}{" "}
           {t("resident ideas")}
         </span>
-        <Link to={`${root}/data`}>
+        <Link data-tour="team" to={`${root}/data`}>
           {t("Meet the team & inspect the data")} ↗
         </Link>
         <Link to={`${root}/monitor`}>{t("Source monitoring")} ↗</Link>

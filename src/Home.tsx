@@ -25,11 +25,14 @@ export default function Home() {
               )}
             </p>
             <div className="atlas-hero-actions">
-              <Link className="atlas-primary" to="/demo">
-                {t("Explore the Kraków demo")}
+              <Link className="atlas-primary" to="/demo?tour=jury">
+                {t("Jury walkthrough")}
                 <Icon size={20} />
               </Link>
               <span>{t("Step into the role of a municipal advisor.")}</span>
+              <Link className="atlas-secondary" to="/demo">
+                {t("Explore the demo freely")} <span>↗</span>
+              </Link>
               <Link className="atlas-secondary" to="/enter">
                 {t("Bring your own city")} <span>↗</span>
               </Link>
@@ -106,7 +109,7 @@ export default function Home() {
             )}
           </p>
         </div>
-        <Link className="atlas-primary" to="/demo">
+        <Link className="atlas-primary" to="/demo?tour=jury">
           {t("Open the guided demo")}
           <Icon size={22} />
         </Link>

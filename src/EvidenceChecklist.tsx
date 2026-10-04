@@ -1,3 +1,4 @@
+import { demoCheck } from "./demoReality";
 import { useState } from "react";
 import { t as tr, locale } from "./i18n";
 import { Button, TextField, useApp } from "./components";
@@ -25,6 +26,8 @@ export default function EvidenceChecklist({
       </p>
       {assessment.readiness.map((check) => {
         const saved = profile.localChecks?.[assessment.example.id]?.[check.key];
+        const sample =
+          profile.id === "krakow-demo" ? demoCheck(check.key) : undefined;
         return (
           <div className="evidence-check" key={check.key}>
             <div>
@@ -35,10 +38,15 @@ export default function EvidenceChecklist({
                 {tr(check.state)}
               </span>
             </div>
+            {sample && (
+              <small className="demo-finding">
+                {tr("Sample planning note · not verified evidence")}
+              </small>
+            )}
             <p>{tr(check.explanation)}</p>
             {saved && (
               <small>
-                {saved.owner} ·{" "}
+                {saved.provenance === "demo" ? tr(saved.owner) : saved.owner} ·{" "}
                 {new Date(saved.at).toLocaleDateString(locale())}
               </small>
             )}
@@ -59,7 +67,8 @@ export default function EvidenceChecklist({
                       [assessment.example.id]: {
                         ...profile.localChecks?.[assessment.example.id],
                         [check.key]: {
-                          state: status,
+                          state: sample ? "unknown" : status,
+                          ...(sample ? { provenance: "demo" as const } : {}),
                           owner: owner.trim(),
                           evidence: evidence.trim(),
                           at: new Date().toISOString(),
@@ -77,7 +86,8 @@ export default function EvidenceChecklist({
                 <label>
                   {tr("Finding")}
                   <select
-                    value={status}
+                    disabled={!!sample}
+                    value={sample ? "unknown" : status}
                     onChange={(e) =>
                       setStatus(e.target.value as LocalCheck["state"])
                     }
@@ -120,8 +130,16 @@ export default function EvidenceChecklist({
                 className="quiet-link"
                 onClick={() => {
                   setEditing(check.key);
-                  setOwner(saved?.owner || "");
-                  setEvidence(saved?.evidence || "");
+                  setOwner(
+                    saved?.provenance === "demo"
+                      ? tr(saved.owner)
+                      : saved?.owner || tr(sample?.owner || ""),
+                  );
+                  setEvidence(
+                    saved?.provenance === "demo"
+                      ? tr(saved.evidence)
+                      : saved?.evidence || tr(sample?.evidence || ""),
+                  );
                   setStatus(saved?.state || "unknown");
                   setError("");
                 }}

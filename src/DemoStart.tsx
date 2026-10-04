@@ -1,3 +1,4 @@
+import { useLocation } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { Link, useNavigate } from "./navigation";
 import { useApp } from "./components";
@@ -9,12 +10,16 @@ export default function DemoStart() {
   const shared = useShared();
   const navigate = useNavigate();
   const started = useRef(false);
+  const location = useLocation();
   useEffect(() => {
     if (shared.workspace || started.current) return;
     started.current = true;
     update(startDemo);
-    navigate(`/community/${DEMO_ID}`, { replace: true });
-  }, [shared.workspace, update, navigate]);
+    navigate(
+      `/community/${DEMO_ID}${new URLSearchParams(location.search).get("tour") === "jury" ? "?tour=jury" : ""}`,
+      { replace: true },
+    );
+  }, [shared.workspace, update, navigate, location.search]);
   return (
     <div className="page-width safety-page">
       {shared.workspace ? (

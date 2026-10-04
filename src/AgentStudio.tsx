@@ -1,3 +1,4 @@
+import { reportJuryEvent } from "./juryTourModel";
 import { useShared } from "./SharedContext";
 import { sharedClient } from "./shared";
 import { t as tr, locale, getLanguage } from "./i18n";
@@ -144,6 +145,7 @@ export default function AgentStudio() {
   async function run() {
     if (!profile || !civic || busy) return;
     setBusy(true);
+    if (id === DEMO_ID) reportJuryEvent({ action: "started" });
     setError("");
     setWaiting(null);
     setViewId(null);
@@ -190,6 +192,12 @@ export default function AgentStudio() {
       });
     const onStep = (step: AgentStep) => {
       currentAgent = step.id;
+      if (id === DEMO_ID && step.status === "running")
+        reportJuryEvent({
+          agent:
+            agentDefinitions.find((a) => a.id === step.id)?.name || step.id,
+          waiting: false,
+        });
       runningStep = step.status === "running" ? step : undefined;
       setLiveSteps((list) => [...list.filter((s) => s.id !== step.id), step]);
       if (followAgent.current) {
@@ -231,6 +239,12 @@ export default function AgentStudio() {
           beforeStep: async (agent) => {
             if (!guided || agent === "listener") return;
             setWaiting(agent);
+            if (id === DEMO_ID)
+              reportJuryEvent({
+                agent:
+                  agentDefinitions.find((a) => a.id === agent)?.name || agent,
+                waiting: true,
+              });
             await new Promise<void>((resolve, reject) => {
               const cancel = () => {
                 gate.current = null;
@@ -420,6 +434,7 @@ export default function AgentStudio() {
         ].slice(0, 100),
       }));
       if (followAgent.current) setSelected("writer");
+      if (id === DEMO_ID) reportJuryEvent({ action: "completed" });
     } catch (e) {
       const message = controller.signal.aborted
         ? "Run cancelled."
@@ -427,6 +442,7 @@ export default function AgentStudio() {
           ? e.message
           : "Analysis failed.";
       setError(message);
+      if (id === DEMO_ID) reportJuryEvent({ action: "stopped" });
       emit(currentAgent, "error", "Run stopped", message);
       const failed: AgentRun = {
         id: crypto.randomUUID(),
@@ -500,6 +516,7 @@ export default function AgentStudio() {
         </div>
         <div className="agent-launch-actions">
           <Button
+            data-tour="launch"
             disabled={
               busy ||
               (mode === "ai" &&
@@ -585,6 +602,7 @@ export default function AgentStudio() {
       )}
       <section
         id="agent-workbench"
+        data-tour="workbench"
         className={`agent-workbench ${busy ? "network-active" : ""} ${transferring ? "network-transferring" : ""}`}
         aria-label={tr("Agent work dashboard")}
       >
@@ -692,6 +710,7 @@ export default function AgentStudio() {
                   </p>
                 </div>
                 <Button
+                  data-tour="handoff"
                   disabled={transferring}
                   onClick={async () => {
                     const signal = abort.current?.signal;
@@ -737,7 +756,10 @@ export default function AgentStudio() {
                     )}
                   </p>
                 </div>
-                <Button to={`/community/${id}/opportunities`}>
+                <Button
+                  data-tour="compare"
+                  to={`/community/${id}/opportunities`}
+                >
                   {tr("Compare the findings")} <Icon />
                 </Button>
               </>

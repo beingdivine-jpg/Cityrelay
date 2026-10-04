@@ -1,3 +1,4 @@
+import JuryTour from "./JuryTour";
 import { t as tr, useLanguage } from "./i18n";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
@@ -522,6 +523,7 @@ function Shell() {
           ),
         )}
       </div>
+      <JuryTour />
     </AppContext.Provider>
   );
 }

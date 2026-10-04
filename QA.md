@@ -1,3 +1,13 @@
+# Jury walkthrough and prepared demo inputs — 4 October 2026
+
+- Added a prominent Jury walkthrough entry and a 12-step, English/Polish guide. A native modal establishes the advisor role and demo boundaries; the contextual guide highlights real controls, explains each action, waits for actual agent completion and finishes only after the PDF has been prepared. Closing/minimizing does not cancel an investigation. Progress is saved per browser tab, with route recovery and a safe shortcut to an existing current, completed investigation.
+- Kraków rehearsal inputs now include a hypothetical PLN 25,000 discovery/pilot budget with a breakdown, staffing, a six-week sequence, site checks and evidence notes. Missing notes are filled for new and existing demos without replacing authored findings, plans or the operational Kraków workspace. Sample provenance cannot promote a readiness check to confirmed. A clear Continue with demo assumptions action lets jury members draft the pilot without supplying municipal documents. Downloads retain the sample notes and disclosure.
+- Browser verification on isolated port 4187 covered every action from home through resident voices, shared inputs, all four handoffs in a default paced five-agent run, comparison, Barcelona source/local-fit review, pilot creation and an actual PDF download. A second Polish rehearsal reused the completed investigation, preserved the pilot and downloaded it again. Minimize, reload, resume and panel recovery were verified. No browser console errors were recorded.
+- Desktop and Polish 390/320 px views were inspected. Page width matches both mobile viewports. A 320 px overlap was fixed: the real continuation button scrolls above the bottom guide. The guide header remains available while its longer text scrolls.
+- **102 tests pass across 13 files**, including new action-gating, sample isolation, existing-work preservation, sample-readiness and Polish-copy coverage. Production build and diff checks pass. Optional external AI, shared authentication and background monitoring configuration are unchanged.
+
+---
+
 # Ideas in orbit — 4 October 2026
 
 - Replaced the welcome’s flat map with an orthographic globe built from the existing Natural Earth geography and documented city coordinates. Illuminated land points, moving elevated routes and travelling light markers illustrate knowledge exchange; they do not claim live discoveries or actual municipal partnerships.

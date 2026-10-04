@@ -131,9 +131,11 @@ export default function CityData() {
           </label>
           <small>
             {tr(
-              civic.authority.confirmed
-                ? "Confirmed by the advisor. This does not verify institutional membership."
-                : "A typed organisation name is not institutional verification.",
+              id === "krakow-demo"
+                ? "The sample inputs are ready. You can continue without confirming municipal authority."
+                : civic.authority.confirmed
+                  ? "Confirmed by the advisor. This does not verify institutional membership."
+                  : "A typed organisation name is not institutional verification.",
             )}
           </small>
         </div>
@@ -231,7 +233,7 @@ export default function CityData() {
             <Icon name="edit" size={16} />
           </Link>
         </div>
-        <div className="connection-table">
+        <div className="connection-table" data-tour="access">
           {tr(
             civic.connections.map((c) => (
               <div key={c.key}>
@@ -501,9 +503,11 @@ export default function CityData() {
       <div className="civic-next">
         <p>
           {tr(
-            civic.authority.confirmed
-              ? "The local foundation is ready. Collect resident input or begin a research run."
-              : "Confirm the responsible authority to complete the first step.",
+            id === "krakow-demo"
+              ? "The sample inputs are ready. You can continue without confirming municipal authority."
+              : civic.authority.confirmed
+                ? "The local foundation is ready. Collect resident input or begin a research run."
+                : "Confirm the responsible authority to complete the first step.",
           )}
         </p>
         <Button to={`/community/${id}/agents`}>

@@ -1,3 +1,4 @@
+import { reportJuryEvent } from "./juryTourModel";
 import { t as tr, locale } from "./i18n";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
@@ -104,6 +105,7 @@ export default function Plan() {
       const { downloadPilotPdf } = await import("./pilotPdf");
       await downloadPilotPdf(exportText(), profile.name);
       notify("Pilot PDF prepared. Check your browser downloads.");
+      if (id === "krakow-demo") reportJuryEvent({ action: "downloaded" });
     } catch {
       setExportError(
         "The PDF could not be prepared. Try again or download the text version.",
@@ -268,7 +270,11 @@ export default function Plan() {
           )}
         </span>
         <div className="export-actions">
-          <Button disabled={exporting} onClick={() => void downloadPdf()}>
+          <Button
+            data-tour="export"
+            disabled={exporting}
+            onClick={() => void downloadPdf()}
+          >
             <Icon name="download" size={17} />
             {tr(exporting ? "Preparing PDF…" : "Download pilot · PDF")}
           </Button>

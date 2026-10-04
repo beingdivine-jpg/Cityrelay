@@ -32,6 +32,7 @@ export interface SourceRecord {
     | "Map data";
 }
 export type LocalCheck = {
+  provenance?: "demo";
   state: "met" | "unmet" | "unknown";
   evidence: string;
   owner: string;

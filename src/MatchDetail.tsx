@@ -1,3 +1,5 @@
+import { reportJuryEvent } from "./juryTourModel";
+import { withDemoReality, sampleBudget } from "./demoReality";
 import { t as tr, useLanguage } from "./i18n";
 import { useEffect, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
@@ -26,7 +28,7 @@ export default function MatchDetail() {
   const [proposalEdited, setProposalEdited] = useState(false);
   const { id, matchId } = useParams();
   const location = useLocation();
-  const { state, update, notify } = useApp();
+  const { state, update, notify, saveProfile } = useApp();
   const live = useLive();
   const navigate = useNavigate();
   const [panel, setPanel] = useState("understand");
@@ -60,6 +62,21 @@ export default function MatchDetail() {
     )
       setProposal(tr(localSuggestion(profile, example, "proposal")));
   }, [language, proposalEdited, profile, example, existing]);
+  useEffect(() => {
+    if (profile) {
+      const prepared = withDemoReality(profile);
+      if (prepared !== profile) saveProfile(prepared);
+    }
+  }, [profile, saveProfile]);
+  useEffect(() => {
+    if (location.hash === "#tour-fit") setPanel("fit");
+    if (location.hash === "#tour-adapt") setPanel("adapt");
+  }, [location.hash]);
+  const changePanel = (next: string) => {
+    setPanel(next);
+    if (id === "krakow-demo" && ["fit", "adapt"].includes(next))
+      reportJuryEvent({ action: next as "fit" | "adapt" });
+  };
   if (!profile || !example) return <Missing />;
   const assessment = assessCase(profile, example, state.civic?.[id!]);
   const draft = state.drafts.find(
@@ -161,7 +178,7 @@ export default function MatchDetail() {
                 <button
                   key={key}
                   aria-pressed={panel === key}
-                  onClick={() => setPanel(key)}
+                  onClick={() => changePanel(key)}
                 >
                   <span>
                     {tr("0")}
@@ -237,7 +254,7 @@ export default function MatchDetail() {
                     <span>
                       {tr("Now, bring your local context into the picture.")}
                     </span>
-                    <Button onClick={() => setPanel("fit")}>
+                    <Button data-tour="fit" onClick={() => changePanel("fit")}>
                       {tr("Check the local fit ")}
                       <Icon />
                     </Button>
@@ -268,6 +285,30 @@ export default function MatchDetail() {
                           <span>{tr("WHAT YOU CAN BUILD ON")}</span>
                           <p>{tr(assessment.reasons[0])}</p>
                         </div>
+                        {profile.id === "krakow-demo" && (
+                          <div className="demo-reality" data-tour="reality">
+                            <span className="eyebrow">
+                              {tr("PREFILLED / DEMO ASSUMPTIONS")}
+                            </span>
+                            <h3>
+                              {tr("You have enough to rehearse the decision.")}
+                            </h3>
+                            <p>
+                              {tr(
+                                profile.localChecks?.[example.id]?.budget
+                                  ?.evidence || sampleBudget,
+                              )}
+                            </p>
+                            <small>
+                              {tr(
+                                "Sample team, schedule and evidence notes are filled in below. You can edit them, or move straight to the proposal. Real costs, permissions and availability remain unverified.",
+                              )}
+                            </small>
+                            <Button onClick={() => changePanel("adapt")}>
+                              {tr("Continue with demo assumptions")} <Icon />
+                            </Button>
+                          </div>
+                        )}
                         <Readiness assessment={assessment} />
                         <EvidenceChecklist
                           profile={profile}
@@ -290,7 +331,7 @@ export default function MatchDetail() {
                           <span>
                             {tr("Keep the useful parts. Adapt the rest.")}
                           </span>
-                          <Button onClick={() => setPanel("adapt")}>
+                          <Button onClick={() => changePanel("adapt")}>
                             {tr("Shape the local version ")}
                             <Icon />
                           </Button>
@@ -346,7 +387,11 @@ export default function MatchDetail() {
                     <span>
                       {tr("Take this into a practical, editable pilot brief.")}
                     </span>
-                    <Button onClick={add} disabled={!assessment}>
+                    <Button
+                      data-tour="pilot"
+                      onClick={add}
+                      disabled={!assessment}
+                    >
                       {tr(
                         existing
                           ? "Add evidence to my pilot"

@@ -136,7 +136,9 @@ export function assessMatches(
           evidence.owner.trim() &&
           evidence.evidence.trim().length >= 20
         ) {
-          check.state = evidence.state;
+          // Rehearsal notes cannot turn an unverified condition into approval.
+          check.state =
+            evidence.provenance === "demo" ? "unknown" : evidence.state;
           check.explanation = `${evidence.evidence} · ${evidence.owner} · ${evidence.at.slice(0, 10)}`;
         }
       }
