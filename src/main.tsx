@@ -6,6 +6,7 @@ import "./app.css";
 import "./civic.css";
 import "./journey.css";
 import "./studio.css";
+import "./atlas.css";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ErrorBoundary>

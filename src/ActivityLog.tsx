@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { AgentEvent, AgentKey, AgentStep } from "./civicModel";
 import { agentDefinitions } from "./civicEngine";
 import { t, locale } from "./i18n";
+import ResearchTrace from "./ResearchTrace";
 export default function ActivityLog({
   events,
   busy,
@@ -84,232 +85,260 @@ export default function ActivityLog({
   ).length;
   return (
     <div className="activity-console">
-      <header>
-        <div>
-          <i className={busy && !waiting ? "working-light" : "console-dot"} />
-          <strong>{t("Activity log")}</strong>
-          <span>
-            {t(
-              waiting
-                ? "Waiting for you"
-                : busy
-                  ? "In progress"
-                  : events.length
-                    ? "Recorded"
-                    : "Ready",
-            )}
-          </span>
-        </div>
-        <label>
-          <input
-            type="checkbox"
-            checked={follow}
-            onChange={(e) => setFollow(e.target.checked)}
-          />
-          {t("Follow latest")}
-        </label>
-      </header>
-      <div className="activity-focus">
-        <div className="activity-focus-meta">
-          <span>
-            {t(agent.name)} ·{" "}
+      <section className="research-stage">
+        <div className="activity-focus">
+          <div className="activity-focus-meta">
+            <span>
+              {t(agent.name)} ·{" "}
+              {t(
+                working
+                  ? "Working now"
+                  : step?.status === "complete"
+                    ? "Output ready"
+                    : step?.status === "failed"
+                      ? "Stopped"
+                      : latest
+                        ? "Recorded activity"
+                        : "Not started",
+              )}
+            </span>
+            <span
+              className="activity-elapsed"
+              aria-label={t("Stage elapsed time")}
+            >
+              {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
+            </span>
+          </div>
+          <h2 className="stage-verb">{t(agent.verb)}</h2>
+          <ResearchTrace events={agentEvents} working={working} />
+          <span className="stage-action-label">
             {t(
               working
-                ? "Working now"
-                : step?.status === "complete"
-                  ? "Output ready"
-                  : step?.status === "failed"
-                    ? "Stopped"
-                    : latest
-                      ? "Recorded activity"
-                      : "Not started",
+                ? "CURRENT ACTION"
+                : latest
+                  ? "LAST RECORDED ACTION"
+                  : "THE ASSIGNMENT",
             )}
           </span>
-          <span
-            className="activity-elapsed"
-            aria-label={t("Stage elapsed time")}
-          >
-            {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
-          </span>
-        </div>
-        <strong>
-          {t(
-            working && pending.length
-              ? "Waiting for source responses"
-              : latest?.title || agent.verb,
-          )}
-        </strong>
-        <p>
-          {latest
-            ? mode === "local"
-              ? t(latest.detail)
-              : latest.detail
-            : t(agent.description)}
-        </p>
-        {latest?.url && (
-          <a href={latest.url} target="_blank" rel="noreferrer">
-            {new URL(latest.url).hostname} ↗
-          </a>
-        )}
-        {working && (
-          <div className="activity-motion" aria-hidden="true">
-            <i />
-            <i />
-            <i />
-            <i />
-            <i />
-          </div>
-        )}
-      </div>
-      {requests.length > 0 && (
-        <details
-          className="source-requests"
-          open={working && pending.length > 0 ? true : undefined}
-        >
-          <summary>
-            {t("Live page requests")} · {requests.length - pending.length}/
-            {requests.length}
-            {unavailable > 0 && (
-              <>
-                {" "}
-                · {t("Unavailable")}: {unavailable}
-              </>
-            )}
-          </summary>
-          {requests.map((request) => (
-            <div key={request.url}>
-              <a href={request.url} target="_blank" rel="noreferrer">
-                {new URL(request.url!).hostname} ↗
-              </a>
-              <span>
-                {t(
-                  request.title === "Checking a live source page"
-                    ? busy && !waiting
-                      ? "Awaiting response"
-                      : "No response recorded"
-                    : request.title === "Source page retrieved"
-                      ? "Retrieved"
-                      : "Unavailable",
-                )}
-              </span>
-            </div>
-          ))}
-        </details>
-      )}
-      {mode === "local" && (
-        <div className="activity-pace">
-          <div role="group" aria-label={t("Activity reading speed")}>
-            <button aria-pressed={readable} onClick={() => onPaceChange(true)}>
-              {t("Reading pace")}
-            </button>
-            <button
-              aria-pressed={!readable}
-              onClick={() => onPaceChange(false)}
-            >
-              {t("Full speed")}
-            </button>
-          </div>
-          <p>
+          <strong>
             {t(
-              "Local actions are spaced for reading. Live requests use their actual response time.",
+              working && pending.length
+                ? "Waiting for source responses"
+                : latest?.title || agent.verb,
             )}
+          </strong>
+          <p>
+            {latest
+              ? mode === "local"
+                ? t(latest.detail)
+                : latest.detail
+              : t(agent.description)}
           </p>
+          {latest?.url && (
+            <a href={latest.url} target="_blank" rel="noreferrer">
+              {new URL(latest.url).hostname} ↗
+            </a>
+          )}
+          {working && (
+            <div className="activity-motion" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+              <i />
+              <i />
+            </div>
+          )}
         </div>
-      )}
-      <div className="log-scope" role="group" aria-label={t("Activity scope")}>
-        <button
-          aria-pressed={scope === "agent"}
-          onClick={() => setScope("agent")}
-        >
-          {t("This agent")} · {agentEvents.length}
-        </button>
-        <button aria-pressed={scope === "run"} onClick={() => setScope("run")}>
-          {t("Whole investigation")} · {events.length}
-        </button>
-      </div>
-      <div className="log-filters">
-        {[
-          ["all", "All actions"],
-          ["query", "Searches"],
-          ["source", "Sources"],
-          ["check", "Checks"],
-        ].map(([key, label]) => (
-          <button
-            key={key}
-            aria-pressed={filter === key}
-            onClick={() => setFilter(key)}
+        {requests.length > 0 && (
+          <details
+            className="source-requests"
+            open={working && pending.length > 0 ? true : undefined}
           >
-            {t(label)}
-          </button>
-        ))}
-        <span>
-          {visible.length} {t("events")}
-        </span>
-      </div>
-      <div
-        className="activity-entries"
-        ref={panel}
-        role="log"
-        aria-label={t("Agent activity log")}
-        aria-live="polite"
-        aria-relevant="additions"
-        tabIndex={0}
-      >
-        {visible.length ? (
-          visible.map((event) => (
-            <article key={event.id} className={`log-event log-${event.kind}`}>
-              <span className="log-time">
-                {new Date(event.at).toLocaleTimeString(locale(), {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                })}
-              </span>
-              <div>
-                <span className="log-agent">
+            <summary>
+              {t("Live page requests")} · {requests.length - pending.length}/
+              {requests.length}
+              {unavailable > 0 && (
+                <>
+                  {" "}
+                  · {t("Unavailable")}: {unavailable}
+                </>
+              )}
+            </summary>
+            {requests.map((request) => (
+              <div key={request.url}>
+                <a href={request.url} target="_blank" rel="noreferrer">
+                  {new URL(request.url!).hostname} ↗
+                </a>
+                <span>
                   {t(
-                    agentDefinitions.find((a) => a.id === event.agent)?.name ||
-                      event.agent,
+                    request.title === "Checking a live source page"
+                      ? busy && !waiting
+                        ? "Awaiting response"
+                        : "No response recorded"
+                      : request.title === "Source page retrieved"
+                        ? "Retrieved"
+                        : "Unavailable",
                   )}
                 </span>
-                <strong>{t(event.title)}</strong>
-                {event.detail.length > 350 ? (
-                  <details>
-                    <summary>{t("Inspect recorded output")}</summary>
-                    <p>{mode === "local" ? t(event.detail) : event.detail}</p>
-                  </details>
-                ) : (
-                  <p>{mode === "local" ? t(event.detail) : event.detail}</p>
-                )}
-                {event.url && (
-                  <a href={event.url} target="_blank" rel="noreferrer">
-                    {new URL(event.url).hostname} ↗
-                  </a>
-                )}
               </div>
-              <span className="log-sequence">
-                {String(events.indexOf(event) + 1).padStart(2, "0")}
-              </span>
-            </article>
-          ))
-        ) : (
-          <div className="console-empty">
-            <span aria-hidden="true">↗</span>
-            <h3>
-              {t(
-                events.length
-                  ? "No actions in this view yet"
-                  : "An investigation you can follow.",
-              )}
-            </h3>
-            <p>
-              {t(
-                "Inputs opened. Reports grouped. Sources checked. Unknowns flagged. Each action earns its place in this record.",
-              )}
-            </p>
-          </div>
+            ))}
+          </details>
         )}
-      </div>
+      </section>
+      <section className="research-ledger">
+        <header>
+          <div>
+            <i className={busy && !waiting ? "working-light" : "console-dot"} />
+            <strong>{t("Activity log")}</strong>
+            <span>
+              {t(
+                waiting
+                  ? "Waiting for you"
+                  : busy
+                    ? "In progress"
+                    : events.length
+                      ? "Recorded"
+                      : "Ready",
+              )}
+            </span>
+          </div>
+          <label>
+            <input
+              type="checkbox"
+              checked={follow}
+              onChange={(e) => setFollow(e.target.checked)}
+            />
+            {t("Follow latest")}
+          </label>
+        </header>
+        <details className="log-controls">
+          <summary>{t("View & playback")}</summary>
+          {mode === "local" && (
+            <div className="activity-pace">
+              <div role="group" aria-label={t("Activity reading speed")}>
+                <button
+                  aria-pressed={readable}
+                  onClick={() => onPaceChange(true)}
+                >
+                  {t("Reading pace")}
+                </button>
+                <button
+                  aria-pressed={!readable}
+                  onClick={() => onPaceChange(false)}
+                >
+                  {t("Full speed")}
+                </button>
+              </div>
+              <p>
+                {t(
+                  "Local actions are spaced for reading. Live requests use their actual response time.",
+                )}
+              </p>
+            </div>
+          )}
+          <div
+            className="log-scope"
+            role="group"
+            aria-label={t("Activity scope")}
+          >
+            <button
+              aria-pressed={scope === "agent"}
+              onClick={() => setScope("agent")}
+            >
+              {t("This agent")} · {agentEvents.length}
+            </button>
+            <button
+              aria-pressed={scope === "run"}
+              onClick={() => setScope("run")}
+            >
+              {t("Whole investigation")} · {events.length}
+            </button>
+          </div>
+          <div className="log-filters">
+            {[
+              ["all", "All actions"],
+              ["query", "Searches"],
+              ["source", "Sources"],
+              ["check", "Checks"],
+            ].map(([key, label]) => (
+              <button
+                key={key}
+                aria-pressed={filter === key}
+                onClick={() => setFilter(key)}
+              >
+                {t(label)}
+              </button>
+            ))}
+            <span>
+              {visible.length} {t("events")}
+            </span>
+          </div>
+        </details>
+        <div
+          className="activity-entries"
+          ref={panel}
+          role="log"
+          aria-label={t("Agent activity log")}
+          aria-live="polite"
+          aria-relevant="additions"
+          tabIndex={0}
+        >
+          {visible.length ? (
+            visible.map((event) => (
+              <article key={event.id} className={`log-event log-${event.kind}`}>
+                <span className="log-time">
+                  {new Date(event.at).toLocaleTimeString(locale(), {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                  })}
+                </span>
+                <div>
+                  <span className="log-agent">
+                    {t(
+                      agentDefinitions.find((a) => a.id === event.agent)
+                        ?.name || event.agent,
+                    )}
+                  </span>
+                  <strong>{t(event.title)}</strong>
+                  {event.detail.length > 350 ? (
+                    <details>
+                      <summary>{t("Inspect recorded output")}</summary>
+                      <p>{mode === "local" ? t(event.detail) : event.detail}</p>
+                    </details>
+                  ) : (
+                    <p>{mode === "local" ? t(event.detail) : event.detail}</p>
+                  )}
+                  {event.url && (
+                    <a href={event.url} target="_blank" rel="noreferrer">
+                      {new URL(event.url).hostname} ↗
+                    </a>
+                  )}
+                </div>
+                <span className="log-sequence">
+                  {String(events.indexOf(event) + 1).padStart(2, "0")}
+                </span>
+              </article>
+            ))
+          ) : (
+            <div className="console-empty">
+              <span aria-hidden="true">↗</span>
+              <h3>
+                {t(
+                  events.length
+                    ? "No actions in this view yet"
+                    : "An investigation you can follow.",
+                )}
+              </h3>
+              <p>
+                {t(
+                  "Inputs opened. Reports grouped. Sources checked. Unknowns flagged. Each action earns its place in this record.",
+                )}
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

@@ -1,3 +1,14 @@
+# Civic atlas art direction — 4 October 2026
+
+- Replaced the welcome composition with an interactive Natural Earth atlas, sourced city selectors, a concise municipal-advisor entry and a shared typographic system. City selection pauses the presentation; pause/play and reduced-motion support remain. Dateline-crossing polygons are unwrapped so they do not draw across the map.
+- Rebuilt the research room as a current-task stage alongside a continuously visible working record. A graphic plots real recorded events; detailed filters, scope and reading pace sit in a disclosure. The agent sequence is horizontal and follows the selected agent on narrow screens. Existing processing, handoffs, cancellation, saved logs and source requests are preserved.
+- Applied deep green, mineral grey and lime with sharper typography and fewer decorative surfaces across listening, research, comparison, project evidence, forms and pilot drafting. Replaced the old project cartoons with labelled conceptual diagrams; these do not claim to be site plans.
+- Browser verification at isolated port 4184 covered the English/Polish atlas, the correct Helsinki municipal source link, pause state, 320/390 px layouts without document overflow, all five Polish agent handoffs, five successful actual source requests, completed research, Barcelona evidence and creation of an editable local pilot. Existing production data is not reset.
+- **91 tests pass across 10 files**. Production build, formatting and diff checks pass. The atlas is loaded separately; the emitted main bundle is approximately 357 kB and no build chunk warning remains.
+- This is a presentation redesign. It does not configure an AI provider, Supabase, identity verification or background monitoring. Fictional resident examples and unknown local feasibility conditions retain their disclosures.
+
+---
+
 # Progressive agent activity — 4 October 2026
 
 - Local analysis now yields after each recorded action. The default **Reading pace** uses disclosed reading intervals; **Full speed** removes those intervals. Real HTTP request callbacks are recorded immediately and are not paced or simulated.

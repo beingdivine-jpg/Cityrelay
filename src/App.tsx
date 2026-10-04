@@ -110,7 +110,7 @@ function About() {
         </p>
         <p>
           {tr(
-            "Open-Meteo’s non-commercial service is attributed in the interface. A commercial release needs appropriate provider terms, secure account infrastructure and shared storage. The animated city is an original conceptual illustration, not a map or a representation of a specific city.",
+            "Open-Meteo’s non-commercial service is attributed in the interface. A commercial release needs appropriate provider terms, secure account infrastructure and shared storage. The atlas uses Natural Earth geography and approximate city locations. Project diagrams are conceptual illustrations, not site plans.",
           )}
         </p>
       </details>

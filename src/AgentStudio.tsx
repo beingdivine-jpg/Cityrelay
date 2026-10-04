@@ -108,6 +108,21 @@ export default function AgentStudio() {
   const [readable, setReadable] = useState(true);
   const readingPace = useRef(true),
     followAgent = useRef(true);
+  const rail = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const list = rail.current;
+    const active = list?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!list || !active || list.scrollWidth <= list.clientWidth) return;
+    list.scrollTo({
+      left:
+        list.scrollLeft +
+        active.getBoundingClientRect().left -
+        list.getBoundingClientRect().left,
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "instant"
+        : "smooth",
+    });
+  }, [selected]);
   useEffect(() => () => abort.current?.abort(), []);
   useEffect(() => {
     if (!busy) return;
@@ -439,8 +454,12 @@ export default function AgentStudio() {
         <div>
           <span className="eyebrow">{tr("STEP 02 / THE RESEARCH ROOM")}</span>
           <h1>
-            {tr("Now, connect")}{" "}
-            <span className="blue-text">{tr("the evidence.")}</span>
+            {profile.name}
+            <span className="research-heading-slash" aria-hidden="true">
+              {" "}
+              /{" "}
+            </span>
+            <span className="blue-text">{tr("In perspective.")}</span>
           </h1>
         </div>
         <p>
@@ -554,7 +573,7 @@ export default function AgentStudio() {
         className="agent-workbench"
         aria-label={tr("Agent work dashboard")}
       >
-        <aside className="agent-rail">
+        <aside className="agent-rail" ref={rail}>
           <span className="eyebrow">{tr("RESEARCH TEAM")}</span>
           {agentDefinitions.map((agent, i) => {
             const step = steps.find((s) => s.id === agent.id);

@@ -114,11 +114,17 @@ export function Logo() {
         aria-hidden="true"
       >
         <path
-          d="M20 2V38M2 20H38M7 7L33 33M7 33L33 7"
+          d="M5 25L17 13H32V28L20 40M5 13L17 1H32"
           stroke="currentColor"
-          strokeWidth="5"
+          strokeWidth="4"
+          transform="translate(0 -1)"
         />
-        <circle cx="20" cy="20" r="7" fill="currentColor" />
+        <path
+          d="M5 25H20V40"
+          stroke="currentColor"
+          strokeWidth="4"
+          transform="translate(0 -1)"
+        />
       </svg>
       <span>{tr("elsewhere")}</span>
     </Link>
