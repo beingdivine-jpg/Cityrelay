@@ -88,7 +88,7 @@ export default function JuryTour() {
       !shared.workspace
     ) {
       setIntro(true);
-      navigate(juryRoot, { replace: true });
+      navigate(juryRoot, { replace: true, viewTransition: false });
     }
   }, [location.pathname, location.search, shared.workspace, navigate]);
   useEffect(() => {
@@ -199,7 +199,7 @@ export default function JuryTour() {
     setProgress({ step: "listen", caseId: "", minimized: false });
     setIntro(false);
     setStopped(false);
-    navigate(juryRoot);
+    if (location.pathname !== juryRoot) navigate(juryRoot);
   };
   function showTarget() {
     if (!onRoute) {
