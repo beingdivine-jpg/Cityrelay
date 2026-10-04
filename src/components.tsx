@@ -342,8 +342,8 @@ export function CommunityNav({ profile }: { profile: CommunityProfile }) {
         </nav>
       </div>
       {profile.id === "krakow-demo" && (
-        <Link className="quiet-link jury-entry" to="/demo?tour=jury">
-          {tr("Jury walkthrough")} ↗
+        <Link className="jury-entry" to="/demo?tour=demo">
+          <span aria-hidden="true">▶</span> {tr("Demo Walkthrough")}
         </Link>
       )}
       <details className="workspace-tools">

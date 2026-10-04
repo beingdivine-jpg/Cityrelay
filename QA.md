@@ -1,3 +1,13 @@
+# Bilingual Demo Walkthrough — 4 October 2026
+
+- Renamed all visible walkthrough entries, headings and accessibility labels to Demo Walkthrough / Demo krok po kroku. Home, header and workspace entries remain easy to find; workspace navigation now uses a highlighted play button. New links use `tour=demo`, while previous `tour=jury` links remain compatible.
+- Shortened the introduction and all twelve steps. Each working agent and handoff has concise guidance explaining the current work, the result and the next action. Stable agent identifiers keep live guidance in the selected language. Completion still depends on real stage events and PDF preparation.
+- Completed Polish presentation for seeded advisor names, document previews, sample feasibility notes and unchanged saved pilot templates. Authored edits and operational workspaces retain their text. Fixed translation of complete sample notes when provenance is appended to prose containing semicolons.
+- Browser verification on isolated port 4188 covered the full Polish journey through all five agents and four handoffs, comparison, local assumptions, pilot creation and a PDF saved in Downloads. English/Polish switching preserved progress and translated unchanged pilot defaults in both directions. Polish home entries were inspected at 390 and 320 px with no horizontal overflow.
+- **103 tests pass across 13 files**, including every guide/stage translation, formatted sample evidence and saved-template preservation. Production build and diff checks pass. No new dependency or backend configuration.
+
+---
+
 # Jury walkthrough and prepared demo inputs — 4 October 2026
 
 - Added a prominent Jury walkthrough entry and a 12-step, English/Polish guide. A native modal establishes the advisor role and demo boundaries; the contextual guide highlights real controls, explains each action, waits for actual agent completion and finishes only after the PDF has been prepared. Closing/minimizing does not cancel an investigation. Progress is saved per browser tab, with route recovery and a safe shortcut to an existing current, completed investigation.

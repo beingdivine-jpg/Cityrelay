@@ -112,7 +112,7 @@ export function translateText(
       );
   }
   // Local agent output and evidence lists contain independently translated lines.
-  for (const separator of ["\n", "; ", " · ", ", "]) {
+  for (const separator of ["\n", " · ", "; ", ", "]) {
     if (text.includes(separator))
       return text
         .split(separator)

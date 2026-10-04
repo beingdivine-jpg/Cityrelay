@@ -4,8 +4,9 @@ import { Link, useNavigate } from "./navigation";
 import { useApp, Icon } from "./components";
 import { useShared } from "./SharedContext";
 import { t, useLanguage } from "./i18n";
-import { juryCopy } from "./juryCopy";
-import { runFingerprint } from "./civicEngine";
+import type { AgentKey } from "./civicModel";
+import { juryCopy, agentWalkthroughCopy } from "./juryCopy";
+import { runFingerprint, agentDefinitions } from "./civicEngine";
 import {
   advanceJuryStep,
   juryRoot,
@@ -58,12 +59,27 @@ export default function JuryTour() {
   const shared = useShared();
   const [progress, setProgress] = useState<Progress | null>(readProgress);
   const [intro, setIntro] = useState(false);
-  const [agent, setAgent] = useState({ name: "", waiting: false });
+  const [agent, setAgent] = useState<{ id: AgentKey | null; waiting: boolean }>(
+    { id: null, waiting: false },
+  );
   const [stopped, setStopped] = useState(false);
   const modal = useRef<HTMLDialogElement>(null);
   const [targetFound, setTargetFound] = useState(false);
   const [locate, setLocate] = useState(0);
-  const copy = progress ? juryCopy[progress.step] : null;
+  const baseCopy = progress ? juryCopy[progress.step] : null;
+  const stageCopy =
+    progress?.step === "run" && agent.id
+      ? agentWalkthroughCopy[agent.id]
+      : null;
+  const copy =
+    baseCopy && stageCopy
+      ? {
+          ...baseCopy,
+          ...(agent.waiting
+            ? stageCopy.handoff || stageCopy.working
+            : stageCopy.working),
+        }
+      : baseCopy;
   const expected = progress ? juryRoute(progress.step, progress.caseId) : "";
   const onRoute = location.pathname === expected;
   const visible = !!progress && !intro && !shared.workspace;
@@ -84,7 +100,9 @@ export default function JuryTour() {
   useEffect(() => {
     if (
       location.pathname === juryRoot &&
-      new URLSearchParams(location.search).get("tour") === "jury" &&
+      ["demo", "jury"].includes(
+        new URLSearchParams(location.search).get("tour") || "",
+      ) &&
       !shared.workspace
     ) {
       setIntro(true);
@@ -105,7 +123,7 @@ export default function JuryTour() {
         if (detail.action === "stopped") setStopped(true);
         if (detail.action === "started") setStopped(false);
         advance(detail.action);
-      } else setAgent({ name: detail.agent, waiting: detail.waiting });
+      } else setAgent({ id: detail.agent, waiting: detail.waiting });
     };
     window.addEventListener("elsewhere:jury", event);
     return () => window.removeEventListener("elsewhere:jury", event);
@@ -244,14 +262,14 @@ export default function JuryTour() {
           >
             <Icon name="close" />
           </button>
-          <span className="jury-kicker">{t("JURY WALKTHROUGH / KRAKÓW")}</span>
+          <span className="jury-kicker">{t("DEMO WALKTHROUGH / KRAKÓW")}</span>
           <div className="jury-orbit" aria-hidden="true">
             ↗
           </div>
           <h2 id="jury-intro-title">{t("Take the advisor’s seat.")}</h2>
           <p>
             {t(
-              "A guided journey from resident concerns to a downloadable pilot. Short messages show what to do and why. You make each click; the guide waits for the work.",
+              "Short prompts explain each result and highlight your next action.",
             )}
           </p>
           <ol>
@@ -259,9 +277,12 @@ export default function JuryTour() {
             <li>{t("Follow the five agents")}</li>
             <li>{t("Check the fit & shape a pilot")}</li>
           </ol>
+          <p className="jury-duration">
+            {t("6–10 minutes · No sign-in needed")}
+          </p>
           <p className="jury-honesty">
             {t(
-              "Allow around 6–10 minutes, depending on source responses. No sign-in is needed. Resident reports and planning assumptions are samples; project sources are real. Existing demo work is preserved.",
+              "Sample reports and planning inputs. Real project sources. Your existing demo work is kept.",
             )}
           </p>
           <button className="button" autoFocus onClick={start}>
@@ -280,7 +301,7 @@ export default function JuryTour() {
             className="jury-resume"
             onClick={() => setProgress((p) => p && { ...p, minimized: false })}
           >
-            <Icon name="chat" size={18} /> {t("Resume jury guide")}{" "}
+            <Icon name="chat" size={18} /> {t("Resume demo walkthrough")}{" "}
             <span>
               {jurySteps.indexOf(progress.step) + 1}/{jurySteps.length}
             </span>
@@ -288,14 +309,14 @@ export default function JuryTour() {
         ) : (
           <aside
             className="jury-coach"
-            aria-label={t("Jury walkthrough guide")}
+            aria-label={t("Demo walkthrough guide")}
             onKeyDown={(e) => {
               if (e.key === "Escape")
                 setProgress((p) => p && { ...p, minimized: true });
             }}
           >
             <header>
-              <span className="jury-kicker">{t("YOUR WALKTHROUGH")}</span>
+              <span className="jury-kicker">{t("Demo Walkthrough")}</span>
               <div>
                 <button
                   aria-label={t("Minimize walkthrough")}
@@ -332,7 +353,7 @@ export default function JuryTour() {
             </span>
             <div
               className="jury-message"
-              key={progress.step}
+              key={`${progress.step}-${agent.id}-${agent.waiting}`}
               aria-live="polite"
             >
               <span className="jury-avatar" aria-hidden="true">
@@ -341,17 +362,18 @@ export default function JuryTour() {
               <h2>{t(copy.title)}</h2>
               <p>{t(copy.body)}</p>
             </div>
-            {progress.step === "run" && agent.name && (
+            {progress.step === "run" && agent.id && (
               <div className="jury-agent" role="status">
                 <i />
-                {t(agent.name)} ·{" "}
-                {t(agent.waiting ? "Handoff ready" : "Working now")}
+                {t(
+                  agentDefinitions.find((a) => a.id === agent.id)?.name,
+                )} · {t(agent.waiting ? "Handoff ready" : "Working now")}
               </div>
             )}
             {stopped && progress.step === "launch" && (
               <p className="jury-recovery">
                 {t(
-                  "The run stopped. Its logs are saved. Start another investigation to continue the walkthrough.",
+                  "The run stopped. Its logs are saved. Start the research again to continue.",
                 )}
               </p>
             )}
@@ -363,7 +385,7 @@ export default function JuryTour() {
                     {t(
                       onRoute
                         ? copy.action
-                        : "You stepped away from this part of the journey. Return when you are ready; your edits are kept.",
+                        : "Return to this step when ready. Your edits are kept.",
                     )}
                   </p>
                 </div>
@@ -375,9 +397,7 @@ export default function JuryTour() {
                   !targetFound &&
                   ["reality", "shape"].includes(progress.step) && (
                     <p className="jury-recovery">
-                      {t(
-                        "If the highlighted control is not visible, reopen this step below.",
-                      )}
+                      {t("Reopen this step to see its controls.")}
                     </p>
                   )}
                 {progress.step === "access" && (
@@ -434,9 +454,7 @@ export default function JuryTour() {
               </div>
             )}
             <footer>
-              {t("Your clicks move the journey forward.")}
-              <br />
-              {t("You can minimize or close the guide at any time.")}
+              {t("You can pause or close the guide at any time.")}
             </footer>
           </aside>
         ))}

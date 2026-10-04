@@ -194,8 +194,7 @@ export default function AgentStudio() {
       currentAgent = step.id;
       if (id === DEMO_ID && step.status === "running")
         reportJuryEvent({
-          agent:
-            agentDefinitions.find((a) => a.id === step.id)?.name || step.id,
+          agent: step.id,
           waiting: false,
         });
       runningStep = step.status === "running" ? step : undefined;
@@ -241,8 +240,7 @@ export default function AgentStudio() {
             setWaiting(agent);
             if (id === DEMO_ID)
               reportJuryEvent({
-                agent:
-                  agentDefinitions.find((a) => a.id === agent)?.name || agent,
+                agent,
                 waiting: true,
               });
             await new Promise<void>((resolve, reject) => {

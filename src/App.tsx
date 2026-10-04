@@ -323,7 +323,10 @@ function Shell() {
               </nav>
             ),
           )}
-          <Link className="header-entry" to={working ? "/account" : "/demo"}>
+          <Link
+            className="header-entry"
+            to={working ? "/account" : "/demo?tour=demo"}
+          >
             {tr(
               working ? (
                 <>
@@ -340,7 +343,7 @@ function Shell() {
                 </>
               ) : (
                 <>
-                  {tr("Open the demo")}
+                  {tr("Demo Walkthrough")}
                   <Icon size={18} />
                 </>
               ),

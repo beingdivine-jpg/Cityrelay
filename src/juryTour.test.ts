@@ -5,9 +5,9 @@ import { withDemoReality } from "./demoReality";
 import { seedState, validState } from "./storage";
 import { assessCase } from "./matching";
 import { examples } from "./data";
-import { createPlan, exportPlan } from "./planLogic";
+import { createPlan, exportPlan, localizeDemoPlan } from "./planLogic";
 import { translateText } from "./i18n";
-import { juryCopy } from "./juryCopy";
+import { juryCopy, agentWalkthroughCopy } from "./juryCopy";
 it("waits for actual completion and export, and recovers from a stopped run", () => {
   expect(advanceJuryStep("run", "downloaded")).toBe("run");
   expect(advanceJuryStep("run", "stopped")).toBe("launch");
@@ -81,13 +81,44 @@ it("never promotes a sample finding to confirmed even if its state is edited", (
   ).toBe("unknown");
 });
 it("provides Polish guidance and sample evidence throughout the journey", () => {
-  for (const step of Object.values(juryCopy)) {
+  const messages = [
+    ...Object.values(juryCopy),
+    ...Object.values(agentWalkthroughCopy).flatMap((stage) => [
+      stage.working,
+      ...(stage.handoff ? [stage.handoff] : []),
+    ]),
+  ];
+  for (const step of messages) {
     for (const text of [step.title, step.body, step.action])
       expect(translateText(text, "pl")).not.toBe(text);
   }
   const state = startDemo(seedState()),
     profile = state.profiles.find((p) => p.id === DEMO_ID)!;
   for (const group of Object.values(profile.localChecks!))
-    for (const check of Object.values(group))
+    for (const check of Object.values(group)) {
       expect(translateText(check.evidence, "pl")).not.toBe(check.evidence);
+      // The rendered explanation appends provenance to prose with punctuation.
+      expect(
+        translateText(`${check.evidence} · ${check.owner} · 2026-10-04`, "pl"),
+      ).toBe(
+        `${translateText(check.evidence, "pl")} · ${translateText(check.owner, "pl")} · 2026-10-04`,
+      );
+    }
+});
+
+it("localizes saved demo templates in both directions without rewriting authored work", () => {
+  const state = startDemo(seedState());
+  const profile = state.profiles.find((p) => p.id === DEMO_ID)!;
+  const original = createPlan(profile, examples[0], undefined, "en");
+  original.roleAssignments = "Keep my personally written team assignments.";
+  const polish = localizeDemoPlan(profile, original, "pl");
+  expect(polish.goal).not.toBe(original.goal);
+  expect(polish.proposal).not.toBe(original.proposal);
+  expect(polish.schedule).not.toBe(original.schedule);
+  expect(polish.roleAssignments).toBe(original.roleAssignments);
+  expect(localizeDemoPlan(profile, polish, "en")).toEqual(original);
+  expect(original.proposal).toBe(
+    createPlan(profile, examples[0], undefined, "en").proposal,
+  );
+  expect(localizeDemoPlan(state.profiles[0], original, "pl")).toBe(original);
 });

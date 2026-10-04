@@ -9,7 +9,7 @@ import { assessCase } from "./matching";
 import { SourceList } from "./SourceList";
 import { getSource } from "./sources";
 import { liveSummary, useLive } from "./LiveContext";
-import { addPlanExample, createPlan } from "./planLogic";
+import { addPlanExample, createPlan, localizeDemoPlan } from "./planLogic";
 import {
   Button,
   CommunityNav,
@@ -34,7 +34,9 @@ export default function MatchDetail() {
   const [panel, setPanel] = useState("understand");
   const profile = state.profiles.find((p) => p.id === id),
     example = examples.find((e) => e.id === matchId);
-  const existing = state.plans.find((p) => p.communityId === id);
+  const savedPlan = state.plans.find((p) => p.communityId === id);
+  const existing =
+    profile && savedPlan ? localizeDemoPlan(profile, savedPlan) : savedPlan;
   const [proposal, setProposal] = useState(
     existing?.selectedExamples.includes(matchId || "")
       ? existing.proposal

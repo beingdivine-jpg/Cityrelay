@@ -1,83 +1,145 @@
 import type { JuryStep } from "./juryTourModel";
+import type { AgentKey } from "./civicModel";
+export type WalkthroughMessage = {
+  title: string;
+  body: string;
+  action: string;
+};
 export const juryCopy: Record<
   JuryStep,
-  { title: string; body: string; action: string; target: string }
+  WalkthroughMessage & { target: string }
 > = {
   listen: {
     title: "Start with a resident.",
-    body: "You are advising Kraków. These sample concerns make the local need tangible. Counts exclude duplicates and reports awaiting review.",
+    body: "You are advising Kraków. These sample concerns show what residents might need; the most reported topics come first.",
     action: "Click Another voice, or choose a concern topic.",
     target: "voice",
   },
   team: {
-    title: "Where does the knowledge come from?",
-    body: "Residents are one input. Municipal advisors also bring context, resources and documents. Let’s look at who shares what.",
+    title: "You’ve heard a resident.",
+    body: "Now meet the advisors. Their local knowledge helps the agents judge which ideas could work here.",
     action: "Click Meet the team & inspect the data.",
     target: "team",
   },
   access: {
-    title: "A team, with clear access.",
-    body: "Each data group has an owner and a sharing switch. The demo is already prepared for local analysis. You do not need to claim municipal membership or connect an AI provider.",
-    action: "Review the data room, then continue to the agent studio.",
+    title: "See who shares what.",
+    body: "Each input has an owner and a sharing switch. Sample data is ready; no account or uploads are needed.",
+    action: "Review access, then continue to the agent studio.",
     target: "access",
   },
   launch: {
-    title: "Begin a visible investigation.",
-    body: "Five stages will group concerns, examine Kraków, retrieve documented approaches, check fit and write a brief. Local analysis works now; external AI is optional.",
-    action: "Click Start the research. Existing runs stay in your history.",
+    title: "Ready to investigate.",
+    body: "Your inputs are ready. Five agents will connect local concerns with documented approaches and explain the fit.",
+    action: "Start the research, then follow the activity log.",
     target: "launch",
   },
   run: {
-    title: "Follow the work as it happens.",
-    body: "The log records the inputs, retrieval and checks actually performed. Reading pauses make each action visible. Live source requests can fail; failures stay in the record.",
-    action:
-      "Watch the log. At each handoff, inspect the output and click Continue.",
+    title: "Follow the investigation.",
+    body: "The log shows the work actually performed. Each handoff pauses for your review.",
+    action: "Read the output, then continue to the next agent.",
     target: "workbench",
   },
   compare: {
-    title: "The research is ready for you.",
-    body: "All five stages have finished. The agents have organised evidence, but choosing a direction remains your decision.",
+    title: "Five stages completed.",
+    body: "You now have documented leads and open checks. Compare the findings before choosing a direction.",
     action: "Click Compare the findings.",
     target: "compare",
   },
   choose: {
-    title: "Choose a documented approach.",
-    body: "Leads connect the resident concerns to projects from other cities. A relevant example is a starting point, not proof that it will work in Kraków.",
-    action: "Click Inspect this approach to follow one lead.",
+    title: "Choose a promising approach.",
+    body: "These leads respond to the resident concerns. Open one to see its source and conditions for use in Kraków.",
+    action: "Click Inspect this approach.",
     target: "choose",
   },
   evidence: {
-    title: "Understand what actually happened.",
-    body: "Read the project mechanism, the dated source fact and its limitations. These are real documented projects; their outcomes are not predictions for Kraków.",
-    action: "Open the evidence if useful, then click Check the local fit.",
+    title: "You’ve opened a real project.",
+    body: "Read what the city did and what its source supports. This helps separate the useful idea from unproven local benefits.",
+    action: "Review the evidence, then click Check the local fit.",
     target: "fit",
   },
   reality: {
-    title: "The demo reality is already filled in.",
-    body: "Sample budget, team and evidence notes are ready. They are hypothetical planning inputs, so real permissions and affordability remain unverified. You can edit them or continue without supplying documents.",
-    action:
-      "Review the sample assumptions, then click Continue with demo assumptions.",
+    title: "Your sample inputs are ready.",
+    body: "Budget, team and evidence notes are prefilled for the demo. These hypothetical inputs let you draft a pilot; real permissions remain unverified.",
+    action: "Review them, then click Continue with demo assumptions.",
     target: "reality",
   },
   shape: {
-    title: "Make a proposal of your own.",
-    body: "The suggested local version is editable. Creating a brief preserves your existing pilot text if you already have one. This is a proposal for review, not approval to deliver.",
+    title: "Shape a local proposal.",
+    body: "The approach is now a draft for Kraków. Edit it before creating your pilot. Existing pilot text is preserved.",
     action:
-      "Review the proposal, then create the pilot brief or add this evidence to your pilot.",
+      "Create the pilot brief, or add this evidence to your existing pilot.",
     target: "pilot",
   },
   export: {
-    title: "Take the working brief with you.",
-    body: "Your pilot brings together the proposal, responsibilities, sources and unresolved checks. You can edit its pages before exporting. Sample assumptions remain labelled in the download.",
-    action:
-      "Click Download pilot · PDF. The guide finishes after the file is prepared.",
+    title: "Your pilot is ready to review.",
+    body: "The brief combines your proposal, responsibilities, sources and open checks. Review it, then take a copy with you.",
+    action: "Click Download pilot · PDF.",
     target: "export",
   },
   done: {
-    title: "From a concern to a considered pilot.",
-    body: "You listened, inspected the shared inputs, followed five research stages and prepared a pilot brief. Check your browser downloads for the PDF. Nothing has been sent to a municipality.",
-    action:
-      "Keep exploring, or rehearse the journey again. Your work stays saved.",
+    title: "Your pilot PDF is ready.",
+    body: "Find it in your browser downloads. It includes your proposal, evidence and labelled demo assumptions. Nothing was sent to a municipality.",
+    action: "Keep exploring, or start the walkthrough again.",
     target: "",
+  },
+};
+export const agentWalkthroughCopy: Record<
+  AgentKey,
+  { working: WalkthroughMessage; handoff?: WalkthroughMessage }
+> = {
+  listener: {
+    working: {
+      title: "Listening to residents.",
+      body: "The Listener groups concerns and excludes duplicates, so repeated submissions do not inflate priorities.",
+      action: "Watch the log; a handoff will appear when this stage finishes.",
+    },
+  },
+  context: {
+    working: {
+      title: "Checking Kraków’s context.",
+      body: "The City analyst reads the shared profile, resources and constraints. These inputs anchor the research in local conditions.",
+      action: "Watch the checks appear in the log.",
+    },
+    handoff: {
+      title: "Resident priorities are ready.",
+      body: "The concerns are grouped. Next, the City analyst checks the local context to guide the research.",
+      action: "Review the Listener’s output, then continue to City analyst.",
+    },
+  },
+  scout: {
+    working: {
+      title: "Looking for documented approaches.",
+      body: "The Research scout searches the project catalogue and checks source pages. Successful requests and failures appear in the log.",
+      action: "Follow the sources as they are checked.",
+    },
+    handoff: {
+      title: "The local context is ready.",
+      body: "Kraków’s shared inputs have been reviewed. The Research scout will now look for documented approaches from other cities.",
+      action: "Review the context, then continue to Research scout.",
+    },
+  },
+  reviewer: {
+    working: {
+      title: "Testing the local fit.",
+      body: "The Fit reviewer compares needs, assets and resources. Sample planning notes stay unverified; open questions remain visible.",
+      action: "Read the reasons behind each fit check.",
+    },
+    handoff: {
+      title: "The source trail is ready.",
+      body: "Candidate projects and source-check results are recorded. Next, the Fit reviewer examines what could transfer to Kraków.",
+      action: "Review the sources, then continue to Fit reviewer.",
+    },
+  },
+  writer: {
+    working: {
+      title: "Preparing the findings.",
+      body: "The Brief writer brings the evidence and open questions together for your decision.",
+      action: "Wait for the final stage to finish.",
+    },
+    handoff: {
+      title: "Local checks are ready.",
+      body: "The fit review shows useful connections and unresolved conditions. The Brief writer will organise these findings for your review.",
+      action: "Review the fit, then continue to Brief writer.",
+    },
   },
 };

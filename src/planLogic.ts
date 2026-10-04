@@ -1,4 +1,4 @@
-import { t } from "./i18n";
+import { t, translateText, getLanguage, type Language } from "./i18n";
 import type {
   AppState,
   CommunityProfile,
@@ -12,6 +12,7 @@ export function createPlan(
   profile: CommunityProfile,
   example: ImplementationExample,
   contextSnapshot?: string,
+  language: Language = getLanguage(),
 ): PilotPlan {
   const plan: PilotPlan = {
     id: `plan-${profile.id}`,
@@ -51,16 +52,53 @@ export function createPlan(
     "schedule",
     "proposal",
   ] as const)
-    plan[key] = t(plan[key]);
-  if (!profile.goals.objective || !profile.problems.includes(example.domain))
-    plan.goal = t(plan.goal);
+    plan[key] = translateText(plan[key], language);
+  if (
+    profile.id === "krakow-demo" ||
+    !profile.goals.objective ||
+    !profile.problems.includes(example.domain)
+  )
+    plan.goal = translateText(plan.goal, language);
+  if (profile.id === "krakow-demo")
+    plan.retainedInitiatives = translateText(
+      plan.retainedInitiatives,
+      language,
+    );
   return plan;
+}
+/** Localize unchanged demo templates for display/export; preserve every authored edit. */
+export function localizeDemoPlan(
+  profile: CommunityProfile,
+  plan: PilotPlan,
+  language: Language = getLanguage(),
+): PilotPlan {
+  if (profile.id !== "krakow-demo") return plan;
+  const example = examples.find((e) => e.id === plan.selectedExamples[0]);
+  if (!example) return plan;
+  const english = createPlan(profile, example, plan.contextSnapshot, "en");
+  const polish = createPlan(profile, example, plan.contextSnapshot, "pl");
+  const target = language === "pl" ? polish : english;
+  const result = { ...plan };
+  for (const key of [
+    "goal",
+    "proposal",
+    "retainedInitiatives",
+    "adaptations",
+    "prerequisites",
+    "roleAssignments",
+    "schedule",
+  ] as const) {
+    if (plan[key] === english[key] || plan[key] === polish[key])
+      result[key] = target[key];
+  }
+  return result;
 }
 export function exportPlan(
   profile: CommunityProfile,
   plan: PilotPlan,
   state: AppState,
 ): string {
+  plan = localizeDemoPlan(profile, plan);
   const selected = plan.selectedExamples
     .map((id) => examples.find((e) => e.id === id))
     .filter((e): e is ImplementationExample => !!e);

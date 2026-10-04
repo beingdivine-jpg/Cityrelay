@@ -1,3 +1,4 @@
+import type { AgentKey } from "./civicModel";
 export const jurySteps = [
   "listen",
   "team",
@@ -54,7 +55,7 @@ export function juryRoute(step: JuryStep, caseId: string): string {
   return `${juryRoot}/plan`;
 }
 export type JuryEvent =
-  { action: JuryAction } | { agent: string; waiting: boolean };
+  { action: JuryAction } | { agent: AgentKey; waiting: boolean };
 export function reportJuryEvent(event: JuryEvent) {
   window.dispatchEvent(new CustomEvent("elsewhere:jury", { detail: event }));
 }

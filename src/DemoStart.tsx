@@ -16,7 +16,7 @@ export default function DemoStart() {
     started.current = true;
     update(startDemo);
     navigate(
-      `/community/${DEMO_ID}${new URLSearchParams(location.search).get("tour") === "jury" ? "?tour=jury" : ""}`,
+      `/community/${DEMO_ID}${["demo", "jury"].includes(new URLSearchParams(location.search).get("tour") || "") ? "?tour=demo" : ""}`,
       { replace: true },
     );
   }, [shared.workspace, update, navigate, location.search]);

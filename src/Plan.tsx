@@ -5,7 +5,7 @@ import { useParams } from "react-router-dom";
 import { Link } from "./navigation";
 import { examples } from "./data";
 import { assessCase } from "./matching";
-import { checkpointPlan, exportPlan } from "./planLogic";
+import { checkpointPlan, exportPlan, localizeDemoPlan } from "./planLogic";
 import {
   Button,
   CommunityNav,
@@ -57,7 +57,9 @@ export default function Plan() {
     });
   };
   const profile = state.profiles.find((p) => p.id === id);
-  const plan = state.plans.find((p) => p.communityId === id);
+  const savedPlan = state.plans.find((p) => p.communityId === id);
+  const plan =
+    profile && savedPlan ? localizeDemoPlan(profile, savedPlan) : savedPlan;
   if (!profile) return <Missing />;
   if (!plan)
     return (

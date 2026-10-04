@@ -19,6 +19,14 @@ export default function CityData() {
     [external, setExternal] = useState(false),
     [error, setError] = useState("");
   if (!profile || !civic) return <Missing />;
+  const demoText = <T extends string | undefined>(
+    value: T,
+    itemId: string,
+  ): T =>
+    id === "krakow-demo" &&
+    ["lead", "parks", "services", "demo-brief"].includes(itemId)
+      ? tr(value)
+      : value;
   async function readFile(file?: File) {
     setError("");
     if (!file) return;
@@ -157,16 +165,18 @@ export default function CityData() {
             civic.contributors.map((c) => (
               <article key={c.id}>
                 <span className="contributor-avatar">
-                  {tr(c.name.slice(0, 2).toUpperCase())}
+                  {demoText(c.name, c.id).slice(0, 2).toUpperCase()}
                 </span>
                 <div>
                   <h3>
-                    {c.id === "lead" && c.name === "You" ? tr(c.name) : c.name}
+                    {c.id === "lead" && c.name === "You"
+                      ? tr(c.name)
+                      : demoText(c.name, c.id)}
                   </h3>
                   <p>
                     {c.id === "lead" && c.department === "Innovation team"
                       ? tr(c.department)
-                      : c.department}
+                      : demoText(c.department, c.id)}
                   </p>
                   <small>{tr(c.role)}</small>
                 </div>
@@ -289,7 +299,7 @@ export default function CityData() {
                     {tr(
                       civic.contributors.map((p) => (
                         <option key={p.id} value={p.id}>
-                          {p.name}
+                          {demoText(p.name, p.id)}
                         </option>
                       )),
                     )}
@@ -394,11 +404,13 @@ export default function CityData() {
               {tr(
                 civic.contributors.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.id === "lead" && c.name === "You" ? tr(c.name) : c.name}
+                    {c.id === "lead" && c.name === "You"
+                      ? tr(c.name)
+                      : demoText(c.name, c.id)}
                     {tr(" / ")}
                     {c.id === "lead" && c.department === "Innovation team"
                       ? tr(c.department)
-                      : c.department}
+                      : demoText(c.department, c.id)}
                   </option>
                 )),
               )}
@@ -455,12 +467,16 @@ export default function CityData() {
                     <span className="eyebrow">
                       {tr("LOCAL CONTRIBUTION /")}
                       {tr(" ")}
-                      {civic.contributors.find((c) => c.id === d.ownerId)?.name}
+                      {demoText(
+                        civic.contributors.find((c) => c.id === d.ownerId)
+                          ?.name,
+                        d.ownerId,
+                      )}
                     </span>
-                    <h3>{d.title}</h3>
+                    <h3>{demoText(d.title, d.id)}</h3>
                     <p>
-                      {d.text.slice(0, 260)}
-                      {tr(d.text.length > 260 ? "…" : "")}
+                      {demoText(d.text, d.id).slice(0, 260)}
+                      {tr(demoText(d.text, d.id).length > 260 ? "…" : "")}
                     </p>
                     <small>
                       {tr(
