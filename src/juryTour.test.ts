@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { beforeEach, expect, it } from "vitest";
 import { advanceJuryStep, type JuryStep } from "./juryTourModel";
 import { startDemo, DEMO_ID } from "./demo";
 import { withDemoReality } from "./demoReality";
@@ -6,8 +6,9 @@ import { seedState, validState } from "./storage";
 import { assessCase } from "./matching";
 import { examples } from "./data";
 import { createPlan, exportPlan, localizeDemoPlan } from "./planLogic";
-import { translateText } from "./i18n";
+import { setLanguage, translateText } from "./i18n";
 import { juryCopy, agentWalkthroughCopy } from "./juryCopy";
+beforeEach(() => setLanguage("en"));
 it("waits for actual completion and export, and recovers from a stopped run", () => {
   expect(advanceJuryStep("run", "downloaded")).toBe("run");
   expect(advanceJuryStep("run", "stopped")).toBe("launch");

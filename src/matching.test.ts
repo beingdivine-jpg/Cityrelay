@@ -1,9 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { setLanguage } from "./i18n";
 import { examples, seedProfiles } from "./data";
 import { assessCase, assessMatches } from "./matching";
 import { exportPlan, createPlan } from "./planLogic";
 import { loadState, saveState, seedState, STORAGE_KEY } from "./storage";
 import { getSource } from "./sources";
+beforeEach(() => setLanguage("en"));
 const profile = () => structuredClone(seedProfiles[0]);
 const find = (id: string, p = profile()) =>
   assessMatches(p, examples).find((a) => a.example.id === id)!;

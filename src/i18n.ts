@@ -8,13 +8,13 @@ const caseMessages = new Map(
   Object.entries(messages).map(([k, v]) => [k.toLowerCase(), v]),
 );
 const normalize = (text: string) => text.replace(/\s+/g, " ").trim();
-let language: Language = "en";
+let language: Language = "pl";
 try {
   if (
     typeof window !== "undefined" &&
-    localStorage.getItem(LANGUAGE_KEY) === "pl"
+    localStorage.getItem(LANGUAGE_KEY) === "en"
   )
-    language = "pl";
+    language = "en";
 } catch {
   /* Language switching still works without storage. */
 }
@@ -51,7 +51,7 @@ function subscribe(listener: () => void) {
   };
 }
 export function useLanguage() {
-  return useSyncExternalStore(subscribe, getLanguage, () => "en" as Language);
+  return useSyncExternalStore(subscribe, getLanguage, () => "pl" as Language);
 }
 if (typeof document !== "undefined") document.documentElement.lang = language;
 // Only known product messages are translated. Unrecognized prose is retained verbatim.
