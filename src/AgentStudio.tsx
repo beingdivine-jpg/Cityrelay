@@ -18,6 +18,7 @@ import {
 import { Missing } from "./Workspace";
 import { DEMO_ID } from "./demo";
 import ActivityLog from "./ActivityLog";
+import { waitForActivity } from "./activityPace";
 import type {
   AgentEvent,
   AgentCitation,
@@ -104,6 +105,9 @@ export default function AgentStudio() {
     [viewId, setViewId] = useState<string | null>(null);
   const abort = useRef<AbortController | null>(null),
     gate = useRef<(() => void) | null>(null);
+  const [readable, setReadable] = useState(true);
+  const readingPace = useRef(true),
+    followAgent = useRef(true);
   useEffect(() => () => abort.current?.abort(), []);
   useEffect(() => {
     if (!busy) return;
@@ -119,6 +123,7 @@ export default function AgentStudio() {
   const selectedStep = steps.find((s) => s.id === selected),
     completed = steps.filter((s) => s.status === "complete").length;
   const displayMode = busy ? mode : last?.mode || mode;
+  const activeAgent = steps.find((s) => s.status === "running")?.id;
   async function run() {
     if (!profile || !civic || busy) return;
     setBusy(true);
@@ -128,6 +133,7 @@ export default function AgentStudio() {
     setLiveSteps([]);
     setLiveEvents([]);
     setSelected("listener");
+    followAgent.current = true;
     requestAnimationFrame(() =>
       document.getElementById("agent-workbench")?.scrollIntoView({
         block: "start",
@@ -143,7 +149,8 @@ export default function AgentStudio() {
       startedAt = new Date().toISOString();
     let completedSteps: AgentStep[] = [],
       recorded: AgentEvent[] = [],
-      currentAgent: AgentKey = "listener";
+      currentAgent: AgentKey = "listener",
+      runningStep: AgentStep | undefined;
     const log = (event: AgentEvent) => {
       recorded = [...recorded, event];
       setLiveEvents(recorded);
@@ -166,8 +173,9 @@ export default function AgentStudio() {
       });
     const onStep = (step: AgentStep) => {
       currentAgent = step.id;
+      runningStep = step.status === "running" ? step : undefined;
       setLiveSteps((list) => [...list.filter((s) => s.id !== step.id), step]);
-      setSelected(step.id);
+      if (followAgent.current) setSelected(step.id);
       if (step.status === "complete")
         completedSteps = [
           ...completedSteps.filter((s) => s.id !== step.id),
@@ -180,6 +188,17 @@ export default function AgentStudio() {
         result = await localAnalysis(place, snapshot, onStep, {
           signal: controller.signal,
           onEvent: log,
+          afterEvent: (event) =>
+            waitForActivity(
+              controller.signal,
+              readingPace.current
+                ? event.kind === "output" || event.kind === "handoff"
+                  ? 900
+                  : event.kind === "check"
+                    ? 420
+                    : 700
+                : 0,
+            ),
           beforeStep: async (agent) => {
             if (!guided || agent === "listener") return;
             setWaiting(agent);
@@ -371,7 +390,7 @@ export default function AgentStudio() {
           ...c.notices,
         ].slice(0, 100),
       }));
-      setSelected("writer");
+      if (followAgent.current) setSelected("writer");
     } catch (e) {
       const message = controller.signal.aborted
         ? "Run cancelled."
@@ -387,7 +406,17 @@ export default function AgentStudio() {
         mode,
         status: "failed",
         fingerprint: runFingerprint(place, snapshot),
-        steps: completedSteps,
+        steps: runningStep
+          ? [
+              ...completedSteps,
+              {
+                ...runningStep,
+                status: "failed",
+                completedAt: new Date().toISOString(),
+                output: message,
+              },
+            ]
+          : completedSteps,
         events: recorded,
         signals: [],
         opportunities: [],
@@ -529,12 +558,18 @@ export default function AgentStudio() {
           <span className="eyebrow">{tr("RESEARCH TEAM")}</span>
           {agentDefinitions.map((agent, i) => {
             const step = steps.find((s) => s.id === agent.id);
+            const actionCount = events.filter(
+              (e) => e.agent === agent.id,
+            ).length;
             return (
               <button
                 key={agent.id}
                 aria-pressed={selected === agent.id}
                 className={selected === agent.id ? "selected" : ""}
-                onClick={() => setSelected(agent.id)}
+                onClick={() => {
+                  followAgent.current = false;
+                  setSelected(agent.id);
+                }}
               >
                 <span className="rail-number">
                   {step?.status === "complete"
@@ -549,8 +584,12 @@ export default function AgentStudio() {
                         ? "Working now"
                         : step?.status === "complete"
                           ? "Output ready"
-                          : "Waiting for handoff",
+                          : step?.status === "failed"
+                            ? "Stopped"
+                            : "Not started",
                     )}
+                    {" · "}
+                    {actionCount} {tr(actionCount === 1 ? "action" : "actions")}
                   </small>
                 </span>
                 {step?.status === "running" && <i className="working-light" />}
@@ -560,6 +599,17 @@ export default function AgentStudio() {
           <p>
             {completed}/5 {tr("stages completed")}
           </p>
+          {busy && activeAgent && selected !== activeAgent && (
+            <button
+              className="follow-agent"
+              onClick={() => {
+                followAgent.current = true;
+                setSelected(activeAgent);
+              }}
+            >
+              {tr("Follow the working agent")} <Icon />
+            </button>
+          )}
         </aside>
         <div className="agent-log-panel">
           <ActivityLog
@@ -567,6 +617,13 @@ export default function AgentStudio() {
             busy={busy}
             waiting={!!waiting}
             mode={displayMode}
+            selected={selected}
+            step={selectedStep}
+            readable={readable}
+            onPaceChange={(value) => {
+              readingPace.current = value;
+              setReadable(value);
+            }}
           />
           <div className="agent-handoff" role="status">
             {waiting ? (
@@ -577,7 +634,13 @@ export default function AgentStudio() {
                     {tr("Inspect the log, then continue when you are ready.")}
                   </p>
                 </div>
-                <Button onClick={() => gate.current?.()}>
+                <Button
+                  onClick={() => {
+                    followAgent.current = true;
+                    setSelected(waiting);
+                    gate.current?.();
+                  }}
+                >
                   {tr("Continue to")}{" "}
                   {tr(agentDefinitions.find((a) => a.id === waiting)!.name)}{" "}
                   <Icon />

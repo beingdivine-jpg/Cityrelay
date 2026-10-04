@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { AgentEvent } from "./civicModel";
+import type { AgentEvent, AgentKey, AgentStep } from "./civicModel";
 import { agentDefinitions } from "./civicEngine";
 import { t, locale } from "./i18n";
 export default function ActivityLog({
@@ -7,23 +7,81 @@ export default function ActivityLog({
   busy,
   waiting,
   mode,
+  selected,
+  step,
+  readable,
+  onPaceChange,
 }: {
   events: AgentEvent[];
   busy: boolean;
   waiting: boolean;
   mode: "local" | "ai";
+  selected: AgentKey;
+  step?: AgentStep;
+  readable: boolean;
+  onPaceChange: (value: boolean) => void;
 }) {
   const [follow, setFollow] = useState(true),
-    [filter, setFilter] = useState("all");
+    [filter, setFilter] = useState("all"),
+    [scope, setScope] = useState<"agent" | "run">("agent"),
+    [now, setNow] = useState(Date.now());
   const panel = useRef<HTMLDivElement>(null);
+  useEffect(() => setFilter("all"), [selected]);
+  useEffect(() => {
+    if (!busy || waiting) return;
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [busy, waiting, selected]);
   useEffect(() => {
     if (follow && panel.current)
       panel.current.scrollTop = panel.current.scrollHeight;
-  }, [events.length, follow, filter]);
+  }, [events.length, follow, filter, selected, scope]);
+  const agent = agentDefinitions.find((a) => a.id === selected)!;
+  const agentEvents = events.filter((e) => e.agent === selected);
+  const latest = agentEvents.at(-1);
+  const working = busy && !waiting && step?.status === "running";
+  const seconds = step
+    ? Math.max(
+        0,
+        Math.floor(
+          ((step.completedAt
+            ? Date.parse(step.completedAt)
+            : busy
+              ? now
+              : Date.parse(latest?.at || step.startedAt)) -
+            Date.parse(step.startedAt)) /
+            1000,
+        ),
+      )
+    : 0;
   const visible = events.filter(
     (e) =>
-      filter === "all" || e.kind === filter || (filter === "source" && e.url),
+      (scope === "run" || e.agent === selected) &&
+      (filter === "all" || e.kind === filter || (filter === "source" && e.url)),
   );
+  // These rows come only from actual request start/completion callbacks.
+  const requests = [
+    ...new Map(
+      agentEvents
+        .filter(
+          (e) =>
+            e.url &&
+            [
+              "Checking a live source page",
+              "Source page retrieved",
+              "Source page unavailable",
+            ].includes(e.title),
+        )
+        .map((e) => [e.url!, e]),
+    ).values(),
+  ];
+  const pending = requests.filter(
+    (e) => e.title === "Checking a live source page",
+  );
+  const unavailable = requests.filter(
+    (e) => e.title === "Source page unavailable",
+  ).length;
   return (
     <div className="activity-console">
       <header>
@@ -35,7 +93,7 @@ export default function ActivityLog({
               waiting
                 ? "Waiting for you"
                 : busy
-                  ? "Live"
+                  ? "In progress"
                   : events.length
                     ? "Recorded"
                     : "Ready",
@@ -51,6 +109,124 @@ export default function ActivityLog({
           {t("Follow latest")}
         </label>
       </header>
+      <div className="activity-focus">
+        <div className="activity-focus-meta">
+          <span>
+            {t(agent.name)} ·{" "}
+            {t(
+              working
+                ? "Working now"
+                : step?.status === "complete"
+                  ? "Output ready"
+                  : step?.status === "failed"
+                    ? "Stopped"
+                    : latest
+                      ? "Recorded activity"
+                      : "Not started",
+            )}
+          </span>
+          <span
+            className="activity-elapsed"
+            aria-label={t("Stage elapsed time")}
+          >
+            {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
+          </span>
+        </div>
+        <strong>
+          {t(
+            working && pending.length
+              ? "Waiting for source responses"
+              : latest?.title || agent.verb,
+          )}
+        </strong>
+        <p>
+          {latest
+            ? mode === "local"
+              ? t(latest.detail)
+              : latest.detail
+            : t(agent.description)}
+        </p>
+        {latest?.url && (
+          <a href={latest.url} target="_blank" rel="noreferrer">
+            {new URL(latest.url).hostname} ↗
+          </a>
+        )}
+        {working && (
+          <div className="activity-motion" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+            <i />
+            <i />
+          </div>
+        )}
+      </div>
+      {requests.length > 0 && (
+        <details
+          className="source-requests"
+          open={working && pending.length > 0 ? true : undefined}
+        >
+          <summary>
+            {t("Live page requests")} · {requests.length - pending.length}/
+            {requests.length}
+            {unavailable > 0 && (
+              <>
+                {" "}
+                · {t("Unavailable")}: {unavailable}
+              </>
+            )}
+          </summary>
+          {requests.map((request) => (
+            <div key={request.url}>
+              <a href={request.url} target="_blank" rel="noreferrer">
+                {new URL(request.url!).hostname} ↗
+              </a>
+              <span>
+                {t(
+                  request.title === "Checking a live source page"
+                    ? busy && !waiting
+                      ? "Awaiting response"
+                      : "No response recorded"
+                    : request.title === "Source page retrieved"
+                      ? "Retrieved"
+                      : "Unavailable",
+                )}
+              </span>
+            </div>
+          ))}
+        </details>
+      )}
+      {mode === "local" && (
+        <div className="activity-pace">
+          <div role="group" aria-label={t("Activity reading speed")}>
+            <button aria-pressed={readable} onClick={() => onPaceChange(true)}>
+              {t("Reading pace")}
+            </button>
+            <button
+              aria-pressed={!readable}
+              onClick={() => onPaceChange(false)}
+            >
+              {t("Full speed")}
+            </button>
+          </div>
+          <p>
+            {t(
+              "Local actions are spaced for reading. Live requests use their actual response time.",
+            )}
+          </p>
+        </div>
+      )}
+      <div className="log-scope" role="group" aria-label={t("Activity scope")}>
+        <button
+          aria-pressed={scope === "agent"}
+          onClick={() => setScope("agent")}
+        >
+          {t("This agent")} · {agentEvents.length}
+        </button>
+        <button aria-pressed={scope === "run"} onClick={() => setScope("run")}>
+          {t("Whole investigation")} · {events.length}
+        </button>
+      </div>
       <div className="log-filters">
         {[
           ["all", "All actions"],
@@ -67,7 +243,7 @@ export default function ActivityLog({
           </button>
         ))}
         <span>
-          {events.length} {t("events")}
+          {visible.length} {t("events")}
         </span>
       </div>
       <div
@@ -122,7 +298,7 @@ export default function ActivityLog({
             <h3>
               {t(
                 events.length
-                  ? "No actions in this filter yet"
+                  ? "No actions in this view yet"
                   : "An investigation you can follow.",
               )}
             </h3>

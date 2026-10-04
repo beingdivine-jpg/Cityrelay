@@ -1,3 +1,14 @@
+# Progressive agent activity — 4 October 2026
+
+- Local analysis now yields after each recorded action. The default **Reading pace** uses disclosed reading intervals; **Full speed** removes those intervals. Real HTTP request callbacks are recorded immediately and are not paced or simulated.
+- The selected agent has a current-action panel, elapsed stage time, action count and its own log. Users can inspect prior agents without restarting the run, return to the working agent, or view the complete investigation. Existing source/search/check filters and explicit stage handoffs remain.
+- Resident topic grouping and brief assembly expose their actual intermediate records. Live request rows distinguish pending, retrieved and unavailable responses. Stopping an active stage preserves its partial log and marks it stopped, including after reload.
+- **91 tests passed across 10 files**, including new sequencing/backpressure, per-action cancellation/timer cleanup and unpaced source callback tests. Production build, formatting and diff checks pass. The existing main bundle warning remains.
+- Browser checks on isolated port 4184: incremental Listener events; City analyst handoff; catalogue retrieval and five correctly reported source timeouts; inspecting Research scout while Fit reviewer continues; return-to-active control; cancellation and reload persistence; full-speed completion through all five stages. Polish controls were visually inspected at 390 px; document width matches both 390 px and 320 px viewports.
+- No new AI provider, broad web search, institutional identity verification or backend configuration is claimed. This changes execution visibility and review pacing, preserving the existing matching and consent rules.
+
+---
+
 # Civic studio redesign — 4 October 2026
 
 - Rebuilt the visual presentation around apricot, aubergine, vermilion, lavender and chartreuse, with editorial serif typography, an original animated city illustration and distinct project motifs. The welcome scene is conceptual artwork, not a live feed or map; its three city selectors link to existing documented sources. Pause and reduced-motion handling are present.

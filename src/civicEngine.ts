@@ -357,6 +357,7 @@ export async function localAnalysis(
     signal?: AbortSignal;
     beforeStep?: (agent: AgentKey) => Promise<void>;
     onEvent?: (event: AgentEvent) => void;
+    afterEvent?: (event: AgentEvent) => Promise<void>;
     checkSources?: (
       emit: (event: Omit<AgentEvent, "id" | "at" | "agent">) => void,
     ) => Promise<void>;
@@ -381,7 +382,7 @@ export async function localAnalysis(
   for (const def of agentDefinitions) {
     await options.beforeStep?.(def.id);
     options.signal?.throwIfAborted();
-    const emit = (event: Omit<AgentEvent, "id" | "at" | "agent">) => {
+    const record = (event: Omit<AgentEvent, "id" | "at" | "agent">) => {
       const item: AgentEvent = {
         ...event,
         id: crypto.randomUUID(),
@@ -390,6 +391,15 @@ export async function localAnalysis(
       };
       run.events!.push(item);
       options.onEvent?.(item);
+      return item;
+    };
+    // Local work yields after each recorded action. Network callbacks bypass
+    // reading pace so their timestamps remain the actual response times.
+    const emit = async (event: Omit<AgentEvent, "id" | "at" | "agent">) => {
+      options.signal?.throwIfAborted();
+      const item = record(event);
+      await options.afterEvent?.(item);
+      options.signal?.throwIfAborted();
     };
     const step: AgentStep = {
       id: def.id,
@@ -401,17 +411,14 @@ export async function localAnalysis(
       citations: [],
     };
     onStep({ ...step });
-    await new Promise<void>((resolve) =>
-      requestAnimationFrame(() => resolve()),
-    );
     if (def.id === "listener") {
-      emit({
+      await emit({
         kind: "input",
         title: "Opening permitted resident input",
         detail: `${reports.length} reports shared by the municipal data steward`,
       });
       for (const report of reports)
-        emit({
+        await emit({
           kind: "check",
           title: report.duplicateOf
             ? "Duplicate excluded from counts"
@@ -423,6 +430,12 @@ export async function localAnalysis(
           detail: report.title,
         });
       run.signals = summarizeReports(reports);
+      for (const signal of run.signals)
+        await emit({
+          kind: "check",
+          title: "Resident topic grouped",
+          detail: `${topicLabels[signal.topic]}: ${signal.count} complaint${signal.count === 1 ? "" : "s"}, ${signal.ideas} idea${signal.ideas === 1 ? "" : "s"}. ${signal.summary}`,
+        });
       run.reportCount = reports.filter(
         (r) => !r.duplicateOf && r.status === "received",
       ).length;
@@ -437,7 +450,7 @@ export async function localAnalysis(
         : "No eligible resident submissions. The municipal brief may provide a starting focus; it is not a claim about resident demand.";
     }
     if (def.id === "context") {
-      emit({
+      await emit({
         kind: "input",
         title: "Opening the municipal profile",
         detail: allowed(civic, "context")
@@ -446,13 +459,13 @@ export async function localAnalysis(
       });
       if (allowed(civic, "context"))
         for (const document of civic.documents.filter((d) => d.enabled))
-          emit({
+          await emit({
             kind: "input",
             title: "Reading a shared local document",
             detail: document.title,
           });
       for (const connection of civic.connections)
-        emit({
+        await emit({
           kind: "input",
           title: connection.enabled
             ? "Data access enabled"
@@ -477,7 +490,7 @@ export async function localAnalysis(
         .map((s) => ({ url: s.url, title: s.title }));
     }
     if (def.id === "scout") {
-      emit({
+      await emit({
         kind: "query",
         title: "Searching the documented project library",
         detail: allowed(civic, "catalogue")
@@ -494,7 +507,7 @@ export async function localAnalysis(
       run.opportunities = buildOpportunities(profile, civic, run.signals);
       for (const opportunity of run.opportunities) {
         const example = examples.find((e) => e.id === opportunity.exampleId)!;
-        emit({
+        await emit({
           kind: "source",
           title: "Documented candidate retrieved",
           detail: `${example.origin.name} · ${example.shortTitle}`,
@@ -504,7 +517,7 @@ export async function localAnalysis(
       for (const signal of run.signals.filter(
         (s) => !run.opportunities.some((o) => o.topic === s.topic),
       ))
-        emit({
+        await emit({
           kind: "check",
           title: "Evidence gap kept visible",
           detail: topicLabels[signal.topic],
@@ -529,10 +542,12 @@ export async function localAnalysis(
           "Catalogue retrieval is complete. Live source-page checks are listed in the activity log. No broader web discovery was run.",
         );
         try {
-          await options.checkSources(emit);
+          await options.checkSources((event) => {
+            record(event);
+          });
         } catch (e) {
           if (options.signal?.aborted) throw e;
-          emit({
+          await emit({
             kind: "error",
             title: "Live source check unavailable",
             detail:
@@ -545,7 +560,7 @@ export async function localAnalysis(
     if (def.id === "reviewer") {
       run.ideas = triageIdeas(reports, run.opportunities);
       for (const idea of run.ideas)
-        emit({
+        await emit({
           kind: "check",
           title:
             idea.state === "review"
@@ -556,7 +571,7 @@ export async function localAnalysis(
         });
       for (const o of run.opportunities)
         for (const factor of o.factors)
-          emit({
+          await emit({
             kind: "check",
             title: `${examples.find((e) => e.id === o.exampleId)!.origin.name} · ${factor.name}`,
             detail: `${factor.state.toUpperCase()}: ${factor.detail}`,
@@ -575,20 +590,32 @@ export async function localAnalysis(
         "No candidate to assess. Add local context or eligible reports and share the project repository.";
     }
     if (def.id === "writer") {
+      await emit({
+        kind: "input",
+        title: "Assembling the advisor brief",
+        detail:
+          "Ranked reports, documented approaches and explicit transfer checks",
+      });
+      for (const opportunity of run.opportunities)
+        await emit({
+          kind: "check",
+          title: "Adding a lead and its unresolved conditions",
+          detail: `${examples.find((e) => e.id === opportunity.exampleId)!.origin.name} · ${opportunity.reason}`,
+        });
       step.input =
         "Ranked reports, documented approaches and explicit transfer checks";
       step.output = `${profile.name}: ${run.reportCount} eligible submissions inform ${run.signals.length} reported topics.\n${run.opportunities.length} source-backed research leads; ${run.opportunities.filter((o) => o.state === "hold").length} blocked by recorded constraints.\n${run.ideas.filter((i) => i.state === "hold").length} submitted ideas held for more evidence.\nNext: inspect a fit assessment, resolve the missing local evidence and record an advisor decision. No project is approved or sent to a municipality.`;
     }
-    step.status = "complete";
-    step.completedAt = new Date().toISOString();
-    run.steps.push(step);
-    onStep({ ...step });
-    emit({
+    await emit({
       kind: "output",
       title: "Stage output recorded",
       detail: step.output,
     });
-    emit({
+    step.status = "complete";
+    step.completedAt = new Date().toISOString();
+    run.steps.push(step);
+    onStep({ ...step });
+    await emit({
       kind: "handoff",
       title: def.id === "writer" ? "Ready for advisor review" : "Handoff ready",
       detail:

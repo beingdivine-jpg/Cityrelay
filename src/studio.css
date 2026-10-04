@@ -2250,3 +2250,196 @@ html[lang="pl"] .studio-cta > span {
 .local-context > p {
   color: var(--muted);
 }
+
+/* A readable research desk: each action has room before the next handoff. */
+.activity-focus {
+  padding: 20px 22px 16px;
+  background: #eee0e5;
+  border-bottom: 1px solid #ae94aa;
+  position: relative;
+  overflow: hidden;
+}
+.activity-focus-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: #76546b;
+  font-size: 11px;
+}
+.activity-elapsed {
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.activity-focus > strong {
+  display: block;
+  color: #442739;
+  font:
+    24px/1.15 Georgia,
+    serif;
+}
+.activity-focus > p {
+  margin: 10px 0 4px;
+  color: #63475c;
+  font-size: 12px;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.activity-focus > a {
+  color: #7b342d;
+  font-size: 11px;
+}
+.activity-motion {
+  display: flex;
+  gap: 5px;
+  margin-top: 12px;
+  height: 7px;
+}
+.activity-motion i {
+  height: 5px;
+  width: 24px;
+  background: #9c614a;
+  animation: activity-breathe 1.6s ease-in-out infinite;
+  transform-origin: left;
+}
+.activity-motion i:nth-child(2) {
+  animation-delay: 0.16s;
+}
+.activity-motion i:nth-child(3) {
+  animation-delay: 0.32s;
+}
+.activity-motion i:nth-child(4) {
+  animation-delay: 0.48s;
+}
+.activity-motion i:nth-child(5) {
+  animation-delay: 0.64s;
+}
+@keyframes activity-breathe {
+  50% {
+    opacity: 0.25;
+    transform: scaleX(0.6);
+  }
+}
+.activity-pace {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 22px;
+  background: #e7d7e0;
+  border-bottom: 1px solid #ae94aa;
+}
+.activity-pace > div {
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
+}
+.activity-pace p {
+  margin: 0;
+  color: #63475c;
+  font-size: 10px;
+  line-height: 1.5;
+  max-width: 300px;
+}
+.activity-pace button,
+.log-scope button {
+  border: 1px solid transparent;
+  background: transparent;
+  color: #63475c;
+  font-size: 11px;
+  min-height: 35px;
+  padding: 7px 10px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.activity-pace button[aria-pressed="true"] {
+  background: #dfdc98;
+  color: #442739;
+  border-color: #a19b65;
+}
+.log-scope {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 20px 0;
+}
+.log-scope button[aria-pressed="true"] {
+  border-color: #97778e;
+  background: #eee0e5;
+  color: #442739;
+}
+.source-requests {
+  border-bottom: 1px solid #ae94aa;
+  padding: 12px 22px;
+  font-size: 11px;
+}
+.source-requests summary {
+  cursor: pointer;
+  color: #63475c;
+}
+.source-requests > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 10px;
+}
+.source-requests a {
+  color: #7b342d;
+  overflow-wrap: anywhere;
+}
+.source-requests span {
+  color: #63475c;
+}
+.agent-rail > button.follow-agent {
+  min-height: 44px;
+  border: 1px solid #b6959d;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.agent-page .activity-entries {
+  height: 310px;
+}
+#agent-workbench {
+  scroll-margin-top: 18px;
+}
+@media (max-width: 800px) {
+  .activity-pace {
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+  .activity-pace p {
+    max-width: none;
+  }
+}
+@media (max-width: 600px) {
+  .activity-focus,
+  .activity-pace,
+  .source-requests {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  .activity-focus > strong {
+    font-size: 21px;
+  }
+  .log-scope {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .activity-console > header {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .agent-page .activity-entries {
+    height: 280px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .activity-motion i,
+  .agent-page .working-light {
+    animation: none;
+  }
+}
