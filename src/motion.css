@@ -1,0 +1,470 @@
+/* A single spatial language for page changes, agent work and evidence handoffs. */
+#main-content {
+  view-transition-name: workspace;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+::view-transition-old(workspace) {
+  animation: workspace-out 260ms ease-in both;
+}
+::view-transition-new(workspace) {
+  animation: workspace-in 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+::view-transition-group(workspace) {
+  animation-duration: 600ms;
+}
+@keyframes workspace-out {
+  to {
+    opacity: 0;
+    transform: translateY(-18px) scale(0.99);
+  }
+}
+@keyframes workspace-in {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+    clip-path: inset(0 0 18% 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    clip-path: inset(0);
+  }
+}
+.route-scene > div,
+.panel-transition {
+  animation: scene-arrive 550ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes scene-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.network-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin: 12px 0 28px;
+}
+.network-heading > span {
+  font:
+    9px/1.5 ui-monospace,
+    monospace;
+  letter-spacing: 0.09em;
+  color: var(--muted);
+}
+.network-heading strong {
+  font-size: 12px;
+  font-weight: 550;
+}
+.network-active .network-heading strong {
+  color: var(--ink);
+}
+.agent-rail {
+  gap: 0;
+  isolation: isolate;
+  margin-bottom: 26px;
+}
+.agent-rail > button,
+.agent-rail > button.selected {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border: 0;
+  padding: 0 12px 10px 0;
+  gap: 14px;
+  overflow: visible;
+}
+.agent-rail > button::before {
+  content: "";
+  position: absolute;
+  left: 26px;
+  right: 0;
+  top: 26px;
+  border-top: 1px solid #bdc7b6;
+  z-index: -1;
+}
+.agent-rail > button:nth-of-type(5)::before {
+  display: none;
+}
+.agent-rail .rail-number {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px solid #8c9d85;
+  background: var(--paper, #e9ece4);
+  color: var(--ink);
+  font:
+    12px ui-monospace,
+    monospace;
+  position: relative;
+}
+.agent-rail > button.selected .rail-number {
+  background: #173c34;
+  color: #dfed83;
+  border-color: #173c34;
+}
+.agent-rail > button.node-running .rail-number {
+  background: #dfed83;
+  color: #173c34;
+  border-color: #173c34;
+}
+.agent-rail > button.node-running .rail-number::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border: 1px dashed #47714c;
+  border-radius: 50%;
+  animation: node-orbit 9s linear infinite;
+}
+.agent-rail > button.node-complete::before {
+  border-color: #496c4a;
+}
+.agent-rail > button.node-next .rail-number {
+  outline: 1px dashed #607d4e;
+  outline-offset: 5px;
+}
+.agent-rail small,
+.agent-rail .selected small {
+  font-size: 10px;
+}
+.agent-rail .working-light {
+  position: absolute;
+  top: 40px;
+  left: 43px;
+  box-shadow: 0 0 0 3px #e9ece4;
+}
+.agent-rail > button.follow-agent {
+  flex-direction: row;
+  width: auto;
+  padding: 8px;
+}
+.agent-rail > button.follow-agent::before {
+  display: none;
+}
+.research-stage {
+  position: relative;
+  overflow: hidden;
+  animation: scene-arrive 600ms ease both;
+}
+.agent-scan {
+  margin: 16px -10px 22px;
+}
+.scan-node-field {
+  width: 100%;
+  height: auto;
+  color: #9fb49c;
+  display: block;
+}
+.scan-lane path,
+.scan-outlet {
+  stroke: #567667;
+  fill: none;
+  stroke-width: 1;
+}
+.scan-lane circle {
+  fill: #173c34;
+  stroke: #809b79;
+}
+.scan-lane.active path {
+  stroke: #dfea90;
+  stroke-dasharray: 7 5;
+  animation: scan-current 1.4s linear infinite;
+}
+.scan-lane.active circle {
+  fill: #dfed83;
+  stroke: #dfed83;
+}
+.scan-orbit {
+  fill: none;
+  stroke: #769267;
+  stroke-dasharray: 3 11;
+  stroke-width: 1;
+  transform-origin: 220px 85px;
+}
+.orbit-inner {
+  stroke: #a9bb85;
+  stroke-dasharray: 35 130;
+}
+.is-scanning .scan-orbit {
+  animation: node-orbit 24s linear infinite;
+}
+.is-scanning .orbit-inner {
+  animation-direction: reverse;
+  animation-duration: 12s;
+}
+.scan-core {
+  fill: #214d3d;
+  stroke: #9db67d;
+  stroke-width: 1;
+}
+.is-scanning .scan-core {
+  fill: #dfea90;
+  stroke: #dfea90;
+}
+.scan-node-field text {
+  fill: #dfea90;
+  font:
+    24px ui-monospace,
+    monospace;
+}
+.is-scanning .scan-node-field text {
+  fill: #173c34;
+}
+.scan-endpoint {
+  fill: #173c34;
+  stroke: #94aa78;
+}
+.scan-packet {
+  fill: #f1f4cc;
+}
+.scan-caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 10px 14px;
+  font:
+    8px/1.5 ui-monospace,
+    monospace;
+  letter-spacing: 0.09em;
+  color: #bacaab;
+}
+.is-scanning .scan-caption > span:first-child {
+  color: #e0ed83;
+}
+.scan-records {
+  margin: 0 10px;
+  min-height: 126px;
+  border-top: 1px solid #45644f;
+}
+.scan-records > p {
+  font-size: 12px;
+  color: #bdd0b2;
+  padding: 15px 0;
+  line-height: 1.65;
+}
+.scan-record {
+  display: flex;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid #45644f;
+  animation: scan-record-in 450ms ease both;
+}
+.scan-record > span:last-child {
+  min-width: 0;
+}
+.scan-record strong {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  color: #dce7ce;
+}
+.scan-record small {
+  display: block;
+  max-width: 100%;
+  font-size: 10px;
+  line-height: 1.5;
+  margin-top: 3px;
+  color: #aec2a3;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.scan-record-mark {
+  width: 5px;
+  height: 5px;
+  flex-shrink: 0;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: #dfed83;
+}
+.mark-source {
+  background: #8bcbbb;
+}
+.mark-error {
+  background: #f5aa88;
+}
+.trace-disclosure {
+  margin-top: 22px;
+  padding-top: 12px;
+  border-top: 1px solid #56715a;
+}
+.trace-disclosure > summary {
+  color: #c0d1b2;
+  font-size: 10px;
+  cursor: pointer;
+}
+.trace-disclosure .research-trace {
+  margin-top: 18px;
+}
+.visible-pace-note {
+  font-size: 10px;
+  line-height: 1.7;
+  color: var(--muted);
+  padding: 10px 0;
+  margin: 0;
+}
+.activity-running .log-event {
+  animation: scan-record-in 400ms ease both;
+}
+.activity-running .log-event:last-child {
+  background: #e0e8cd;
+  border-left: 2px solid #335b3e;
+  padding-left: 10px;
+}
+.activity-console .activity-focus > p {
+  display: block;
+  -webkit-line-clamp: unset;
+  max-height: none;
+}
+.agent-handoff {
+  position: relative;
+}
+.handoff-transfer {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: #dfea90;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  overflow: hidden;
+}
+.handoff-transfer i {
+  position: absolute;
+  bottom: 0;
+  height: 3px;
+  background: #173c34;
+  left: 0;
+  animation: handoff-line 950ms ease-in-out both;
+}
+.handoff-transfer span {
+  font-size: 13px;
+}
+.network-transferring .node-next .rail-number {
+  animation: node-receive 950ms ease-in-out both;
+}
+.pilot-export-note {
+  margin: 10px 0 26px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+.export-actions {
+  flex-wrap: wrap;
+}
+@keyframes node-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes scan-current {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+@keyframes scan-record-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes handoff-line {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+@keyframes node-receive {
+  50% {
+    box-shadow: 0 0 0 12px #c3d39b;
+  }
+}
+@media (max-width: 800px) {
+  .network-heading {
+    flex-wrap: wrap;
+    gap: 6px 20px;
+  }
+  .network-heading strong {
+    order: 3;
+    width: 100%;
+  }
+  .agent-rail {
+    padding: 10px 5px 0;
+  }
+  .agent-rail > button,
+  .agent-rail > button.selected {
+    min-width: 156px;
+    padding: 0 12px 10px 0;
+  }
+  .agent-rail .rail-number {
+    width: 46px;
+    height: 46px;
+  }
+  .agent-rail > button::before {
+    top: 23px;
+  }
+  .agent-rail .working-light {
+    top: 35px;
+    left: 37px;
+  }
+  .agent-scan {
+    max-width: 440px;
+  }
+  .notebook-tools {
+    align-items: flex-start;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  ::view-transition-old(workspace),
+  ::view-transition-new(workspace),
+  ::view-transition-group(workspace) {
+    animation: none !important;
+  }
+  .scan-packet {
+    display: none;
+  }
+}
+@media (max-width: 600px) {
+  .notebook-tools .export-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    gap: 8px;
+  }
+  .notebook-tools .export-actions > .button:first-child {
+    grid-column: 1 / -1;
+    min-height: 52px;
+    font-size: 13px;
+  }
+  .notebook-tools .export-actions > .button {
+    font-size: 11px;
+    min-height: 44px;
+  }
+}

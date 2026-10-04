@@ -3,6 +3,7 @@ import type { AgentEvent, AgentKey, AgentStep } from "./civicModel";
 import { agentDefinitions } from "./civicEngine";
 import { t, locale } from "./i18n";
 import ResearchTrace from "./ResearchTrace";
+import AgentScan from "./AgentScan";
 export default function ActivityLog({
   events,
   busy,
@@ -84,8 +85,8 @@ export default function ActivityLog({
     (e) => e.title === "Source page unavailable",
   ).length;
   return (
-    <div className="activity-console">
-      <section className="research-stage">
+    <div className={`activity-console ${working ? "activity-running" : ""}`}>
+      <section className="research-stage" key={selected}>
         <div className="activity-focus">
           <div className="activity-focus-meta">
             <span>
@@ -110,7 +111,7 @@ export default function ActivityLog({
             </span>
           </div>
           <h2 className="stage-verb">{t(agent.verb)}</h2>
-          <ResearchTrace events={agentEvents} working={working} />
+          <AgentScan agent={selected} events={agentEvents} working={working} />
           <span className="stage-action-label">
             {t(
               working
@@ -149,11 +150,12 @@ export default function ActivityLog({
             </div>
           )}
         </div>
+        <details className="trace-disclosure">
+          <summary>{t("Inspect the action trace")}</summary>
+          <ResearchTrace events={agentEvents} working={working} />
+        </details>
         {requests.length > 0 && (
-          <details
-            className="source-requests"
-            open={working && pending.length > 0 ? true : undefined}
-          >
+          <details className="source-requests" open>
             <summary>
               {t("Live page requests")} · {requests.length - pending.length}/
               {requests.length}
@@ -211,6 +213,13 @@ export default function ActivityLog({
             {t("Follow latest")}
           </label>
         </header>
+        <p className="visible-pace-note">
+          {t(
+            mode === "local"
+              ? "Local analysis · actions paced for reading · source requests use real response times."
+              : "AI service activity · source and search events appear when received.",
+          )}
+        </p>
         <details className="log-controls">
           <summary>{t("View & playback")}</summary>
           {mode === "local" && (

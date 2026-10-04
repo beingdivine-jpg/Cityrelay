@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { Link } from "./navigation";
 import { sharedClient } from "./shared";
 import { t as tr, locale } from "./i18n";
 import { Button, TextField } from "./components";

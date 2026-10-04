@@ -1,5 +1,6 @@
 import { t as tr, locale } from "./i18n";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { Link } from "./navigation";
 import { Button, CommunityNav, Icon } from "./components";
 import { Missing } from "./Workspace";
 import { DEMO_ID } from "./demo";

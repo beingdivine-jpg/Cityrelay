@@ -1,6 +1,7 @@
 import { t as tr, useLanguage } from "./i18n";
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "./navigation";
 import { examples, localSuggestion } from "./data";
 import { assessCase } from "./matching";
 import { SourceList } from "./SourceList";
@@ -172,7 +173,8 @@ export default function MatchDetail() {
             )}
           </nav>
           <section
-            className="case-panel"
+            className="case-panel panel-transition"
+            key={panel}
             aria-label={tr(
               panel === "understand"
                 ? "Understand the idea"

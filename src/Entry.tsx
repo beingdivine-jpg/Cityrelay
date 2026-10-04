@@ -1,6 +1,6 @@
 import { t as tr } from "./i18n";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "./navigation";
 import { Button, Icon, TextField, SelectField, useApp } from "./components";
 import { newProfile } from "./data";
 import type { Setting } from "./model";

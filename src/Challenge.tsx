@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { useNavigate, Link } from "./navigation";
 import { t as tr } from "./i18n";
 import { Button, CommunityNav, Icon, TextField, useApp } from "./components";
 import { Missing } from "./Workspace";

@@ -1,5 +1,5 @@
 import { t } from "./i18n";
-import { Link } from "react-router-dom";
+import { Link } from "./navigation";
 import { Icon } from "./components";
 import { lazy, Suspense } from "react";
 const CityAtlas = lazy(() => import("./CityAtlas"));

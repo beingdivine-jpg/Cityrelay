@@ -1,6 +1,7 @@
 import { t as tr } from "./i18n";
 import { useEffect, useRef, useState, type DragEvent } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "./navigation";
 import {
   assetLabels,
   budgetLabels,

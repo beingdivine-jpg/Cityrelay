@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "./navigation";
 import { t } from "./i18n";
 import { CommunityNav, Icon } from "./components";
 import { summarizeReports, topicLabels } from "./civicEngine";

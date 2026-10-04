@@ -1,6 +1,7 @@
 import { t as tr, locale } from "./i18n";
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { Link } from "./navigation";
 import { Button, CommunityNav, Icon, TextField } from "./components";
 import { useCivic } from "./CivicContext";
 import { duplicateReport, needsReview, topicLabels } from "./civicEngine";

@@ -14,3 +14,5 @@ createRoot(document.getElementById("root")!).render(
     </ErrorBoundary>
   </StrictMode>,
 );
+
+import "./motion.css";

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "./navigation";
 import { useApp } from "./components";
 import { useShared } from "./SharedContext";
 import { DEMO_ID, startDemo } from "./demo";

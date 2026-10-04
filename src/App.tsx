@@ -2,17 +2,18 @@ import { t as tr, useLanguage } from "./i18n";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import {
-  BrowserRouter,
-  Link,
+  createBrowserRouter,
+  RouterProvider,
   Route,
   Routes,
   useLocation,
-  useNavigate,
 } from "react-router-dom";
+import { Link, useNavigate } from "./navigation";
 import { AppContext, Button, Icon, Logo } from "./components";
 import { loadState, saveState, seedState, STORAGE_KEY } from "./storage";
 import type { AppState, CommunityProfile } from "./model";
 import Home from "./Home";
+import { ErrorFallback } from "./ErrorBoundary";
 import Entry from "./Entry";
 import DemoStart from "./DemoStart";
 import { DEMO_ID, demoDisclosure } from "./demo";
@@ -406,72 +407,74 @@ function Shell() {
           </p>
         )}
         <main id="main-content" tabIndex={-1}>
-          {shared.opening ? (
-            <p className="page-width" role="status">
-              {tr("Loading shared workspace…")}
-            </p>
-          ) : (
-            <Suspense
-              fallback={
-                <p className="page-width" role="status">
-                  {tr("Loading workspace…")}
-                </p>
-              }
-            >
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/demo" element={<DemoStart />} />
-                <Route
-                  path="/resident/:id"
-                  element={<SharedResident key={location.pathname} />}
-                />
-                <Route path="/account" element={<WorkspaceSafety />} />
-                <Route
-                  path="/community/:id/challenge"
-                  element={<Challenge key={location.pathname} />}
-                />
-                <Route path="/enter" element={<Entry />} />
-                <Route path="/start" element={<Profile />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/community/:id" element={<CitySignals />} />
-                <Route path="/community/:id/brief" element={<Workspace />} />
-                <Route path="/community/:id/data" element={<CityData />} />
-                <Route
-                  path="/community/:id/agents"
-                  element={<AgentStudio key={location.pathname} />}
-                />
-                <Route
-                  path="/community/:id/reports"
-                  element={
-                    shared.workspace ? (
-                      <SharedIntake />
-                    ) : (
-                      <ResidentSpace intake />
-                    )
-                  }
-                />
-                <Route
-                  path="/community/:id/opportunities"
-                  element={<Opportunities />}
-                />
-                <Route
-                  path="/community/:id/monitor"
-                  element={<CityMonitor />}
-                />
-                <Route path="/report/:id" element={<ResidentSpace />} />
-                <Route
-                  path="/community/:id/matches"
-                  element={<Workspace matchesOnly />}
-                />
-                <Route
-                  path="/community/:id/matches/:matchId"
-                  element={<MatchDetail />}
-                />
-                <Route path="/community/:id/plan" element={<Plan />} />
-                <Route path="*" element={<Missing />} />
-              </Routes>
-            </Suspense>
-          )}
+          <div className="route-scene" key={location.pathname}>
+            {shared.opening ? (
+              <p className="page-width" role="status">
+                {tr("Loading shared workspace…")}
+              </p>
+            ) : (
+              <Suspense
+                fallback={
+                  <p className="page-width" role="status">
+                    {tr("Loading workspace…")}
+                  </p>
+                }
+              >
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/demo" element={<DemoStart />} />
+                  <Route
+                    path="/resident/:id"
+                    element={<SharedResident key={location.pathname} />}
+                  />
+                  <Route path="/account" element={<WorkspaceSafety />} />
+                  <Route
+                    path="/community/:id/challenge"
+                    element={<Challenge key={location.pathname} />}
+                  />
+                  <Route path="/enter" element={<Entry />} />
+                  <Route path="/start" element={<Profile />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/community/:id" element={<CitySignals />} />
+                  <Route path="/community/:id/brief" element={<Workspace />} />
+                  <Route path="/community/:id/data" element={<CityData />} />
+                  <Route
+                    path="/community/:id/agents"
+                    element={<AgentStudio key={location.pathname} />}
+                  />
+                  <Route
+                    path="/community/:id/reports"
+                    element={
+                      shared.workspace ? (
+                        <SharedIntake />
+                      ) : (
+                        <ResidentSpace intake />
+                      )
+                    }
+                  />
+                  <Route
+                    path="/community/:id/opportunities"
+                    element={<Opportunities />}
+                  />
+                  <Route
+                    path="/community/:id/monitor"
+                    element={<CityMonitor />}
+                  />
+                  <Route path="/report/:id" element={<ResidentSpace />} />
+                  <Route
+                    path="/community/:id/matches"
+                    element={<Workspace matchesOnly />}
+                  />
+                  <Route
+                    path="/community/:id/matches/:matchId"
+                    element={<MatchDetail />}
+                  />
+                  <Route path="/community/:id/plan" element={<Plan />} />
+                  <Route path="*" element={<Missing />} />
+                </Routes>
+              </Suspense>
+            )}
+          </div>
         </main>
         <footer className="site-footer page-width">
           <Logo />
@@ -522,14 +525,19 @@ function Shell() {
     </AppContext.Provider>
   );
 }
-export default function App() {
-  return (
-    <BrowserRouter>
+const router = createBrowserRouter([
+  {
+    path: "*",
+    errorElement: <ErrorFallback />,
+    element: (
       <SharedProvider>
         <LiveProvider>
           <Shell />
         </LiveProvider>
       </SharedProvider>
-    </BrowserRouter>
-  );
+    ),
+  },
+]);
+export default function App() {
+  return <RouterProvider router={router} />;
 }

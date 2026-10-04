@@ -1,3 +1,15 @@
+# Downloadable pilots and visible agent work — 4 October 2026
+
+- Added a prominent PDF download alongside Markdown and clipboard export. The PDF uses the complete existing export (authored edits, context, evidence, unresolved checks, source URLs and observations), with paginated layout, selectable text, clickable source links and embedded Polish glyphs. PDF code is loaded only when requested; generation stays on the device. Existing authored content keeps its language when interface language changes.
+- Added a five-node agent network, animated active node and input paths, a rolling scan record, visible method/pacing note and an evidence-transfer animation. All record labels/counts come from actual events. Source status stays tied to request callbacks. Reading intervals are disclosed; no new AI provider or broad live web discovery is claimed.
+- Handoffs now scroll back to the next active stage; inspecting another agent turns off automatic following. Stop remains available and interrupted runs retain their records. Source requests are expanded by default.
+- Internal links and programmatic navigation use React Router view transitions, with a content-entry fallback and reduced-motion handling. Evidence and pilot section changes animate. The router uses the existing friendly recovery screen for missing chunks or rendering failures.
+- **93 tests passed across 11 files.** New PDF tests cover long-document pagination, source link annotations, embedded Unicode fonts and filenames. Existing per-action sequencing, cancellation and real source callback tests continue to pass. Production build, formatting and diff checks pass.
+- Browser checks on isolated port 4185: complete five-stage guided run; five successful municipal source requests; real English and Polish PDF downloads confirmed in Downloads and rendered for visual inspection; comparison to evidence to pilot creation; Polish mobile node following and stop/save; 390 and 320 px layouts with no document overflow. Browser automation did not emit a download event, but both files were saved successfully and inspected directly.
+- PDF rendering was reviewed in English and Polish, including multi-page source sections and diacritics. Generated font instance retains the original OFL licence. No account, provider, shared-storage or deployment credential changes.
+
+---
+
 # Civic atlas art direction — 4 October 2026
 
 - Replaced the welcome composition with an interactive Natural Earth atlas, sourced city selectors, a concise municipal-advisor entry and a shared typographic system. City selection pauses the presentation; pause/play and reduced-motion support remain. Dateline-crossing polygons are unwrapped so they do not draw across the map.

@@ -1,5 +1,6 @@
 import { t as tr } from "./i18n";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { Link, useNavigate } from "./navigation";
 import { useState } from "react";
 import {
   assetLabels,

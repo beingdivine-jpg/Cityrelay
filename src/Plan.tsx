@@ -1,6 +1,7 @@
 import { t as tr, locale } from "./i18n";
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { Link } from "./navigation";
 import { examples } from "./data";
 import { assessCase } from "./matching";
 import { checkpointPlan, exportPlan } from "./planLogic";
@@ -38,6 +39,8 @@ export default function Plan() {
   const [observation, setObservation] = useState(blankOutcome);
   const [editing, setEditing] = useState<string | null>(null);
   const [manualCopy, setManualCopy] = useState("");
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
   const [page, setPage] = useState("intent");
   const turnPage = (next: string) => {
     setPage(next);
@@ -94,6 +97,21 @@ export default function Plan() {
     .map((e) => assessCase(profile, e, state.civic?.[id!]));
   const observations = state.outcomes.filter((o) => o.planId === plan.id);
   const exportText = () => exportPlan(profile, plan, state);
+  const downloadPdf = async () => {
+    setExporting(true);
+    setExportError("");
+    try {
+      const { downloadPilotPdf } = await import("./pilotPdf");
+      await downloadPilotPdf(exportText(), profile.name);
+      notify("Pilot PDF prepared. Check your browser downloads.");
+    } catch {
+      setExportError(
+        "The PDF could not be prepared. Try again or download the text version.",
+      );
+    } finally {
+      setExporting(false);
+    }
+  };
   const copy = async () => {
     const text = exportText();
     try {
@@ -250,6 +268,10 @@ export default function Plan() {
           )}
         </span>
         <div className="export-actions">
+          <Button disabled={exporting} onClick={() => void downloadPdf()}>
+            <Icon name="download" size={17} />
+            {tr(exporting ? "Preparing PDF…" : "Download pilot · PDF")}
+          </Button>
           <Button secondary onClick={() => void copy()}>
             <Icon name="copy" size={17} />
             {tr(" Copy plan")}
@@ -263,10 +285,20 @@ export default function Plan() {
             }
           >
             <Icon name="download" size={17} />
-            {tr(" Download plan")}
+            {tr("Text version · .md")}
           </a>
         </div>
       </div>
+      {exportError && (
+        <p className="form-error" role="alert">
+          {tr(exportError)}
+        </p>
+      )}
+      <p className="pilot-export-note">
+        {tr(
+          "Download the complete brief, including your edits, evidence, sources and unresolved checks. Prepared on your device.",
+        )}
+      </p>
       {tr(
         manualCopy && (
           <TextField
@@ -301,7 +333,7 @@ export default function Plan() {
                   key={key}
                   aria-pressed={page === key}
                   aria-controls="notebook-current-page"
-                  onClick={() => setPage(key)}
+                  onClick={() => turnPage(key)}
                 >
                   <span>
                     {tr("0")}
@@ -312,7 +344,11 @@ export default function Plan() {
               )),
             )}
           </nav>
-          <div id="notebook-current-page">
+          <div
+            id="notebook-current-page"
+            className="panel-transition"
+            key={page}
+          >
             {tr(
               page === "intent" && (
                 <section className="plan-section">

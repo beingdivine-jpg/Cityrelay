@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { useNavigate } from "./navigation";
 import { t as tr } from "./i18n";
 import { Button, TextField, useApp } from "./components";
 import { sharedClient } from "./shared";

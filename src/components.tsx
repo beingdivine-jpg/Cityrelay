@@ -1,6 +1,6 @@
 import { t as tr } from "./i18n";
 import { createContext, useContext, useId, type ReactNode } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink } from "./navigation";
 import { useShared } from "./SharedContext";
 import type { AppState, CommunityProfile, MatchAssessment } from "./model";
 export const AppContext = createContext<{

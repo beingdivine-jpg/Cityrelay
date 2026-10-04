@@ -2,7 +2,8 @@ import { useShared } from "./SharedContext";
 import { sharedClient } from "./shared";
 import { t as tr, locale, getLanguage } from "./i18n";
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { Link } from "./navigation";
 import { Button, CommunityNav, Icon } from "./components";
 import { checkSourcesLive, useAgentService, useCivic } from "./CivicContext";
 import {
@@ -106,6 +107,7 @@ export default function AgentStudio() {
   const abort = useRef<AbortController | null>(null),
     gate = useRef<(() => void) | null>(null);
   const [readable, setReadable] = useState(true);
+  const [transferring, setTransferring] = useState(false);
   const readingPace = useRef(true),
     followAgent = useRef(true);
   const rail = useRef<HTMLElement>(null);
@@ -190,7 +192,19 @@ export default function AgentStudio() {
       currentAgent = step.id;
       runningStep = step.status === "running" ? step : undefined;
       setLiveSteps((list) => [...list.filter((s) => s.id !== step.id), step]);
-      if (followAgent.current) setSelected(step.id);
+      if (followAgent.current) {
+        setSelected(step.id);
+        if (step.status === "running")
+          requestAnimationFrame(() =>
+            document.getElementById("agent-workbench")?.scrollIntoView({
+              block: "start",
+              behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+                .matches
+                ? "instant"
+                : "smooth",
+            }),
+          );
+      }
       if (step.status === "complete")
         completedSteps = [
           ...completedSteps.filter((s) => s.id !== step.id),
@@ -208,10 +222,10 @@ export default function AgentStudio() {
               controller.signal,
               readingPace.current
                 ? event.kind === "output" || event.kind === "handoff"
-                  ? 900
+                  ? 1200
                   : event.kind === "check"
-                    ? 420
-                    : 700
+                    ? 650
+                    : 1000
                 : 0,
             ),
           beforeStep: async (agent) => {
@@ -441,6 +455,7 @@ export default function AgentStudio() {
       };
       change((c) => ({ ...c, runs: [failed, ...c.runs].slice(0, 20) }));
     } finally {
+      setTransferring(false);
       setBusy(false);
       setWaiting(null);
       abort.current = null;
@@ -570,9 +585,26 @@ export default function AgentStudio() {
       )}
       <section
         id="agent-workbench"
-        className="agent-workbench"
+        className={`agent-workbench ${busy ? "network-active" : ""} ${transferring ? "network-transferring" : ""}`}
         aria-label={tr("Agent work dashboard")}
       >
+        <div className="network-heading">
+          <span>{tr("AGENT NETWORK")}</span>
+          <strong>
+            {tr(
+              transferring
+                ? "Passing findings to the next agent…"
+                : waiting
+                  ? "Handoff ready · your review"
+                  : busy
+                    ? "Agents running · follow the work below"
+                    : "Five agents. One evidence trail.",
+            )}
+          </strong>
+          <span>
+            {completed}/5 {tr("stages completed")}
+          </span>
+        </div>
         <aside className="agent-rail" ref={rail}>
           <span className="eyebrow">{tr("RESEARCH TEAM")}</span>
           {agentDefinitions.map((agent, i) => {
@@ -584,7 +616,7 @@ export default function AgentStudio() {
               <button
                 key={agent.id}
                 aria-pressed={selected === agent.id}
-                className={selected === agent.id ? "selected" : ""}
+                className={`${selected === agent.id ? "selected" : ""} ${step?.status === "running" ? "node-running" : ""} ${step?.status === "complete" ? "node-complete" : ""} ${waiting === agent.id ? "node-next" : ""}`}
                 onClick={() => {
                   followAgent.current = false;
                   setSelected(agent.id);
@@ -645,6 +677,12 @@ export default function AgentStudio() {
             }}
           />
           <div className="agent-handoff" role="status">
+            {transferring && (
+              <div className="handoff-transfer" aria-hidden="true">
+                <i />
+                <span>{tr("Passing the evidence record…")}</span>
+              </div>
+            )}
             {waiting ? (
               <>
                 <div>
@@ -654,10 +692,27 @@ export default function AgentStudio() {
                   </p>
                 </div>
                 <Button
-                  onClick={() => {
-                    followAgent.current = true;
-                    setSelected(waiting);
-                    gate.current?.();
+                  disabled={transferring}
+                  onClick={async () => {
+                    const signal = abort.current?.signal;
+                    if (!signal || transferring) return;
+                    setTransferring(true);
+                    try {
+                      await waitForActivity(
+                        signal,
+                        window.matchMedia("(prefers-reduced-motion: reduce)")
+                          .matches
+                          ? 0
+                          : 950,
+                      );
+                      followAgent.current = true;
+                      setSelected(waiting);
+                      gate.current?.();
+                    } catch {
+                      /* Stopping during transfer keeps the recorded work. */
+                    } finally {
+                      setTransferring(false);
+                    }
                   }}
                 >
                   {tr("Continue to")}{" "}
