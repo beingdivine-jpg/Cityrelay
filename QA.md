@@ -1,3 +1,13 @@
+# Ideas in orbit — 4 October 2026
+
+- Replaced the welcome’s flat map with an orthographic globe built from the existing Natural Earth geography and documented city coordinates. Illuminated land points, moving elevated routes and travelling light markers illustrate knowledge exchange; they do not claim live discoveries or actual municipal partnerships.
+- A seven-second city tour rotates the globe between documented projects. City selection opens a spotlight and pauses the tour; next-city, left/right controls and desktop pointer dragging provide manual exploration. Existing primary-source links remain visible.
+- Animation is capped at 30 fps with shared projection trigonometry and batched land dots. Rendering and the tour stop when hidden/offscreen. Pause freezes the scene; reduced-motion preferences are observed at mount and on change, with manual city/turn controls retained.
+- English and Polish labels include the canvas city marker. Browser inspection covered desktop and 390/320 px Polish layouts without horizontal overflow, Singapore source URL, manual turn controls and desktop dragging, automatic spotlight changes, and zero console errors. Two paused screenshots taken separately were byte-identical; Play resumed the tour. Reduced-motion behavior was reviewed in code rather than changing the user’s system settings.
+- **97 tests passed across 12 files**, including coordinate centring, lifted route endpoints, shortest rotation over the date line and coincident endpoints. Build, formatting and diff checks pass. No new dependency or backend behavior; the lazy atlas JavaScript grows by about 3 KB gzip.
+
+---
+
 # Downloadable pilots and visible agent work — 4 October 2026
 
 - Added a prominent PDF download alongside Markdown and clipboard export. The PDF uses the complete existing export (authored edits, context, evidence, unresolved checks, source URLs and observations), with paginated layout, selectable text, clickable source links and embedded Polish glyphs. PDF code is loaded only when requested; generation stays on the device. Existing authored content keeps its language when interface language changes.

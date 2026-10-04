@@ -1,169 +1,164 @@
-import { useEffect, useState } from "react";
-import world from "./worldMap.json";
+import { useEffect, useRef, useState } from "react";
 import { examples } from "./data";
 import { getSource } from "./sources";
 import { t } from "./i18n";
-const project = (coordinates: [number, number]) => [
-  (coordinates[0] + 180) * 2.5,
-  (85 - coordinates[1]) * 2.5,
-];
-// Keep dateline-crossing rings continuous instead of filling a band across the map.
-const geography = world.flatMap((country) => {
-  let crossesDateline = false;
-  const path = country.path
-    .split("M")
-    .filter(Boolean)
-    .map((ring) => {
-      let previous: number | undefined;
-      let offset = 0;
-      const points = [...ring.matchAll(/(-?[\d.]+),(-?[\d.]+)/g)].map(
-        (match) => {
-          const raw = Number(match[1]);
-          if (
-            previous !== undefined &&
-            Math.abs(raw + offset - previous) > 450
-          ) {
-            offset += raw + offset > previous ? -900 : 900;
-            crossesDateline = true;
-          }
-          previous = raw + offset;
-          return `${previous},${match[2]}`;
-        },
-      );
-      return `M${points.join("L")}Z`;
-    })
-    .join("");
-  return (crossesDateline ? [-900, 0, 900] : [0]).map((offset) => ({
-    key: `${country.id}-${offset}`,
-    path,
-    offset,
-  }));
-});
-/** Existing Natural Earth geography and documented city locations. */
+import IdeaGlobe from "./IdeaGlobe";
+import "./globe.css";
+const tour = [0, 2, 4, 3, 1];
+const reducedMotion = () =>
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+/** Real documented projects in an animated editorial globe, not a live discovery feed. */
 export default function CityAtlas() {
   const [selected, setSelected] = useState(0);
-  const [paused, setPaused] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-  );
+  const [reduced, setReduced] = useState(reducedMotion);
+  const [paused, setPaused] = useState(reducedMotion);
+  const [turn, setTurn] = useState(0);
+  const [visible, setVisible] = useState(true);
+  const [pageVisible, setPageVisible] = useState(() => !document.hidden);
+  const section = useRef<HTMLElement>(null);
   useEffect(() => {
-    if (paused) return;
-    const timer = setInterval(
-      () => setSelected((s) => (s + 1) % examples.length),
-      8000,
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const change = () => {
+      setReduced(preference.matches);
+      if (preference.matches) setPaused(true);
+    };
+    const visibility = () => setPageVisible(!document.hidden);
+    const observer = new IntersectionObserver(
+      ([entry]) => setVisible(entry.isIntersecting),
+      { threshold: 0.1 },
     );
-    return () => clearInterval(timer);
-  }, [paused]);
-  const example = examples[selected];
-  const source = getSource(example.sources[0])!;
-  const [x, y] = project(example.origin.coordinates);
+    if (section.current) observer.observe(section.current);
+    preference.addEventListener("change", change);
+    document.addEventListener("visibilitychange", visibility);
+    return () => {
+      observer.disconnect();
+      preference.removeEventListener("change", change);
+      document.removeEventListener("visibilitychange", visibility);
+    };
+  }, []);
+  const moving = !paused && !reduced && visible && pageVisible;
+  useEffect(() => {
+    if (!moving) return;
+    const timer = setTimeout(
+      () => setSelected(tour[(tour.indexOf(selected) + 1) % tour.length]),
+      7000,
+    );
+    return () => clearTimeout(timer);
+  }, [moving, selected]);
+  const example = examples[selected],
+    source = getSource(example.sources[0])!;
+  const next = tour[(tour.indexOf(selected) + 1) % tour.length];
+  const choose = (index: number) => {
+    setSelected(index);
+    setTurn(0);
+    setPaused(true);
+  };
+  const rotate = (amount: number) => {
+    setPaused(true);
+    setTurn((value) => value + amount);
+  };
   return (
     <section
-      className={`city-atlas ${paused ? "atlas-paused" : ""}`}
+      ref={section}
+      className={`city-atlas globe-atlas ${moving ? "globe-moving" : "atlas-paused"}`}
       aria-label={t("Explore a documented city idea")}
     >
       <div className="atlas-caption">
-        <span>{t("THE CITY-TO-CITY ATLAS")}</span>
-        <button onClick={() => setPaused(!paused)} aria-pressed={paused}>
-          {t(paused ? "Play motion" : "Pause motion")} {paused ? "▷" : "Ⅱ"}
+        <span>
+          <i className="orbit-status" />
+          {t("IDEAS IN ORBIT")}
+        </span>
+        <button
+          onClick={() => setPaused((value) => !value)}
+          aria-pressed={paused}
+          disabled={reduced}
+        >
+          {t(
+            reduced
+              ? "Reduced motion"
+              : paused
+                ? "Play motion"
+                : "Pause motion",
+          )}{" "}
+          <span aria-hidden="true">{paused ? "▷" : "Ⅱ"}</span>
         </button>
       </div>
-      <div className="atlas-map">
-        <svg viewBox="170 30 600 370" aria-hidden="true">
-          <defs>
-            <pattern
-              id="city-atlas-grid"
-              width="25"
-              height="25"
-              patternUnits="userSpaceOnUse"
-            >
-              <circle cx="1" cy="1" r=".6" fill="currentColor" />
-            </pattern>
-          </defs>
-          <rect
-            x="170"
-            y="30"
-            width="600"
-            height="370"
-            fill="url(#city-atlas-grid)"
-            opacity=".2"
-          />
-          <g className="atlas-land">
-            {geography.map((country) => (
-              <path
-                key={country.key}
-                d={country.path}
-                transform={`translate(${country.offset} 0)`}
-              />
-            ))}
-          </g>
-          <path className="atlas-crosshair" d={`M${x} 30V400M170 ${y}H770`} />
-          {examples.map((item, i) => {
-            const [cx, cy] = project(item.origin.coordinates);
-            return (
-              <g
-                key={item.id}
-                className={
-                  selected === i ? "atlas-point selected" : "atlas-point"
-                }
-              >
-                <circle cx={cx} cy={cy} r={selected === i ? 5 : 3} />
-                {selected === i && (
-                  <>
-                    <circle className="atlas-ring" cx={cx} cy={cy} r="17" />
-                    <circle
-                      className="atlas-ring outer"
-                      cx={cx}
-                      cy={cy}
-                      r="29"
-                    />
-                  </>
-                )}
-              </g>
-            );
-          })}
-          <text x="184" y="384" className="atlas-coordinate">
-            {example.origin.coordinates[1].toFixed(2)}° /{" "}
-            {example.origin.coordinates[0].toFixed(2)}°
-          </text>
-          <path d="M744 352V380M730 366H758" className="atlas-crosshair" />
-        </svg>
-      </div>
-      <div className="atlas-project" aria-live={paused ? "polite" : "off"}>
-        <span className="atlas-index">
-          {String(selected + 1).padStart(2, "0")}
-          <small> / 05</small>
-        </span>
-        <div>
-          <h2>{t(example.origin.name)}</h2>
-          <p>{t(example.shortTitle)}</p>
+      <div className="globe-stage">
+        <div className="globe-side-label" aria-hidden="true">
+          {t("LOCAL KNOWLEDGE / WORLDWIDE")}
         </div>
-        <a
-          href={source.url}
-          target="_blank"
-          rel="noreferrer"
-          aria-label={`${t("Read the city source")} · ${example.origin.name}`}
-        >
-          ↗
-        </a>
+        <IdeaGlobe
+          selected={selected}
+          paused={!moving}
+          reduced={reduced}
+          turn={turn}
+          onTurn={rotate}
+        />
+        <div className="globe-navigation" aria-label={t("Turn the globe")}>
+          <button
+            onClick={() => rotate(-0.45)}
+            aria-label={t("Rotate globe left")}
+          >
+            ←
+          </button>
+          <span>{t("Turn the world")}</span>
+          <button
+            onClick={() => rotate(0.45)}
+            aria-label={t("Rotate globe right")}
+          >
+            →
+          </button>
+        </div>
+        <span className="globe-scale" aria-hidden="true">
+          {String(examples.length).padStart(2, "0")}{" "}
+          {t("CITIES / SHARED POSSIBILITIES")}
+        </span>
       </div>
-      <div className="atlas-places">
+      <div className="globe-discovery" aria-live={paused ? "polite" : "off"}>
+        <div className="globe-discovery-heading">
+          <span>{t("IN THE SPOTLIGHT")}</span>
+          <span>
+            {String(selected + 1).padStart(2, "0")} /{" "}
+            {String(examples.length).padStart(2, "0")}
+          </span>
+        </div>
+        <div className="atlas-project" key={example.id}>
+          <div>
+            <h2>{t(example.origin.name)}</h2>
+            <p>{t(example.shortTitle)}</p>
+          </div>
+          <a
+            href={source.url}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`${t("Read the city source")} · ${t(example.origin.name)}`}
+          >
+            ↗
+          </a>
+        </div>
+        <div className="globe-tour-track">
+          <i key={`${selected}-${moving}`} />
+        </div>
+        <button className="globe-next" onClick={() => choose(next)}>
+          <span>{t("Next perspective")}</span>
+          <strong>{t(examples[next].origin.name)} ↗</strong>
+        </button>
+      </div>
+      <div className="atlas-places" aria-label={t("Choose a city")}>
         {examples.map((item, i) => (
           <button
             key={item.id}
             aria-pressed={selected === i}
-            onClick={() => {
-              setSelected(i);
-              setPaused(true);
-            }}
+            onClick={() => choose(i)}
           >
             {t(item.origin.name)}
           </button>
         ))}
       </div>
       <div className="atlas-credit">
-        <span>{t("Documented projects. Approximate city locations.")}</span>
+        <span>
+          {t("Documented ideas. Animated connections, not a live feed.")}
+        </span>
         <a href={getSource("world-map")!.url} target="_blank" rel="noreferrer">
           Natural Earth ↗
         </a>
